@@ -1,18 +1,16 @@
 const express = require('express');
 const router = express.Router();
-
-let projects = [];
-let nextId = 1;
+const data = require('../data');
 
 // GET all projects
 router.get('/', (req, res) => {
-    res.json(projects);
+    res.json(data.projects);
 });
 
 // GET a single project by id
 router.get('/:id', (req, res) => {
     const id = parseInt(req.params.id, 10);
-    const project = projects.find(p => p.id === id);
+    const project = data.projects.find(p => p.id === id);
     if (project) {
         res.json(project);
     } else {
@@ -23,7 +21,7 @@ router.get('/:id', (req, res) => {
 // POST create a new project
 router.post('/', (req, res) => {
     const newProject = {
-        id: nextId++,
+        id: data.nextProjectId++,
         name: req.body.name,
         description: req.body.description,
         tasks: [],
@@ -31,21 +29,21 @@ router.post('/', (req, res) => {
         milestones: [],
         milestoneNextId: 1
     };
-    projects.push(newProject);
+    data.projects.push(newProject);
     res.status(201).json(newProject);
 });
 
 // PUT update an existing project by id
 router.put('/:id', (req, res) => {
     const id = parseInt(req.params.id, 10);
-    const index = projects.findIndex(p => p.id === id);
+    const index = data.projects.findIndex(p => p.id === id);
     if (index !== -1) {
-        projects[index] = {
-            ...projects[index],
-            name: req.body.name !== undefined ? req.body.name : projects[index].name,
-            description: req.body.description !== undefined ? req.body.description : projects[index].description
+        data.projects[index] = {
+            ...data.projects[index],
+            name: req.body.name !== undefined ? req.body.name : data.projects[index].name,
+            description: req.body.description !== undefined ? req.body.description : data.projects[index].description
         };
-        res.json(projects[index]);
+        res.json(data.projects[index]);
     } else {
         res.status(404).json({ message: 'Project not found' });
     }
@@ -54,9 +52,9 @@ router.put('/:id', (req, res) => {
 // DELETE remove a project by id
 router.delete('/:id', (req, res) => {
     const id = parseInt(req.params.id, 10);
-    const index = projects.findIndex(p => p.id === id);
+    const index = data.projects.findIndex(p => p.id === id);
     if (index !== -1) {
-        const deleted = projects.splice(index, 1)[0];
+        const deleted = data.projects.splice(index, 1)[0];
         res.json({ message: 'Project deleted', project: deleted });
     } else {
         res.status(404).json({ message: 'Project not found' });
@@ -66,15 +64,19 @@ router.delete('/:id', (req, res) => {
 // Sprint 3: Endpoints for Milestones
 router.post('/:projectId/milestones', (req, res) => {
     const projectId = parseInt(req.params.projectId, 10);
-    const project = projects.find(p => p.id === projectId);
+    const project = data.projects.find(p => p.id === projectId);
     if (!project) {
          return res.status(404).json({ message: 'Project not found' });
     }
-    const { title, description } = req.body;
+    const { title, description, cost } = req.body;
+    const totalCost = cost ? parseFloat(cost) : 0;
     const newMilestone = {
          id: project.milestoneNextId++,
          title,
          description,
+         totalCost: totalCost,
+         paidAmount: 0,
+         pendingAmount: totalCost,
          completed: false,
          tasks: [],
          taskNextId: 1
@@ -86,7 +88,7 @@ router.post('/:projectId/milestones', (req, res) => {
 router.put('/:projectId/milestones/:milestoneId', (req, res) => {
     const projectId = parseInt(req.params.projectId, 10);
     const milestoneId = parseInt(req.params.milestoneId, 10);
-    const project = projects.find(p => p.id === projectId);
+    const project = data.projects.find(p => p.id === projectId);
     if (!project) {
          return res.status(404).json({ message: 'Project not found' });
     }
@@ -103,7 +105,7 @@ router.put('/:projectId/milestones/:milestoneId', (req, res) => {
 router.delete('/:projectId/milestones/:milestoneId', (req, res) => {
     const projectId = parseInt(req.params.projectId, 10);
     const milestoneId = parseInt(req.params.milestoneId, 10);
-    const project = projects.find(p => p.id === projectId);
+    const project = data.projects.find(p => p.id === projectId);
     if (!project) {
          return res.status(404).json({ message: 'Project not found' });
     }
@@ -119,7 +121,7 @@ router.delete('/:projectId/milestones/:milestoneId', (req, res) => {
 router.post('/:projectId/milestones/:milestoneId/tasks', (req, res) => {
     const projectId = parseInt(req.params.projectId, 10);
     const milestoneId = parseInt(req.params.milestoneId, 10);
-    const project = projects.find(p => p.id === projectId);
+    const project = data.projects.find(p => p.id === projectId);
     if (!project) {
          return res.status(404).json({ message: 'Project not found' });
     }
@@ -142,7 +144,7 @@ router.put('/:projectId/milestones/:milestoneId/tasks/:taskId', (req, res) => {
     const projectId = parseInt(req.params.projectId, 10);
     const milestoneId = parseInt(req.params.milestoneId, 10);
     const taskId = parseInt(req.params.taskId, 10);
-    const project = projects.find(p => p.id === projectId);
+    const project = data.projects.find(p => p.id === projectId);
     if (!project) {
          return res.status(404).json({ message: 'Project not found' });
     }
@@ -164,7 +166,7 @@ router.delete('/:projectId/milestones/:milestoneId/tasks/:taskId', (req, res) =>
     const projectId = parseInt(req.params.projectId, 10);
     const milestoneId = parseInt(req.params.milestoneId, 10);
     const taskId = parseInt(req.params.taskId, 10);
-    const project = projects.find(p => p.id === projectId);
+    const project = data.projects.find(p => p.id === projectId);
     if (!project) {
          return res.status(404).json({ message: 'Project not found' });
     }
@@ -180,5 +182,4 @@ router.delete('/:projectId/milestones/:milestoneId/tasks/:taskId', (req, res) =>
     res.json({ message: 'Task deleted', task: deletedTask });
 });
 
-module.exports = router; 
-module.exports = router; 
+module.exports = router;

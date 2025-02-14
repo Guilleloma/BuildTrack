@@ -45,6 +45,10 @@ app.post('/login', (req, res) => {
 const projectsRouter = require('./routes/projects');
 app.use('/projects', projectsRouter);
 
+// Agrego las rutas para pagos (Sprint 4)
+const paymentsRouter = require('./routes/payments');
+app.use('/payments', paymentsRouter);
+
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 }); 

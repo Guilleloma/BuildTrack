@@ -122,7 +122,7 @@ function Projects() {
       if (response.ok) {
         const newMilestone = await response.json();
         setProjects(projects.map(p => p.id === projectId ? { ...p, milestones: [...p.milestones, newMilestone] } : p));
-        setNewMilestoneData({ ...newMilestoneData, [projectId]: { title: '', description: '' } });
+        setNewMilestoneData({ ...newMilestoneData, [projectId]: { title: '', description: '', cost: '' } });
       } else {
         console.error('Error adding milestone');
       }
@@ -252,6 +252,9 @@ function Projects() {
                     <li key={milestone.id}>
                       <div style={{ border: '1px solid #aaa', margin: '5px', padding: '5px' }}>
                         <strong>{milestone.title}</strong>: {milestone.description} - {milestone.completed ? 'Completed' : 'Pending'}
+                        <div>
+                          Cost: {milestone.totalCost} | Paid: {milestone.paidAmount} | Pending: {milestone.pendingAmount}
+                        </div>
                         <button onClick={() => deleteMilestone(project.id, milestone.id)}>Delete Milestone</button>
                         <div style={{ marginLeft: '20px' }}>
                           <h5>Tasks</h5>
@@ -295,6 +298,12 @@ function Projects() {
                     placeholder="Milestone Description"
                     value={newMilestoneData[project.id]?.description || ''}
                     onChange={(e) => handleMilestoneChange(project.id, 'description', e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Cost"
+                    value={newMilestoneData[project.id]?.cost || ''}
+                    onChange={(e) => handleMilestoneChange(project.id, 'cost', e.target.value)}
                   />
                   <button onClick={() => addMilestone(project.id)}>Add Milestone</button>
                 </div>

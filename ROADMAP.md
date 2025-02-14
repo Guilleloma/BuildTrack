@@ -70,18 +70,7 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 + - La funcionalidad fue verificada en el frontend, donde se confirmó que cada hito muestra sus tareas correspondientes y que se pueden agregar, editar y eliminar.
 + **Estado: COMPLETADO**
 
-## Sprint 4: Sistema de Pagos
-- Diseñar un esquema para gestionar pagos de forma escalonada (por ejemplo, pagos basados en hitos o porcentajes).
-- Crear endpoints en el backend para simular la lógica del sistema de pagos.
-- Integrar la funcionalidad de pagos en la interfaz de usuario.
-
-+ **Criterios de Aceptación y Test:**
-+ - La lógica de pagos deberá simular transacciones basadas en hitos y validarse mediante tests.
-+ - El backend debe procesar las transacciones correctamente y notificar el estado al frontend.
-+ - El flujo de aprobación de pago debe verificarse tanto en pruebas unitarias como integrales.
-
-## Sprint 4: Payment Processing
-
+## Sprint 4: Sistema de Pagos / Payment Processing
 - Implemented a new payment processing endpoint (POST /payments) that validates the required fields: projectId, milestoneId, and amount.
 - The endpoint returns a nested JSON structure containing both the processed payment and the updated milestone details.
 - On processing a payment, the milestone's 'paidAmount' is increased and 'pendingAmount' is updated accordingly.
