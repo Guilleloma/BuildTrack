@@ -86,36 +86,53 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 
 + Validación:
 + - Se verificó que el frontend se actualice automáticamente y se muestre el área de Debug Log con los mensajes pertinentes.
-+ Estado: COMPLETADO
+**Estado: COMPLETADO**
 
-## Sprint 6: Seguimiento de Desviaciones de Presupuesto
-- Implementar la lógica para registrar desviaciones entre el presupuesto inicial y los gastos reales en cada proyecto.
-- Permitir el registro de la razón de la desviación y calcular porcentajes de cambios.
-- Visualizar esta información en el frontend, ya sea en forma de tablas o gráficos.
+## Sprint 6: Capa Gráfica e Integración Visual (Dividido en Hitos)
+### Hito 6.1: Diseño y Estructura Base de la UI
+- Implementar la estructura mínima con un header, un menú lateral y un área principal para contenidos.
+- Configurar rutas y navegación básica utilizando Material UI para garantizar un diseño limpio y responsive.
++ Validación:
++ - Se verificará que el layout se visualice correctamente en diferentes dispositivos y resoluciones.
+**Estado: COMPLETADO**
 
-+ **Criterios de Aceptación y Test:**
-+ - La API debe permitir ingresar y almacenar datos sobre las desviaciones presupuestarias.
-+ - El frontend debe mostrar de forma clara las tablas o gráficos con los porcentajes calculados.
-+ - Se realizarán pruebas que confirmen la precisión de los cálculos y la correcta actualización de los datos.
+### Hito 6.2: Dashboard Inicial
+- Desarrollar un Dashboard con tarjetas o paneles que muestren información crucial del sistema (proyectos, pagos, desviaciones, etc.).
+- Utilizar datos simulados inicialmente para validar la funcionalidad y experiencia de usuario.
++ Validación:
++ - Verificar que la vista principal ofrezca una visión general clara y simplificada del sistema.
 
-## Sprint 6: Dashboard y Reportes
-- Crear un dashboard para dar una vista general del progreso de los proyectos, estados de tareas, pagos y desviaciones.
-- Permitir la generación de reportes, con la opción de exportar a PDF o Excel (inicialmente, una versión básica es suficiente).
-- Realizar refactorizaciones y mejoras en la interfaz.
+### Hito 6.3: Listado de Proyectos y Vistas Detalladas
+- Implementar una vista de listado de proyectos en formato de tarjetas o tablas, permitiendo filtros y búsquedas.
+- Crear vistas detalladas para cada proyecto, mostrando hitos, tareas y validaciones.
++ Validación:
++ - Confirmar que la navegación sea intuitiva y la información se presente de forma clara en cada proyecto.
 
-+ **Criterios de Aceptación y Test:**
-+ - El dashboard debe mostrar datos en tiempo real de manera organizada en gráficos y tablas.
-+ - La funcionalidad de exportación debe generar archivos PDF y Excel correctamente.
-+ - Se ejecutarán pruebas de usabilidad y de funcionalidad para asegurar una experiencia de usuario óptima.
+### Hito 6.4: Integración de Componentes Visuales Avanzados
+- Incorporar gráficos y tablas usando librerías como Chart.js o Recharts para visualizar métricas y comparativas.
+- Mejorar la retroalimentación visual mediante el uso de snackbars o alerts para acciones críticas.
++ Validación:
++ - Realizar pruebas de usabilidad que aseguren la correcta interpretación de los datos visualizados.
 
-## Sprint 7: Mejoras, Pruebas y Despliegue
-- Mejorar la experiencia de usuario y pulir detalles de la interfaz.
-- Implementar pruebas unitarias y de integración a lo largo del proyecto.
-- Preparar el despliegue del proyecto en un entorno de producción.
-- Integrar la asociación de proyectos a usuarios, aprovechando la autenticación implementada en el Sprint 1.
+### Hito 6.5: Optimización y Ajustes Basados en Feedback
+- Recoger feedback de pruebas internas y usuarios, y ajustar la interfaz para mejorar la experiencia y el rendimiento.
+- Optimizar la compatibilidad y responsividad en diferentes dispositivos.
++ Validación:
++ - Confirmar mejoras tras la retroalimentación y ensayar en entornos reales.
 
-+ **Criterios de Aceptación y Test:**
-+ - Todas las funcionalidades clave deben estar cubiertas por tests unitarios e integración con una cobertura mínima del 80%.
-+ - Se deben corregir todos los bugs críticos y optimizar el rendimiento de la aplicación.
-+ - El sistema debe ser desplegado correctamente en un entorno de pre-producción y pasar pruebas de aceptación final (UAT).
+## Sprint 7: Dashboard, Reportes y Seguimiento de Presupuestos
+- Crear un dashboard interactivo que brinde una vista general del progreso del proyecto, integrando información de proyectos, hitos, tareas, pagos y desviaciones presupuestarias.
+- Implementar la lógica para el seguimiento de desviaciones entre el presupuesto inicial y los gastos reales, permitiendo el registro de razones y cálculos de porcentajes.
+- Permitir la generación y exportación de reportes en formatos PDF y Excel.
+- Realizar refactorizaciones y mejoras en la interfaz para integrar los nuevos componentes visuales.
++ Validación:
++ - Se validarán los endpoints y la integración del dashboard mediante pruebas manuales y unitarias, confirmando la exactitud y actualización en tiempo real de la información.
+
+## Sprint 8: Mejoras, Pruebas y Despliegue
+- Optimizar la experiencia de usuario integrando la asociación de proyectos a usuarios, aprovechando la autenticación implementada en el Sprint 1.
+- Implementar pruebas unitarias y de integración con una cobertura mínima del 80%, asegurando la estabilidad de las funcionalidades implementadas.
+- Corregir bugs críticos y realizar mejoras de rendimiento en toda la aplicación.
+- Preparar el despliegue del proyecto en un entorno de pre-producción y realizar pruebas de aceptación final (UAT).
++ Validación:
++ - Se confirmará el correcto funcionamiento del sistema mediante un conjunto completo de pruebas de integración y usabilidad en un entorno de pre-producción.
 

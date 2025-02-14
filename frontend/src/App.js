@@ -1,16 +1,14 @@
 import React from 'react';
-import './App.css';
-import Auth from './Auth';
-import Projects from './Projects';
-import Payments from './Payments';
+import MainLayout from './components/MainLayout';
 
 function App() {
   return (
-    <div className="App">
-      <Auth />
-      <Projects />
-      <Payments />
-    </div>
+    <MainLayout>
+      <div style={{ padding: '20px' }}>
+        <h1>Hito 6.1: Layout Base</h1>
+        <p>Esta es una vista de ejemplo para confirmar que el layout funciona correctamente.</p>
+      </div>
+    </MainLayout>
   );
 }
 
