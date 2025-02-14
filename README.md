@@ -1,121 +1,114 @@
-# Build Track
+# BuildTrack - Remodeling Management Platform
 
-Welcome to **Build Track**! This repository aims to centralize and streamline development task management, facilitating team collaboration and offering an organized, efficient user experience.
-
-## Main Features
-
-- **Project and Task Management:** Create, assign, and organize tasks, with options to prioritize and filter by status or assignee.  
-- **Progress Tracking:** View real-time updates on your team’s progress and the status of each task.  
-- **Integrations with External Tools:** Connect with third-party services (such as CI/CD platforms, code repositories, and more) to automate workflows.  
-- **Intuitive Interface:** Designed to maximize productivity and minimize learning curve.  
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## Table of Contents
-
-- [Prerequisites](#prerequisites)  
-- [Installation](#installation)  
-- [Usage](#usage)  
-- [Project Structure](#project-structure)  
-- [Contributing](#contributing)  
-- [License](#license)  
-- [Contact](#contact)
-
-## Prerequisites
-
-Before getting started, make sure you have:
-
-- [Node.js](https://nodejs.org/) (LTS version recommended)  
-- [npm](https://www.npmjs.com/) or [Yarn](https://yarnpkg.com/)  
-- Your preferred **Editor/IDE**, such as Visual Studio Code  
-
-> **Note:** If your project includes additional components (e.g., a database or specific frameworks), list them here.
-
-## Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/your-username/build-track.git
-   cd build-track
-   ```
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-   Or:
-   ```bash
-   yarn install
-   ```
-
-3. **Configure environment variables (optional):**  
-   If your project requires credentials, tokens, or special paths, create an `.env` file in the root directory and define them there:
-   ```
-   API_KEY=YOUR_API_KEY
-   DB_URL=YOUR_DATABASE_URL
-   ```
-4. **Run the project in development mode:**
-   ```bash
-   npm run dev
-   ```
-   Or:
-   ```bash
-   yarn dev
-   ```
-
-## Usage
-
-Once you’ve completed the installation and environment setup:
-
-1. **Open the application** in your browser at the URL provided in the console (e.g., `http://localhost:3000`).  
-2. **Create and manage tasks** from the main dashboard.  
-3. **Track progress** of your team and visualize overall performance statistics.  
-4. **Automate workflows** by connecting to external services, if enabled.
-
-> Adjust these steps according to your project’s architecture or features.
-
-## Project Structure
-
-A typical structure might look like this (yours may vary):
-
-```
-build-track/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   ├── services/
-│   ├── utils/
-│   └── index.js
-├── public/
-├── .env.example
-├── package.json
-└── README.md
-```
-
-- **`src/components/`**: Contains reusable UI components.  
-- **`src/pages/`**: Defines the main screens or routes of the application.  
-- **`src/services/`**: Manages logic for communicating with APIs or external services.  
-- **`src/utils/`**: Utility functions and helpers.  
-- **`.env.example`**: Example configuration file for environment variables.  
-- **`public/`**: Static assets (images, favicon, etc.).  
-
-## Contributing
-
-We welcome contributions! To contribute:
-
-1. **Fork** the repository.  
-2. Create a **new branch** with a descriptive name (e.g., `feature/new-feature` or `fix/bug-fix`).  
-3. Make your changes and ensure you add tests or documentation if necessary.  
-4. Submit a **pull request** with a clear description of your changes.
-
-## License
-
-This project is distributed under the [MIT](LICENSE) license. See the `LICENSE` file for more information.
-
-## Contact
-
-If you have questions, suggestions, or need to report a bug, feel free to open an [issue](https://github.com/your-username/build-track/issues) on this repository or reach out directly:
-
-- **Your Name** (Email or social media)  
-- **Official Website**: [https://your-website.com](https://your-website.com)
+1. [The Problem](#the-problem)  
+2. [The Solution: BuildTrack](#the-solution-buildtrack)  
+3. [Technologies Used](#technologies-used)  
+4. [Key Features](#key-features)  
+5. [Budget Deviations Tracking](#budget-deviations-tracking)  
+6. [Getting Started](#getting-started)  
+7. [Contributing](#contributing)  
+8. [License](#license)
 
 ---
 
-Thank you for using **Build Track**! We hope this project helps improve your productivity and task tracking. If you find it useful, consider starring the repository to support its development. Happy building!
+## The Problem
+Remodeling and construction projects can be complex processes, involving multiple items, staggered payments, and risks of budget overruns. The lack of a structured management tool often leads to:
+
+- **Lack of transparency**: Clients do not have a clear view of progress and real costs.  
+- **Uncontrolled budget deviations**: Unexpected changes inflate costs without proper tracking.  
+- **Disorganized payments**: There’s no clear method to release payments based on actual progress.  
+- **Insufficient documentation**: No standardized system to validate materials, progress, and cost justifications.  
+- **Deteriorated trust**: The lack of oversight undermines trust between clients and professionals.
+
+---
+
+## The Solution: BuildTrack
+BuildTrack is a platform designed to manage remodeling projects in a structured and transparent way, ensuring detailed control of progress, payments, and budget deviations. It streamlines communication between clients and professionals, enabling precise real-time project tracking.
+
+**Key Benefits:**
+- A single platform for financial control and deviation tracking.  
+- Task and milestone management to avoid confusion during execution.  
+- Easy communication among all parties involved.
+
+---
+
+## Technologies Used
+- **Frontend:** React/React Native or Flutter  
+- **Backend:** Node.js with Express or Django  
+- **Database:** PostgreSQL or MongoDB  
+- **Authentication:** Firebase Auth or Auth0  
+- **Payment:** Stripe or PayPal  
+
+These technologies are suggested and may vary based on project needs.
+
+---
+
+## Key Features
+1. **Registration & Authentication**: Account creation for clients and professionals.  
+2. **Project Creation**: Definition of remodeling projects with details, phases, and agreed payments.  
+3. **Task/Milestone Management**: Division of the project into tasks, complete with percentage of completion and validation.  
+4. **Payment System**: Staggered payment methods like 50%-50%, 30-30-40, or milestone-based payments.  
+5. **Validation & Documentation**: Photo uploads and receipts for materials and progress tracking.  
+6. **Dashboard**: Real-time tracking of project progress, payments, and documentation.  
+7. **Feedback & Reviews**: Rating and review system to build transparency and trust.
+
+---
+
+## Budget Deviations Tracking
+- Each item/part of the project has an **assigned initial budget**.  
+- **Deviations** are logged when there are differences between the estimated budget and actual spending.  
+- The **reason for the deviation** is recorded (unexpected issues, material changes, extra labor costs).  
+- The **percentage of deviation** is calculated for each item.  
+- A dashboard provides real-time data on:
+  - **Initial budget vs. current expenses**  
+  - **Absolute difference (€) and percentage of deviation (%)**  
+- Upon completion, a **cost report** is generated, including:
+  - Total initial budget  
+  - Total actual spending  
+  - Total deviation in both euros and percentage  
+  - Option to export a PDF or Excel report  
+
+---
+
+## Getting Started
+1. **Clone the repository**  
+   ```bash
+   git clone https://github.com/your-username/BuildTrack.git
+   ```
+2. **Install dependencies**  
+   ```bash
+   cd BuildTrack
+   npm install
+   ```
+   > Note: Adjust accordingly if you use a different package manager or a Python-based environment for Django.
+3. **Set up environment variables**  
+   - Database (PostgreSQL/MongoDB)  
+   - Authentication (Firebase/Auth0)  
+   - Payment gateway details (Stripe/PayPal)  
+4. **Run the server and the application**  
+   - For Node.js with Express:  
+     ```bash
+     npm start
+     ```
+   - For React:  
+     ```bash
+     npm run dev
+     ```
+   Adjust the commands according to the chosen framework.
+
+---
+
+## Contributing
+We welcome all contributions!  
+1. **Fork** this repository.  
+2. Create a new branch (`git checkout -b new-feature`).  
+3. Make your changes and add detailed **commits**.  
+4. Open a **Pull Request**, describing your changes clearly.
+
+---
+
+## License
+This project is distributed under the MIT License. See the [LICENSE](LICENSE) file for more details.
