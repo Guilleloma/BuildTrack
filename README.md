@@ -36,24 +36,24 @@ BuildTrack is a platform designed to manage remodeling projects in a structured 
 ---
 
 ## Technologies Used
-- **Frontend:** React/React Native or Flutter  
-- **Backend:** Node.js with Express or Django  
-- **Database:** PostgreSQL or MongoDB  
-- **Authentication:** Firebase Auth or Auth0  
-- **Payment:** Stripe or PayPal  
+- **Frontend:** React with Material UI
+- **Backend:** Node.js with Express
+- **Database:** PostgreSQL
+- **Authentication:** JWT-based authentication
+- **Payment Processing:** ✓ Implemented
 
 These technologies are suggested and may vary based on project needs.
 
 ---
 
 ## Key Features
-1. **Registration & Authentication**: Account creation for clients and professionals.  
-2. **Project Creation**: Definition of remodeling projects with details, phases, and agreed payments.  
-3. **Task/Milestone Management**: Division of the project into tasks, complete with percentage of completion and validation.  
-4. **Payment System**: Staggered payment methods like 50%-50, 30-30-40, or milestone-based payments.  
-5. **Validation & Documentation**: Photo uploads and receipts for materials and progress tracking.  
-6. **Dashboard**: Real-time tracking of project progress, payments, and documentation.  
-7. **Feedback & Reviews**: Rating and review system to build transparency and trust.
+1. **Registration & Authentication**: ✓ Implemented - JWT-based authentication with registration and login functionality.
+2. **Project Creation**: ✓ Implemented - Full CRUD functionality for projects with REST API endpoints.
+3. **Task/Milestone Management**: ✓ Implemented - Hierarchical structure with projects > milestones > tasks, including status tracking.
+4. **Payment System**: ✓ Implemented - Payment processing with milestone-based tracking and amount validation.
+5. **Validation & Documentation**: 🚧 In Progress
+6. **Dashboard**: ✓ Basic implementation with auto-updating UI and debug logging.
+7. **Feedback & Reviews**: 🚧 Planned
 
 ---
 
@@ -79,25 +79,39 @@ These technologies are suggested and may vary based on project needs.
    git clone https://github.com/your-username/BuildTrack.git
    ```
 2. **Install dependencies**  
+   For backend:
    ```bash
-   cd BuildTrack
+   cd BuildTrack/backend
    npm install
    ```
-   > Note: Adjust accordingly if you use a different package manager or a Python-based environment for Django.
+   For frontend:
+   ```bash
+   cd BuildTrack/frontend
+   npm install
+   ```
 3. **Set up environment variables**  
-   - Database (PostgreSQL/MongoDB)  
-   - Authentication (Firebase/Auth0)  
-   - Payment gateway details (Stripe/PayPal)  
-4. **Run the server and the application**  
-   - For Node.js with Express:  
-     ```bash
-     npm start
-     ```
-   - For React:  
-     ```bash
-     npm run dev
-     ```
-   Adjust the commands according to the chosen framework.
+   Create a `.env` file in the backend directory with:
+   - Database connection details
+   - JWT secret key
+   - Server port (default: 3000)
+   
+   Create a `.env` file in the frontend directory with:
+   - Backend API URL
+   - Frontend port (default: 3001)
+
+4. **Run the application**  
+   Start the backend:
+   ```bash
+   cd backend
+   npm start
+   ```
+   Start the frontend in a new terminal:
+   ```bash
+   cd frontend
+   npm start
+   ```
+   
+   The backend will run on http://localhost:3000 and the frontend on http://localhost:3001
 
 ---
 

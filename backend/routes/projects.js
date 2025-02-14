@@ -27,7 +27,9 @@ router.post('/', (req, res) => {
         id: projects.length + 1,
         name,
         description,
-        createdAt: new Date()
+        createdAt: new Date(),
+        milestones: [],
+        milestoneNextId: 1
     };
     projects.push(newProject);
     res.status(201).json(newProject);
@@ -66,20 +68,27 @@ router.post('/:projectId/milestones', (req, res) => {
     const projectId = parseInt(req.params.projectId, 10);
     const project = projects.find(p => p.id === projectId);
     if (!project) {
-         return res.status(404).json({ message: 'Project not found' });
+        return res.status(404).json({ message: 'Project not found' });
     }
+
+    // Initialize milestones array if it doesn't exist
+    if (!project.milestones) {
+        project.milestones = [];
+        project.milestoneNextId = 1;
+    }
+
     const { title, description, cost } = req.body;
     const totalCost = cost ? parseFloat(cost) : 0;
     const newMilestone = {
-         id: project.milestoneNextId++,
-         title,
-         description,
-         totalCost: totalCost,
-         paidAmount: 0,
-         pendingAmount: totalCost,
-         completed: false,
-         tasks: [],
-         taskNextId: 1
+        id: project.milestoneNextId++,
+        title,
+        description,
+        totalCost: totalCost,
+        paidAmount: 0,
+        pendingAmount: totalCost,
+        completed: false,
+        tasks: [],
+        taskNextId: 1
     };
     project.milestones.push(newMilestone);
     res.status(201).json(newMilestone);

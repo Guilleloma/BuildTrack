@@ -5,6 +5,7 @@ import ProjectList from './components/ProjectList';
 import ProjectDetail from './components/ProjectDetail';
 import ProjectForm from './components/ProjectForm';
 import { Typography, Container } from '@mui/material';
+import ErrorBoundary from './ErrorBoundary';
 
 // Placeholder components for other routes
 const Dashboard = () => (
@@ -31,19 +32,21 @@ const Settings = () => (
 function App() {
   console.log('App component rendering');
   return (
-    <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/projects" element={<ProjectList />} />
-          <Route path="/projects/new" element={<ProjectForm />} />
-          <Route path="/projects/:id" element={<ProjectDetail />} />
-          <Route path="/payments" element={<Payments />} />
-          <Route path="/settings" element={<Settings />} />
-        </Routes>
-      </Layout>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/projects" element={<ProjectList />} />
+            <Route path="/projects/new" element={<ProjectForm />} />
+            <Route path="/projects/:id" element={<ProjectDetail />} />
+            <Route path="/payments" element={<Payments />} />
+            <Route path="/settings" element={<Settings />} />
+          </Routes>
+        </Layout>
+      </Router>
+    </ErrorBoundary>
   );
 }
 
