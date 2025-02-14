@@ -51,15 +51,24 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 + **Estado: COMPLETADO**
 + Nota: Actualmente, los proyectos no están asociados a un usuario. Se planifica agregar esta funcionalidad en el Sprint 7 (Mejoras, Pruebas y Despliegue), aprovechando la autenticación implementada en el Sprint 1.
 
-## Sprint 3: Gestión de Tareas y Hitos
+## Sprint 3: Gestión de Hitos y Tareas
 - Añadir funcionalidad para agregar tareas y hitos dentro de cada proyecto.
 - Asociar cada tarea/hito a un proyecto y definir estados de completado.
 - Actualizar la interfaz de usuario para reflejar la estructura de tareas/hitos.
-
++ Añadir funcionalidad para agregar hitos dentro de cada proyecto, de manera que cada hito contenga sus propias tareas.
++ Asociar cada hito a un proyecto y, dentro de cada hito, permitir la gestión de tareas (crear, actualizar y eliminar).
++ Actualizar la interfaz de usuario para reflejar la jerarquía: Proyectos > Hitos > Tareas.
+ 
 + **Criterios de Aceptación y Test:**
-+ - Se debe poder agregar, actualizar y eliminar tareas e hitos asociados a un proyecto.
-+ - La interfaz debe mostrar claramente el estado (completado o pendiente) de cada tarea/hito.
-+ - Se incluirán tests unitarios para la lógica de manejo de tareas y hitos.
++ - La API debe permitir crear, actualizar y eliminar hitos.
++ - Dentro de cada hito, se deben poder gestionar (crear, actualizar y eliminar) tareas.
++ - La interfaz debe reflejar la jerarquía, mostrando para cada proyecto sus hitos y, para cada hito, sus tareas con su estado (completado o pendiente).
++ - Se incluirán tests unitarios para la lógica de manejo de hitos y tareas.
+  
++ **Validación y Resultados:**
++ - Se validaron los endpoints para la gestión de hitos y tareas mediante pruebas manuales con curl, comprobando la correcta creación, edición y eliminación de hitos y tareas.
++ - La funcionalidad fue verificada en el frontend, donde se confirmó que cada hito muestra sus tareas correspondientes y que se pueden agregar, editar y eliminar.
++ **Estado: COMPLETADO**
 
 ## Sprint 4: Sistema de Pagos
 - Diseñar un esquema para gestionar pagos de forma escalonada (por ejemplo, pagos basados en hitos o porcentajes).
