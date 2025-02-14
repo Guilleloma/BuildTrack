@@ -80,6 +80,14 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 + - El backend debe procesar las transacciones correctamente y notificar el estado al frontend.
 + - El flujo de aprobación de pago debe verificarse tanto en pruebas unitarias como integrales.
 
+## Sprint 4: Payment Processing
+
+- Implemented a new payment processing endpoint (POST /payments) that validates the required fields: projectId, milestoneId, and amount.
+- The endpoint returns a nested JSON structure containing both the processed payment and the updated milestone details.
+- On processing a payment, the milestone's 'paidAmount' is increased and 'pendingAmount' is updated accordingly.
+- Integrated the payment processing logic into the frontend's Payments component for real-time user interaction.
+- Basic error handling implemented for invalid inputs and non-existent project or milestone.
+
 ## Sprint 5: Seguimiento de Desviaciones de Presupuesto
 - Implementar la lógica para registrar desviaciones entre el presupuesto inicial y los gastos reales en cada proyecto.
 - Permitir el registro de la razón de la desviación y calcular porcentajes de cambios.
