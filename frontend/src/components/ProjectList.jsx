@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Card, CardContent, Typography, TextField, Grid, CircularProgress, Container, Paper } from '@mui/material';
+import { Button, Card, CardContent, Typography, TextField, Grid, CircularProgress, Container, Paper, Box, LinearProgress } from '@mui/material';
+import { formatCurrency } from '../utils/formatters';
 
 const ProjectList = () => {
   console.log('ProjectList component rendering');
@@ -112,18 +113,67 @@ const ProjectList = () => {
                     '&:hover': {
                       transform: 'translateY(-4px)',
                       boxShadow: 4,
-                    }
+                    },
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column'
                   }}
                 >
-                  <CardContent>
-                    <Typography variant="h5" gutterBottom>
+                  <CardContent sx={{ flexGrow: 1 }}>
+                    <Typography variant="h6" gutterBottom>
                       {project.name}
                     </Typography>
                     {project.description && (
-                      <Typography color="textSecondary">
+                      <Typography color="textSecondary" variant="body2" sx={{ mb: 2 }}>
                         {project.description}
                       </Typography>
                     )}
+                    
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="subtitle2" color="primary" gutterBottom>
+                        Presupuesto total: {formatCurrency(project.progress?.totalCost || 0)}
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                        <Typography variant="body2" sx={{ minWidth: 140 }}>
+                          Pagado: {Math.round(project.progress?.paymentPercentage || 0)}%
+                        </Typography>
+                        <LinearProgress
+                          variant="determinate"
+                          value={project.progress?.paymentPercentage || 0}
+                          sx={{ 
+                            flexGrow: 1,
+                            ml: 1,
+                            height: 8,
+                            borderRadius: 4,
+                            backgroundColor: '#e0e0e0',
+                            '& .MuiLinearProgress-bar': {
+                              backgroundColor: '#4caf50',
+                              borderRadius: 4,
+                            }
+                          }}
+                        />
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Typography variant="body2" sx={{ minWidth: 140 }}>
+                          Completado: {Math.round(project.progress?.taskCompletionPercentage || 0)}%
+                        </Typography>
+                        <LinearProgress
+                          variant="determinate"
+                          value={project.progress?.taskCompletionPercentage || 0}
+                          sx={{ 
+                            flexGrow: 1,
+                            ml: 1,
+                            height: 8,
+                            borderRadius: 4,
+                            backgroundColor: '#e0e0e0',
+                            '& .MuiLinearProgress-bar': {
+                              backgroundColor: '#2196f3',
+                              borderRadius: 4,
+                            }
+                          }}
+                        />
+                      </Box>
+                    </Box>
                   </CardContent>
                 </Card>
               </Grid>

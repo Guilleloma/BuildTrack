@@ -15,20 +15,30 @@ const TaskForm = ({ open, onClose, onSubmit, initialData }) => {
     description: ''
   });
   const [error, setError] = React.useState('');
+  const titleFieldRef = React.useRef(null);
 
   React.useEffect(() => {
-    if (initialData) {
-      setFormData({
-        title: initialData.title || '',
-        description: initialData.description || ''
-      });
-    } else {
-      setFormData({
-        title: '',
-        description: ''
-      });
+    if (open) {
+      // Reset form data when dialog opens
+      if (initialData) {
+        setFormData({
+          title: initialData.title || '',
+          description: initialData.description || ''
+        });
+      } else {
+        setFormData({
+          title: '',
+          description: ''
+        });
+      }
+      // Focus the title field after a short delay to ensure the dialog is fully rendered
+      setTimeout(() => {
+        if (titleFieldRef.current) {
+          titleFieldRef.current.focus();
+        }
+      }, 100);
     }
-  }, [initialData]);
+  }, [open, initialData]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -60,14 +70,22 @@ const TaskForm = ({ open, onClose, onSubmit, initialData }) => {
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <TextField
+            inputRef={titleFieldRef}
             label="Title"
             fullWidth
             margin="normal"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             required
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('task-description-field').focus();
+              }
+            }}
           />
           <TextField
+            id="task-description-field"
             label="Description"
             fullWidth
             margin="normal"
@@ -75,6 +93,12 @@ const TaskForm = ({ open, onClose, onSubmit, initialData }) => {
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             multiline
             rows={3}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit(e);
+              }
+            }}
           />
           {error && (
             <Typography color="error" variant="body2" sx={{ mt: 1 }}>

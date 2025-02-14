@@ -16,22 +16,32 @@ const MilestoneForm = ({ open, onClose, onSubmit, initialData }) => {
     cost: ''
   });
   const [error, setError] = React.useState('');
+  const titleFieldRef = React.useRef(null);
 
   React.useEffect(() => {
-    if (initialData) {
-      setFormData({
-        title: initialData.title || '',
-        description: initialData.description || '',
-        cost: initialData.cost || ''
-      });
-    } else {
-      setFormData({
-        title: '',
-        description: '',
-        cost: ''
-      });
+    if (open) {
+      // Reset form data when dialog opens
+      if (initialData) {
+        setFormData({
+          title: initialData.title || '',
+          description: initialData.description || '',
+          cost: initialData.cost || ''
+        });
+      } else {
+        setFormData({
+          title: '',
+          description: '',
+          cost: ''
+        });
+      }
+      // Focus the title field after a short delay to ensure the dialog is fully rendered
+      setTimeout(() => {
+        if (titleFieldRef.current) {
+          titleFieldRef.current.focus();
+        }
+      }, 100);
     }
-  }, [initialData]);
+  }, [open, initialData]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -65,14 +75,22 @@ const MilestoneForm = ({ open, onClose, onSubmit, initialData }) => {
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <TextField
+            inputRef={titleFieldRef}
             label="Title"
             fullWidth
             margin="normal"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             required
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('description-field').focus();
+              }
+            }}
           />
           <TextField
+            id="description-field"
             label="Description"
             fullWidth
             margin="normal"
@@ -80,8 +98,15 @@ const MilestoneForm = ({ open, onClose, onSubmit, initialData }) => {
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             multiline
             rows={3}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('cost-field').focus();
+              }
+            }}
           />
           <TextField
+            id="cost-field"
             label="Cost"
             fullWidth
             margin="normal"
@@ -89,6 +114,12 @@ const MilestoneForm = ({ open, onClose, onSubmit, initialData }) => {
             onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
             type="number"
             inputProps={{ min: 0, step: "0.01" }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSubmit(e);
+              }
+            }}
           />
           {error && (
             <Typography color="error" variant="body2" sx={{ mt: 1 }}>

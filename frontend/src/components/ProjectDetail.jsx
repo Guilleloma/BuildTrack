@@ -30,12 +30,14 @@ import MilestoneForm from './MilestoneForm';
 import TaskForm from './TaskForm';
 import PaymentForm from './PaymentForm';
 import PaymentHistory from './PaymentHistory';
+import ProgressDisplay from './ProgressDisplay';
 import { formatCurrency } from '../utils/formatters';
 
 const ProjectDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [project, setProject] = React.useState(null);
+  const [projectProgress, setProjectProgress] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [milestoneFormOpen, setMilestoneFormOpen] = React.useState(false);
@@ -45,18 +47,30 @@ const ProjectDetail = () => {
   const [selectedTask, setSelectedTask] = React.useState(null);
   const [paymentsRefreshTrigger, setPaymentsRefreshTrigger] = React.useState(0);
 
+  const fetchProjectProgress = useCallback(async () => {
+    try {
+      const response = await fetch(`/projects/${id}/progress`);
+      if (!response.ok) throw new Error('Error fetching project progress');
+      const data = await response.json();
+      setProjectProgress(data);
+    } catch (err) {
+      console.error('Error fetching project progress:', err);
+    }
+  }, [id]);
+
   const fetchProject = useCallback(async () => {
     try {
       const response = await fetch(`/projects/${id}`);
       if (!response.ok) throw new Error('Project not found');
       const data = await response.json();
       setProject(data);
+      await fetchProjectProgress();
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, fetchProjectProgress]);
 
   useEffect(() => {
     fetchProject();
@@ -171,8 +185,24 @@ const ProjectDetail = () => {
   };
 
   const handlePaymentComplete = async (paymentData) => {
-    await fetchProject();
-    setPaymentsRefreshTrigger(prev => prev + 1);
+    try {
+      const response = await fetch('/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(paymentData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error processing payment');
+      }
+      
+      await fetchProject();
+      setPaymentsRefreshTrigger(prev => prev + 1);
+      setPaymentFormOpen(false);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   if (loading) {
@@ -228,151 +258,148 @@ const ProjectDetail = () => {
               {project.description}
             </Typography>
           )}
+          {projectProgress?.overallProgress && (
+            <>
+              <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+                Progreso General del Proyecto
+              </Typography>
+              <ProgressDisplay 
+                progress={projectProgress.overallProgress} 
+                type="project"
+              />
+            </>
+          )}
         </CardContent>
       </Card>
 
-      {project?.milestones?.map((milestone) => (
-        <Accordion key={milestone.id} sx={{ mb: 2 }}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-              <Box sx={{ flexGrow: 1 }}>
-                <Typography variant="h6">{milestone.title}</Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                  <Chip
-                    label={formatCurrency(milestone.totalCost)}
-                    color="primary"
-                    size="small"
-                    sx={{ mr: 1 }}
-                  />
-                  <Chip
-                    label={`Pagado: ${formatCurrency(milestone.paidAmount)}`}
-                    color="success"
-                    size="small"
-                    sx={{ mr: 1 }}
-                  />
-                  <Chip
-                    label={`Pendiente: ${formatCurrency(milestone.pendingAmount)}`}
-                    color="warning"
-                    size="small"
-                    sx={{ mr: 1 }}
-                  />
-                  <Chip
-                    label={milestone.paymentStatus}
-                    color={milestone.paymentStatus === 'PAID' ? 'success' : 
-                           milestone.paymentStatus === 'PARTIALLY_PAID' ? 'warning' : 'default'}
-                    size="small"
-                  />
+      {projectProgress?.milestones?.map((milestone, index) => {
+        const milestoneData = project.milestones.find(m => m.id === milestone.id);
+        if (!milestoneData) return null;
+        
+        return (
+          <Accordion key={milestone.id} sx={{ mb: 2 }}>
+            <AccordionSummary 
+              expandIcon={<ExpandMoreIcon />}
+              sx={{
+                backgroundColor: '#fff',
+                '&:hover': {
+                  backgroundColor: '#f5f5f5',
+                },
+              }}
+            >
+              <Box sx={{ width: '100%' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="h6">{milestoneData.title}</Typography>
+                  <Box>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedMilestone(milestoneData);
+                        setMilestoneFormOpen(true);
+                      }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteMilestone(milestone.id);
+                      }}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedMilestone(milestoneData);
+                        setPaymentFormOpen(true);
+                      }}
+                      disabled={milestone.paymentPercentage >= 100}
+                    >
+                      <PaymentIcon />
+                    </IconButton>
+                  </Box>
                 </Box>
+                <ProgressDisplay 
+                  progress={milestone} 
+                  variant="compact" 
+                  type="milestone"
+                />
               </Box>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedMilestone({ ...milestone, projectId: project.id });
-                    setPaymentFormOpen(true);
-                  }}
-                  disabled={milestone.paymentStatus === 'PAID'}
-                >
-                  <PaymentIcon />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedMilestone(milestone);
-                    setMilestoneFormOpen(true);
-                  }}
-                >
-                  <EditIcon />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteMilestone(milestone.id);
-                  }}
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </Box>
-            </Box>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle1" gutterBottom>
-                Historial de Pagos
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography color="textSecondary" paragraph>
+                {milestoneData.description}
               </Typography>
-              <PaymentHistory 
-                milestone={{ ...milestone, projectId: project.id }} 
+              <Box sx={{ mb: 2 }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<AddIcon />}
+                  onClick={() => {
+                    setSelectedMilestone(milestoneData);
+                    setSelectedTask(null);
+                    setTaskFormOpen(true);
+                  }}
+                >
+                  Add Task
+                </Button>
+              </Box>
+              <List>
+                {milestoneData.tasks.map((task) => (
+                  <ListItem
+                    key={task.id}
+                    secondaryAction={
+                      <Box>
+                        <IconButton
+                          edge="end"
+                          size="small"
+                          onClick={() => {
+                            setSelectedMilestone(milestoneData);
+                            setSelectedTask(task);
+                            setTaskFormOpen(true);
+                          }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          edge="end"
+                          size="small"
+                          onClick={() => handleDeleteTask(milestone.id, task.id)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                    }
+                  >
+                    <Checkbox
+                      checked={task.completed}
+                      onChange={() => handleToggleTask(milestone.id, task)}
+                    />
+                    <ListItemText
+                      primary={task.title}
+                      secondary={task.description}
+                      sx={{
+                        textDecoration: task.completed ? 'line-through' : 'none',
+                        color: task.completed ? 'text.secondary' : 'text.primary',
+                      }}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+              {milestoneData.tasks.length > 0 && <Divider sx={{ my: 2 }} />}
+              <PaymentHistory
+                projectId={id}
+                milestoneId={milestone.id}
                 refreshTrigger={paymentsRefreshTrigger}
               />
-            </Box>
-            
-            <Divider sx={{ my: 2 }} />
-            
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle1" gutterBottom>
-                Tareas
-              </Typography>
-              <Button
-                variant="outlined"
-                startIcon={<AddIcon />}
-                size="small"
-                onClick={() => {
-                  setSelectedMilestone(milestone);
-                  setSelectedTask(null);
-                  setTaskFormOpen(true);
-                }}
-              >
-                Add Task
-              </Button>
-            </Box>
-            <List>
-              {milestone.tasks?.map((task) => (
-                <ListItem
-                  key={task.id}
-                  secondaryAction={
-                    <Box>
-                      <IconButton
-                        edge="end"
-                        size="small"
-                        onClick={() => {
-                          setSelectedMilestone(milestone);
-                          setSelectedTask(task);
-                          setTaskFormOpen(true);
-                        }}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        edge="end"
-                        size="small"
-                        onClick={() => handleDeleteTask(milestone.id, task.id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
-                  }
-                >
-                  <Checkbox
-                    checked={task.completed}
-                    onChange={() => handleToggleTask(milestone.id, task)}
-                  />
-                  <ListItemText
-                    primary={task.title}
-                    secondary={task.description}
-                    sx={{
-                      textDecoration: task.completed ? 'line-through' : 'none',
-                      color: task.completed ? 'text.disabled' : 'text.primary',
-                    }}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </AccordionDetails>
-        </Accordion>
-      ))}
+            </AccordionDetails>
+          </Accordion>
+        );
+      })}
 
       <MilestoneForm
         open={milestoneFormOpen}
@@ -400,8 +427,9 @@ const ProjectDetail = () => {
           setPaymentFormOpen(false);
           setSelectedMilestone(null);
         }}
+        onSubmit={handlePaymentComplete}
         milestone={selectedMilestone}
-        onPaymentComplete={handlePaymentComplete}
+        projectId={id}
       />
     </Container>
   );

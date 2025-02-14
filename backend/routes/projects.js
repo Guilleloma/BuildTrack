@@ -4,8 +4,36 @@ const data = require('../data');
 
 // GET all projects
 router.get('/', (req, res) => {
-    res.setHeader('Cache-Control', 'no-store');
-    res.json(data.projects);
+    const projectsWithProgress = data.projects.map(project => {
+        // Calculate totals across all milestones
+        const totalProjectTasks = project.milestones.reduce((sum, m) => sum + m.tasks.length, 0);
+        const totalCompletedTasks = project.milestones.reduce((sum, m) => 
+            sum + m.tasks.filter(task => task.completed).length, 0);
+        const totalProjectCost = project.milestones.reduce((sum, m) => sum + m.totalCost, 0);
+        const totalPaidAmount = project.milestones.reduce((sum, m) => sum + m.paidAmount, 0);
+
+        // Calculate overall progress
+        const taskCompletionPercentage = totalProjectTasks > 0 
+            ? (totalCompletedTasks / totalProjectTasks) * 100 
+            : 0;
+        const paymentPercentage = totalProjectCost > 0 
+            ? (totalPaidAmount / totalProjectCost) * 100 
+            : 0;
+
+        return {
+            ...project,
+            progress: {
+                taskCompletionPercentage: Math.round(taskCompletionPercentage * 100) / 100,
+                paymentPercentage: Math.round(paymentPercentage * 100) / 100,
+                totalTasks: totalProjectTasks,
+                completedTasks: totalCompletedTasks,
+                totalCost: totalProjectCost,
+                paidAmount: totalPaidAmount
+            }
+        };
+    });
+
+    res.json(projectsWithProgress);
 });
 
 // GET a single project by id
@@ -76,21 +104,24 @@ router.post('/:projectId/milestones', (req, res) => {
 
     const { title, description, cost } = req.body;
     
-    // Validate cost
-    if (!cost || isNaN(parseFloat(cost)) || parseFloat(cost) <= 0) {
-        return res.status(400).json({ 
-            message: 'A valid cost greater than 0 is required for the milestone'
-        });
+    // Validate required fields
+    if (!title) {
+        return res.status(400).json({ message: 'Title is required for the milestone' });
+    }
+
+    // Parse and validate cost
+    const parsedCost = cost ? parseFloat(cost) : 0;
+    if (isNaN(parsedCost) || parsedCost < 0) {
+        return res.status(400).json({ message: 'Cost must be a valid number greater than or equal to 0' });
     }
     
-    const totalCost = parseFloat(cost);
     const newMilestone = {
         id: project.milestoneNextId++,
         title,
-        description,
-        totalCost: totalCost,
+        description: description || '',
+        totalCost: parsedCost,
         paidAmount: 0,
-        pendingAmount: totalCost,
+        pendingAmount: parsedCost,
         paymentStatus: 'UNPAID',
         completed: false,
         tasks: [],
@@ -193,10 +224,30 @@ router.put('/:projectId/milestones/:milestoneId/tasks/:taskId', (req, res) => {
     if (!task) {
          return res.status(404).json({ message: 'Task not found' });
     }
+
+    // Update task fields
     task.title = req.body.title !== undefined ? req.body.title : task.title;
     task.description = req.body.description !== undefined ? req.body.description : task.description;
     task.completed = req.body.completed !== undefined ? req.body.completed : task.completed;
-    res.json(task);
+
+    // Calculate task completion percentage and update milestone completion status
+    const totalTasks = milestone.tasks.length;
+    const completedTasks = milestone.tasks.filter(t => t.completed).length;
+    const taskCompletionPercentage = (completedTasks / totalTasks) * 100;
+
+    // Update milestone completion status
+    milestone.completed = completedTasks === totalTasks;
+    milestone.lastUpdated = new Date().toISOString();
+
+    res.json({
+        task,
+        milestoneProgress: {
+            taskCompletionPercentage: Math.round(taskCompletionPercentage * 100) / 100,
+            totalTasks,
+            completedTasks,
+            milestoneCompleted: milestone.completed
+        }
+    });
 });
 
 router.delete('/:projectId/milestones/:milestoneId/tasks/:taskId', (req, res) => {
@@ -217,6 +268,94 @@ router.delete('/:projectId/milestones/:milestoneId/tasks/:taskId', (req, res) =>
     }
     const deletedTask = milestone.tasks.splice(index, 1)[0];
     res.json({ message: 'Task deleted', task: deletedTask });
+});
+
+// GET project progress
+router.get('/:projectId/progress', (req, res) => {
+    const projectId = parseInt(req.params.projectId, 10);
+    const project = data.projects.find(p => p.id === projectId);
+    if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+    }
+
+    // Calculate totals across all milestones
+    const totalProjectTasks = project.milestones.reduce((sum, m) => sum + m.tasks.length, 0);
+    const totalCompletedTasks = project.milestones.reduce((sum, m) => 
+        sum + m.tasks.filter(task => task.completed).length, 0);
+    const totalProjectCost = project.milestones.reduce((sum, m) => sum + m.totalCost, 0);
+    const totalPaidAmount = project.milestones.reduce((sum, m) => sum + m.paidAmount, 0);
+
+    const progress = project.milestones.map(milestone => {
+        // Calculate task completion percentage
+        const totalTasks = milestone.tasks.length;
+        const completedTasks = milestone.tasks.filter(task => task.completed).length;
+        const taskCompletionPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
+        // Calculate payment percentage
+        const paymentPercentage = milestone.totalCost > 0 ? (milestone.paidAmount / milestone.totalCost) * 100 : 0;
+
+        return {
+            id: milestone.id,
+            title: milestone.title,
+            taskCompletionPercentage: Math.round(taskCompletionPercentage * 100) / 100,
+            paymentPercentage: Math.round(paymentPercentage * 100) / 100,
+            totalTasks,
+            completedTasks,
+            totalCost: milestone.totalCost,
+            paidAmount: milestone.paidAmount
+        };
+    });
+
+    // Calculate overall project progress
+    const overallTaskCompletion = totalProjectTasks > 0 
+        ? (totalCompletedTasks / totalProjectTasks) * 100 
+        : 0;
+    const overallPaymentPercentage = totalProjectCost > 0 
+        ? (totalPaidAmount / totalProjectCost) * 100 
+        : 0;
+
+    res.json({
+        projectId,
+        milestones: progress,
+        overallProgress: {
+            taskCompletionPercentage: Math.round(overallTaskCompletion * 100) / 100,
+            paymentPercentage: Math.round(overallPaymentPercentage * 100) / 100,
+            totalTasks: totalProjectTasks,
+            completedTasks: totalCompletedTasks,
+            totalCost: totalProjectCost,
+            paidAmount: totalPaidAmount
+        }
+    });
+});
+
+// Modify the existing milestone GET endpoint to include progress information
+router.get('/:projectId/milestones/:milestoneId', (req, res) => {
+    const projectId = parseInt(req.params.projectId, 10);
+    const milestoneId = parseInt(req.params.milestoneId, 10);
+    const project = data.projects.find(p => p.id === projectId);
+    if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+    }
+    const milestone = project.milestones.find(m => m.id === milestoneId);
+    if (!milestone) {
+        return res.status(404).json({ message: 'Milestone not found' });
+    }
+
+    // Calculate progress percentages
+    const totalTasks = milestone.tasks.length;
+    const completedTasks = milestone.tasks.filter(task => task.completed).length;
+    const taskCompletionPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+    const paymentPercentage = milestone.totalCost > 0 ? (milestone.paidAmount / milestone.totalCost) * 100 : 0;
+
+    res.json({
+        ...milestone,
+        progress: {
+            taskCompletionPercentage: Math.round(taskCompletionPercentage * 100) / 100,
+            paymentPercentage: Math.round(paymentPercentage * 100) / 100,
+            totalTasks,
+            completedTasks
+        }
+    });
 });
 
 module.exports = router;
