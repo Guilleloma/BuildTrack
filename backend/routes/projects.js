@@ -2,49 +2,48 @@ const express = require('express');
 const router = express.Router();
 const data = require('../data');
 
+// Temporary storage for projects (replace with database later)
+let projects = [];
+
 // GET all projects
 router.get('/', (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
-    res.json(data.projects);
+    res.json(projects);
 });
 
 // GET a single project by id
 router.get('/:id', (req, res) => {
-    const id = parseInt(req.params.id, 10);
-    const project = data.projects.find(p => p.id === id);
-    if (project) {
-        res.json(project);
-    } else {
-        res.status(404).json({ message: 'Project not found' });
+    const project = projects.find(p => p.id === parseInt(req.params.id));
+    if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
     }
+    res.json(project);
 });
 
 // POST create a new project
 router.post('/', (req, res) => {
+    const { name, description } = req.body;
     const newProject = {
-        id: data.nextProjectId++,
-        name: req.body.name,
-        description: req.body.description,
-        tasks: [],
-        taskNextId: 1,
-        milestones: [],
-        milestoneNextId: 1
+        id: projects.length + 1,
+        name,
+        description,
+        createdAt: new Date()
     };
-    data.projects.push(newProject);
+    projects.push(newProject);
     res.status(201).json(newProject);
 });
 
 // PUT update an existing project by id
 router.put('/:id', (req, res) => {
     const id = parseInt(req.params.id, 10);
-    const index = data.projects.findIndex(p => p.id === id);
+    const index = projects.findIndex(p => p.id === id);
     if (index !== -1) {
-        data.projects[index] = {
-            ...data.projects[index],
-            name: req.body.name !== undefined ? req.body.name : data.projects[index].name,
-            description: req.body.description !== undefined ? req.body.description : data.projects[index].description
+        projects[index] = {
+            ...projects[index],
+            name: req.body.name !== undefined ? req.body.name : projects[index].name,
+            description: req.body.description !== undefined ? req.body.description : projects[index].description
         };
-        res.json(data.projects[index]);
+        res.json(projects[index]);
     } else {
         res.status(404).json({ message: 'Project not found' });
     }
@@ -53,9 +52,9 @@ router.put('/:id', (req, res) => {
 // DELETE remove a project by id
 router.delete('/:id', (req, res) => {
     const id = parseInt(req.params.id, 10);
-    const index = data.projects.findIndex(p => p.id === id);
+    const index = projects.findIndex(p => p.id === id);
     if (index !== -1) {
-        const deleted = data.projects.splice(index, 1)[0];
+        const deleted = projects.splice(index, 1)[0];
         res.json({ message: 'Project deleted', project: deleted });
     } else {
         res.status(404).json({ message: 'Project not found' });
@@ -65,7 +64,7 @@ router.delete('/:id', (req, res) => {
 // Sprint 3: Endpoints for Milestones
 router.post('/:projectId/milestones', (req, res) => {
     const projectId = parseInt(req.params.projectId, 10);
-    const project = data.projects.find(p => p.id === projectId);
+    const project = projects.find(p => p.id === projectId);
     if (!project) {
          return res.status(404).json({ message: 'Project not found' });
     }
@@ -89,7 +88,7 @@ router.post('/:projectId/milestones', (req, res) => {
 router.put('/:projectId/milestones/:milestoneId', (req, res) => {
     const projectId = parseInt(req.params.projectId, 10);
     const milestoneId = parseInt(req.params.milestoneId, 10);
-    const project = data.projects.find(p => p.id === projectId);
+    const project = projects.find(p => p.id === projectId);
     if (!project) {
          return res.status(404).json({ message: 'Project not found' });
     }
@@ -106,7 +105,7 @@ router.put('/:projectId/milestones/:milestoneId', (req, res) => {
 router.delete('/:projectId/milestones/:milestoneId', (req, res) => {
     const projectId = parseInt(req.params.projectId, 10);
     const milestoneId = parseInt(req.params.milestoneId, 10);
-    const project = data.projects.find(p => p.id === projectId);
+    const project = projects.find(p => p.id === projectId);
     if (!project) {
          return res.status(404).json({ message: 'Project not found' });
     }
@@ -122,7 +121,7 @@ router.delete('/:projectId/milestones/:milestoneId', (req, res) => {
 router.post('/:projectId/milestones/:milestoneId/tasks', (req, res) => {
     const projectId = parseInt(req.params.projectId, 10);
     const milestoneId = parseInt(req.params.milestoneId, 10);
-    const project = data.projects.find(p => p.id === projectId);
+    const project = projects.find(p => p.id === projectId);
     if (!project) {
          return res.status(404).json({ message: 'Project not found' });
     }
@@ -145,7 +144,7 @@ router.put('/:projectId/milestones/:milestoneId/tasks/:taskId', (req, res) => {
     const projectId = parseInt(req.params.projectId, 10);
     const milestoneId = parseInt(req.params.milestoneId, 10);
     const taskId = parseInt(req.params.taskId, 10);
-    const project = data.projects.find(p => p.id === projectId);
+    const project = projects.find(p => p.id === projectId);
     if (!project) {
          return res.status(404).json({ message: 'Project not found' });
     }
@@ -167,7 +166,7 @@ router.delete('/:projectId/milestones/:milestoneId/tasks/:taskId', (req, res) =>
     const projectId = parseInt(req.params.projectId, 10);
     const milestoneId = parseInt(req.params.milestoneId, 10);
     const taskId = parseInt(req.params.taskId, 10);
-    const project = data.projects.find(p => p.id === projectId);
+    const project = projects.find(p => p.id === projectId);
     if (!project) {
          return res.status(404).json({ message: 'Project not found' });
     }

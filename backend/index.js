@@ -50,5 +50,5 @@ const paymentsRouter = require('./routes/payments');
 app.use('/payments', paymentsRouter);
 
 app.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
+  console.log(`Server is running on http://localhost:${port}`);
 }); 
