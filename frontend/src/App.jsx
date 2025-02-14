@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import ProjectList from './components/ProjectList';
 import ProjectDetail from './components/ProjectDetail';
 import ProjectForm from './components/ProjectForm';
+import PaymentsPage from './components/PaymentsPage';
 import { Typography, Container } from '@mui/material';
 import ErrorBoundary from './ErrorBoundary';
 
@@ -12,13 +13,6 @@ const Dashboard = () => (
   <Container>
     <Typography variant="h4" gutterBottom>Dashboard</Typography>
     <Typography>Welcome to BuildTrack Dashboard</Typography>
-  </Container>
-);
-
-const Payments = () => (
-  <Container>
-    <Typography variant="h4" gutterBottom>Payments</Typography>
-    <Typography>Payment management coming soon</Typography>
   </Container>
 );
 
@@ -41,7 +35,7 @@ function App() {
             <Route path="/projects" element={<ProjectList />} />
             <Route path="/projects/new" element={<ProjectForm />} />
             <Route path="/projects/:id" element={<ProjectDetail />} />
-            <Route path="/payments" element={<Payments />} />
+            <Route path="/payments" element={<PaymentsPage />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </Layout>

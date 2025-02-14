@@ -135,7 +135,49 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 
 **Estado: COMPLETADO**
 
-## Sprint 8: Dashboard, Reportes y Seguimiento de Presupuestos
+## Sprint 8: Pagina Payments
+- Implementación de una página de pagos con visión global y por proyecto
+- Desarrollo de estadísticas generales (total pagado, número de pagos, promedio)
+- Vista detallada de pagos por proyecto con sistema de acordeón
+- Historial de pagos con capacidad de búsqueda y filtrado
+- Visualización del progreso de pagos con barras de progreso
+
+**Criterios de Aceptación:**
+- La página debe mostrar estadísticas globales claras y actualizadas
+- Cada proyecto debe mostrar:
+  * Monto total pagado vs costo total
+  * Número de pagos realizados
+  * Porcentaje de completado con barra de progreso
+  * Desglose de pagos por hitos (milestones)
+- La interfaz debe seguir buenas prácticas de UX:
+  * Información jerárquica y bien organizada
+  * Sistema de acordeón para mostrar/ocultar detalles
+  * Visualización clara del progreso
+  * Consistencia en el formato de moneda y porcentajes
+- El historial de pagos debe permitir búsqueda por proyecto, hito o descripción
+- Los datos deben actualizarse en tiempo real al realizar nuevos pagos
+
+**Validación y Resultados:**
+- Se implementó exitosamente la página de pagos con todas las funcionalidades requeridas
+- Se validó la correcta visualización de:
+  * Estadísticas globales (total, cuenta y promedio de pagos)
+  * Lista de proyectos con sus respectivos progresos
+  * Desglose detallado de pagos por hito dentro de cada proyecto
+  * Historial completo de pagos con funcionalidad de búsqueda
+- Se comprobó la precisión de los cálculos:
+  * Montos totales y pendientes por proyecto
+  * Porcentajes de completado
+  * Progreso de pagos por hito
+- Se verificó la usabilidad y experiencia de usuario:
+  * Navegación intuitiva entre proyectos
+  * Visualización clara del progreso mediante barras
+  * Funcionamiento correcto del sistema de acordeón
+  * Respuesta inmediata en búsquedas y filtros
+- Se confirmó la correcta integración con el backend y la actualización en tiempo real de los datos
+
+**Estado: COMPLETADO**
+
+## Sprint 9: Dashboard, Reportes y Seguimiento de Presupuestos
 - Crear un dashboard interactivo que brinde una vista general del progreso del proyecto, integrando información de proyectos, hitos, tareas, pagos y desviaciones presupuestarias.
 - Implementar la lógica para el seguimiento de desviaciones entre el presupuesto inicial y los gastos reales, permitiendo el registro de razones y cálculos de porcentajes.
 - Permitir la generación y exportación de reportes en formatos PDF y Excel.
@@ -144,7 +186,7 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 + - Se validarán los endpoints y la integración del dashboard mediante pruebas manuales y unitarias, confirmando la exactitud y actualización en tiempo real de la información.
 **Estado: TODO**
 
-## Sprint 9: Mejoras, Pruebas y Despliegue
+## Sprint 10: Mejoras, Pruebas y Despliegue
 - Optimizar la experiencia de usuario integrando la asociación de proyectos a usuarios, aprovechando la autenticación implementada en el Sprint 1.
 - Implementar pruebas unitarias y de integración con una cobertura mínima del 80%, asegurando la estabilidad de las funcionalidades implementadas.
 - Corregir bugs críticos y realizar mejoras de rendimiento en toda la aplicación.
