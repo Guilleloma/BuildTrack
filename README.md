@@ -19,7 +19,7 @@ Remodeling and construction projects can be complex processes, involving multipl
 
 - **Lack of transparency**: Clients do not have a clear view of progress and real costs.  
 - **Uncontrolled budget deviations**: Unexpected changes inflate costs without proper tracking.  
-- **Disorganized payments**: There’s no clear method to release payments based on actual progress.  
+- **Disorganized payments**: There's no clear method to release payments based on actual progress.  
 - **Insufficient documentation**: No standardized system to validate materials, progress, and cost justifications.  
 - **Deteriorated trust**: The lack of oversight undermines trust between clients and professionals.
 
@@ -50,7 +50,7 @@ These technologies are suggested and may vary based on project needs.
 1. **Registration & Authentication**: Account creation for clients and professionals.  
 2. **Project Creation**: Definition of remodeling projects with details, phases, and agreed payments.  
 3. **Task/Milestone Management**: Division of the project into tasks, complete with percentage of completion and validation.  
-4. **Payment System**: Staggered payment methods like 50%-50%, 30-30-40, or milestone-based payments.  
+4. **Payment System**: Staggered payment methods like 50%-50, 30-30-40, or milestone-based payments.  
 5. **Validation & Documentation**: Photo uploads and receipts for materials and progress tracking.  
 6. **Dashboard**: Real-time tracking of project progress, payments, and documentation.  
 7. **Feedback & Reviews**: Rating and review system to build transparency and trust.
@@ -69,7 +69,7 @@ These technologies are suggested and may vary based on project needs.
   - Total initial budget  
   - Total actual spending  
   - Total deviation in both euros and percentage  
-  - Option to export a PDF or Excel report  
+  - Option to export a PDF or Excel report
 
 ---
 
