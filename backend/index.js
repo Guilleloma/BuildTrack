@@ -41,6 +41,10 @@ app.post('/login', (req, res) => {
   res.json({ message: "Login successful", token });
 });
 
+// Agrego las rutas para proyectos
+const projectsRouter = require('./routes/projects');
+app.use('/projects', projectsRouter);
+
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 }); 
