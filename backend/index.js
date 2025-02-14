@@ -6,14 +6,16 @@ const jwt = require('jsonwebtoken');
 const SECRET = 'mysecret';
 const users = {};
 
-// Middleware: if needed you can add JSON body parsing, etc.
+// Middleware configuration
 app.use(express.json());
 app.use(cors());
 
+// Basic route
 app.get('/', (req, res) => {
   res.send('Hello from BuildTrack backend!');
 });
 
+// Auth routes
 app.post('/register', (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
@@ -41,14 +43,21 @@ app.post('/login', (req, res) => {
   res.json({ message: "Login successful", token });
 });
 
-// Agrego las rutas para proyectos
+// Import and use routers
 const projectsRouter = require('./routes/projects');
-app.use('/projects', projectsRouter);
-
-// Agrego las rutas para pagos (Sprint 4)
 const paymentsRouter = require('./routes/payments');
+
+// Register routers
+app.use('/projects', projectsRouter);
 app.use('/payments', paymentsRouter);
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
+
+// Start server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 }); 

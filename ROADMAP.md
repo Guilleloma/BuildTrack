@@ -96,43 +96,60 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 + - Se verificará que el layout se visualice correctamente en diferentes dispositivos y resoluciones.
 **Estado: COMPLETADO**
 
-### Hito 6.2: Dashboard Inicial
-- Desarrollar un Dashboard con tarjetas o paneles que muestren información crucial del sistema (proyectos, pagos, desviaciones, etc.).
-- Utilizar datos simulados inicialmente para validar la funcionalidad y experiencia de usuario.
-+ Validación:
-+ - Verificar que la vista principal ofrezca una visión general clara y simplificada del sistema.
-
-### Hito 6.3: Listado de Proyectos y Vistas Detalladas
+### Hito 6.2: Listado de Proyectos y Vistas Detalladas
 - Implementar una vista de listado de proyectos en formato de tarjetas o tablas, permitiendo filtros y búsquedas.
 - Crear vistas detalladas para cada proyecto, mostrando hitos, tareas y validaciones.
 + Validación:
 + - Confirmar que la navegación sea intuitiva y la información se presente de forma clara en cada proyecto.
+**Estado: COMPLETADO**
 
-### Hito 6.4: Integración de Componentes Visuales Avanzados
-- Incorporar gráficos y tablas usando librerías como Chart.js o Recharts para visualizar métricas y comparativas.
-- Mejorar la retroalimentación visual mediante el uso de snackbars o alerts para acciones críticas.
-+ Validación:
-+ - Realizar pruebas de usabilidad que aseguren la correcta interpretación de los datos visualizados.
+## Sprint 7: Implementar pagos de milestones
+- Implementar la lógica para el pago de milestones, permitiendo registrar pagos y actualizar el estado de los milestones y las cantidades pagadas y pendientes.
+- Desarrollar una interfaz de usuario intuitiva para la gestión de pagos.
+- Implementar un sistema de seguimiento del estado de pagos (UNPAID, PARTIALLY_PAID, PAID).
+- Crear un historial de pagos con detalles completos de cada transacción.
 
-### Hito 6.5: Optimización y Ajustes Basados en Feedback
-- Recoger feedback de pruebas internas y usuarios, y ajustar la interfaz para mejorar la experiencia y el rendimiento.
-- Optimizar la compatibilidad y responsividad en diferentes dispositivos.
-+ Validación:
-+ - Confirmar mejoras tras la retroalimentación y ensayar en entornos reales.
+**Criterios de Aceptación:**
+- Los usuarios deben poder realizar pagos parciales o totales para cada milestone.
+- El sistema debe validar que los pagos no excedan el costo total del milestone.
+- El estado del milestone debe actualizarse automáticamente según los pagos (UNPAID, PARTIALLY_PAID, PAID).
+- El historial de pagos debe mostrar fecha, monto, descripción y estado de cada pago.
+- La interfaz debe mostrar claramente el monto total, pagado y pendiente de cada milestone.
+- El botón de pago debe deshabilitarse cuando el milestone esté completamente pagado.
+- Los pagos deben reflejarse en tiempo real sin necesidad de refrescar la página.
 
-## Sprint 7: Dashboard, Reportes y Seguimiento de Presupuestos
+**Validación y Resultados:**
+- Se implementó exitosamente el endpoint POST /payments para procesar pagos.
+- Se creó el endpoint GET /payments/milestone/:id para obtener el historial de pagos.
+- Se desarrolló una interfaz de usuario con:
+  * Formulario modal para realizar pagos con validación de montos.
+  * Visualización de estados mediante chips de colores (verde para pagado, amarillo para parcial).
+  * Tabla de historial de pagos con actualización en tiempo real.
+  * Indicadores visuales del progreso de pago en cada milestone.
+- Se realizaron pruebas exitosas de:
+  * Pagos parciales y totales
+  * Validación de montos máximos
+  * Actualización automática del estado del milestone
+  * Actualización en tiempo real del historial de pagos
+  * Deshabilitación del botón de pago en milestones pagados
+
+**Estado: COMPLETADO**
+
+## Sprint 8: Dashboard, Reportes y Seguimiento de Presupuestos
 - Crear un dashboard interactivo que brinde una vista general del progreso del proyecto, integrando información de proyectos, hitos, tareas, pagos y desviaciones presupuestarias.
 - Implementar la lógica para el seguimiento de desviaciones entre el presupuesto inicial y los gastos reales, permitiendo el registro de razones y cálculos de porcentajes.
 - Permitir la generación y exportación de reportes en formatos PDF y Excel.
 - Realizar refactorizaciones y mejoras en la interfaz para integrar los nuevos componentes visuales.
 + Validación:
 + - Se validarán los endpoints y la integración del dashboard mediante pruebas manuales y unitarias, confirmando la exactitud y actualización en tiempo real de la información.
+**Estado: TODO**
 
-## Sprint 8: Mejoras, Pruebas y Despliegue
+## Sprint 9: Mejoras, Pruebas y Despliegue
 - Optimizar la experiencia de usuario integrando la asociación de proyectos a usuarios, aprovechando la autenticación implementada en el Sprint 1.
 - Implementar pruebas unitarias y de integración con una cobertura mínima del 80%, asegurando la estabilidad de las funcionalidades implementadas.
 - Corregir bugs críticos y realizar mejoras de rendimiento en toda la aplicación.
 - Preparar el despliegue del proyecto en un entorno de pre-producción y realizar pruebas de aceptación final (UAT).
 + Validación:
 + - Se confirmará el correcto funcionamiento del sistema mediante un conjunto completo de pruebas de integración y usabilidad en un entorno de pre-producción.
+**Estado: TODO**
 

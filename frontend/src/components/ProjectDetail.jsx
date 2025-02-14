@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -24,9 +24,12 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import PaymentIcon from '@mui/icons-material/Payment';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MilestoneForm from './MilestoneForm';
 import TaskForm from './TaskForm';
+import PaymentForm from './PaymentForm';
+import PaymentHistory from './PaymentHistory';
 import { formatCurrency } from '../utils/formatters';
 
 const ProjectDetail = () => {
@@ -37,10 +40,12 @@ const ProjectDetail = () => {
   const [error, setError] = React.useState(null);
   const [milestoneFormOpen, setMilestoneFormOpen] = React.useState(false);
   const [taskFormOpen, setTaskFormOpen] = React.useState(false);
+  const [paymentFormOpen, setPaymentFormOpen] = React.useState(false);
   const [selectedMilestone, setSelectedMilestone] = React.useState(null);
   const [selectedTask, setSelectedTask] = React.useState(null);
+  const [paymentsRefreshTrigger, setPaymentsRefreshTrigger] = React.useState(0);
 
-  const fetchProject = async () => {
+  const fetchProject = useCallback(async () => {
     try {
       const response = await fetch(`/projects/${id}`);
       if (!response.ok) throw new Error('Project not found');
@@ -51,11 +56,11 @@ const ProjectDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  React.useEffect(() => {
-    fetchProject();
   }, [id]);
+
+  useEffect(() => {
+    fetchProject();
+  }, [fetchProject]);
 
   const handleCreateMilestone = async (milestoneData) => {
     try {
@@ -165,6 +170,11 @@ const ProjectDetail = () => {
     }
   };
 
+  const handlePaymentComplete = async (paymentData) => {
+    await fetchProject();
+    setPaymentsRefreshTrigger(prev => prev + 1);
+  };
+
   if (loading) {
     return (
       <Container style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
@@ -235,19 +245,37 @@ const ProjectDetail = () => {
                     sx={{ mr: 1 }}
                   />
                   <Chip
-                    label={`Paid: ${formatCurrency(milestone.paidAmount)}`}
+                    label={`Pagado: ${formatCurrency(milestone.paidAmount)}`}
                     color="success"
                     size="small"
                     sx={{ mr: 1 }}
                   />
                   <Chip
-                    label={`Pending: ${formatCurrency(milestone.pendingAmount)}`}
+                    label={`Pendiente: ${formatCurrency(milestone.pendingAmount)}`}
                     color="warning"
+                    size="small"
+                    sx={{ mr: 1 }}
+                  />
+                  <Chip
+                    label={milestone.paymentStatus}
+                    color={milestone.paymentStatus === 'PAID' ? 'success' : 
+                           milestone.paymentStatus === 'PARTIALLY_PAID' ? 'warning' : 'default'}
                     size="small"
                   />
                 </Box>
               </Box>
-              <Box>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedMilestone({ ...milestone, projectId: project.id });
+                    setPaymentFormOpen(true);
+                  }}
+                  disabled={milestone.paymentStatus === 'PAID'}
+                >
+                  <PaymentIcon />
+                </IconButton>
                 <IconButton
                   size="small"
                   onClick={(e) => {
@@ -271,13 +299,22 @@ const ProjectDetail = () => {
             </Box>
           </AccordionSummary>
           <AccordionDetails>
-            {milestone.description && (
-              <Typography color="textSecondary" paragraph>
-                {milestone.description}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                Historial de Pagos
               </Typography>
-            )}
+              <PaymentHistory 
+                milestone={{ ...milestone, projectId: project.id }} 
+                refreshTrigger={paymentsRefreshTrigger}
+              />
+            </Box>
+            
             <Divider sx={{ my: 2 }} />
+            
             <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                Tareas
+              </Typography>
               <Button
                 variant="outlined"
                 startIcon={<AddIcon />}
@@ -344,7 +381,7 @@ const ProjectDetail = () => {
           setSelectedMilestone(null);
         }}
         onSubmit={selectedMilestone ? handleUpdateMilestone : handleCreateMilestone}
-        initialData={selectedMilestone}
+        milestone={selectedMilestone}
       />
 
       <TaskForm
@@ -354,7 +391,17 @@ const ProjectDetail = () => {
           setSelectedTask(null);
         }}
         onSubmit={selectedTask ? handleUpdateTask : handleCreateTask}
-        initialData={selectedTask}
+        task={selectedTask}
+      />
+
+      <PaymentForm
+        open={paymentFormOpen}
+        onClose={() => {
+          setPaymentFormOpen(false);
+          setSelectedMilestone(null);
+        }}
+        milestone={selectedMilestone}
+        onPaymentComplete={handlePaymentComplete}
       />
     </Container>
   );

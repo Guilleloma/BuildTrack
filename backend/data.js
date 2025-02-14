@@ -1,4 +1,8 @@
-let projects = [];
-let nextProjectId = 1;
+// Centralized data storage
+const data = {
+    projects: [],
+    payments: [],
+    nextPaymentId: 1
+};
 
-module.exports = { projects, nextProjectId }; 
+module.exports = data; 
