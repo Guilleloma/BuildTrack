@@ -4,6 +4,7 @@ const data = require('../data');
 
 // GET all projects
 router.get('/', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
     res.json(data.projects);
 });
 

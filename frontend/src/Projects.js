@@ -15,13 +15,22 @@ function Projects() {
 
   useEffect(() => {
     fetchProjects();
+    const intervalId = setInterval(() => {
+      fetchProjects();
+    }, 5000);
+    return () => clearInterval(intervalId);
   }, []);
+
+  useEffect(() => {
+    console.log('Projects state updated:', projects);
+  }, [projects]);
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch(baseURL);
+      const response = await fetch(`${baseURL}?_=${Date.now()}`, { cache: 'no-store' });
       if (response.ok) {
         const data = await response.json();
+        console.log('Fetched projects', data);
         setProjects(data);
       } else {
         console.error('Error fetching projects');
@@ -33,6 +42,7 @@ function Projects() {
 
   const addProject = async (e) => {
     e.preventDefault();
+    console.log('addProject called', newProjectName, newProjectDescription);
     try {
       const response = await fetch(baseURL, {
         method: 'POST',
@@ -47,6 +57,7 @@ function Projects() {
         setProjects([...projects, newProject]);
         setNewProjectName('');
         setNewProjectDescription('');
+        await fetchProjects();
       } else {
         console.error('Error adding project');
       }
@@ -60,6 +71,7 @@ function Projects() {
       const response = await fetch(`${baseURL}/${id}`, { method: 'DELETE' });
       if (response.ok) {
         setProjects(projects.filter(p => p.id !== id));
+        await fetchProjects();
       } else {
         console.error('Error deleting project');
       }
@@ -94,6 +106,7 @@ function Projects() {
         const updatedProject = await response.json();
         setProjects(projects.map(p => p.id === id ? updatedProject : p));
         cancelEditing();
+        await fetchProjects();
       } else {
         console.error('Error updating project');
       }
@@ -123,6 +136,7 @@ function Projects() {
         const newMilestone = await response.json();
         setProjects(projects.map(p => p.id === projectId ? { ...p, milestones: [...p.milestones, newMilestone] } : p));
         setNewMilestoneData({ ...newMilestoneData, [projectId]: { title: '', description: '', cost: '' } });
+        await fetchProjects();
       } else {
         console.error('Error adding milestone');
       }
@@ -136,6 +150,7 @@ function Projects() {
       const response = await fetch(`${baseURL}/${projectId}/milestones/${milestoneId}`, { method: 'DELETE' });
       if (response.ok) {
         setProjects(projects.map(p => p.id === projectId ? { ...p, milestones: p.milestones.filter(m => m.id !== milestoneId) } : p));
+        await fetchProjects();
       } else {
         console.error('Error deleting milestone');
       }
@@ -169,6 +184,7 @@ function Projects() {
           }
         }));
         setNewMilestoneTaskData({ ...newMilestoneTaskData, [key]: { title: '', description: '' } });
+        await fetchProjects();
       } else {
         console.error('Error adding task to milestone');
       }
@@ -188,6 +204,7 @@ function Projects() {
             return p;
           }
         }));
+        await fetchProjects();
       } else {
         console.error('Error deleting task from milestone');
       }
@@ -199,7 +216,11 @@ function Projects() {
   return (
     <div>
       <h2>Projects</h2>
-      <form onSubmit={addProject}>
+      <form onSubmit={(e) => { 
+        e.preventDefault(); 
+        console.log('Formulario enviado', newProjectName, newProjectDescription); 
+        addProject(e); 
+      }}>
         <input 
           type="text" 
           placeholder="Project Name" 
@@ -214,7 +235,7 @@ function Projects() {
           onChange={(e) => setNewProjectDescription(e.target.value)} 
           required 
         />
-        <button type="submit">Add Project</button>
+        <button type="submit" onClick={() => console.log("submit button clicked")}>Add Project</button>
       </form>
       <ul>
         {projects.map((project) => (
@@ -224,12 +245,14 @@ function Projects() {
                 <input 
                   type="text" 
                   value={editingName} 
-                  onChange={(e) => setEditingName(e.target.value)} 
+                  onChange={(e) => setEditingName(e.target.value)}
+                  onKeyDown={(e) => { if(e.key === 'Enter') { updateProject(project.id); } }}
                 />
                 <input 
                   type="text" 
                   value={editingDescription} 
-                  onChange={(e) => setEditingDescription(e.target.value)} 
+                  onChange={(e) => setEditingDescription(e.target.value)}
+                  onKeyDown={(e) => { if(e.key === 'Enter') { updateProject(project.id); } }}
                 />
                 <button onClick={() => updateProject(project.id)}>Save</button>
                 <button onClick={cancelEditing}>Cancel</button>
@@ -272,12 +295,14 @@ function Projects() {
                               placeholder="Task Title"
                               value={newMilestoneTaskData[`${project.id}-${milestone.id}`]?.title || ''}
                               onChange={(e) => handleMilestoneTaskChange(project.id, milestone.id, 'title', e.target.value)}
+                              onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); addTaskToMilestone(project.id, milestone.id); } }}
                             />
                             <input
                               type="text"
                               placeholder="Task Description"
                               value={newMilestoneTaskData[`${project.id}-${milestone.id}`]?.description || ''}
                               onChange={(e) => handleMilestoneTaskChange(project.id, milestone.id, 'description', e.target.value)}
+                              onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); addTaskToMilestone(project.id, milestone.id); } }}
                             />
                             <button onClick={() => addTaskToMilestone(project.id, milestone.id)}>Add Task</button>
                           </div>
@@ -292,18 +317,21 @@ function Projects() {
                     placeholder="Milestone Title"
                     value={newMilestoneData[project.id]?.title || ''}
                     onChange={(e) => handleMilestoneChange(project.id, 'title', e.target.value)}
+                    onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); addMilestone(project.id); } }}
                   />
                   <input
                     type="text"
                     placeholder="Milestone Description"
                     value={newMilestoneData[project.id]?.description || ''}
                     onChange={(e) => handleMilestoneChange(project.id, 'description', e.target.value)}
+                    onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); addMilestone(project.id); } }}
                   />
                   <input
                     type="text"
                     placeholder="Cost"
                     value={newMilestoneData[project.id]?.cost || ''}
                     onChange={(e) => handleMilestoneChange(project.id, 'cost', e.target.value)}
+                    onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); addMilestone(project.id); } }}
                   />
                   <button onClick={() => addMilestone(project.id)}>Add Milestone</button>
                 </div>

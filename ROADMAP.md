@@ -58,7 +58,7 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 + Añadir funcionalidad para agregar hitos dentro de cada proyecto, de manera que cada hito contenga sus propias tareas.
 + Asociar cada hito a un proyecto y, dentro de cada hito, permitir la gestión de tareas (crear, actualizar y eliminar).
 + Actualizar la interfaz de usuario para reflejar la jerarquía: Proyectos > Hitos > Tareas.
- 
+
 + **Criterios de Aceptación y Test:**
 + - La API debe permitir crear, actualizar y eliminar hitos.
 + - Dentro de cada hito, se deben poder gestionar (crear, actualizar y eliminar) tareas.
@@ -77,7 +77,18 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 - Integrated the payment processing logic into the frontend's Payments component for real-time user interaction.
 - Basic error handling implemented for invalid inputs and non-existent project or milestone.
 
-## Sprint 5: Seguimiento de Desviaciones de Presupuesto
+ **Estado: COMPLETADO**
+
+## Sprint 5: Optimización para Testeo y Actualización Automática
+- Implementar polling en el frontend para actualizar automáticamente la lista de proyectos (por ejemplo, en la sección Payments) sin necesidad de hacer refresh manual.
+- Agregar zona de depuración en el frontend para mostrar mensajes y logs de las acciones realizadas (por ejemplo, se mostrará la cantidad de proyectos obtenidos y otros eventos del UI).
+- Optimizar la interacción entre frontend y backend para facilitar la depuración y pruebas en entornos de desarrollo.
+
++ Validación:
++ - Se verificó que el frontend se actualice automáticamente y se muestre el área de Debug Log con los mensajes pertinentes.
++ Estado: COMPLETADO
+
+## Sprint 6: Seguimiento de Desviaciones de Presupuesto
 - Implementar la lógica para registrar desviaciones entre el presupuesto inicial y los gastos reales en cada proyecto.
 - Permitir el registro de la razón de la desviación y calcular porcentajes de cambios.
 - Visualizar esta información en el frontend, ya sea en forma de tablas o gráficos.

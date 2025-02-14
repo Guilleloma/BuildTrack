@@ -11,23 +11,47 @@ function Payments() {
     amount: ''
   });
   const [message, setMessage] = useState('');
+  const [debugLogs, setDebugLogs] = useState([]);
+
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/projects');
+      const data = await response.json();
+      setProjects(data);
+      console.log(`DEBUG: Payments - Fetched ${data.length} projects from backend.`, data);
+      addDebugLog(`Fetched ${data.length} projects from backend.`);
+    } catch (err) {
+      console.error('Error fetching projects for payments', err);
+    }
+  };
+
+  const addDebugLog = (msg) => {
+    setDebugLogs(prevLogs => {
+      const newLogs = [...prevLogs, msg];
+      if(newLogs.length > 10) newLogs.shift();
+      return newLogs;
+    });
+  };
 
   // Fetch projects from backend when component mounts
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const response = await fetch('http://localhost:3000/projects');
-        const data = await response.json();
-        setProjects(data);
-      } catch (err) {
-        console.error('Error fetching projects for payments', err);
-      }
-    };
     fetchProjects();
+  }, []);
+
+  // Polling de proyectos para actualizar automáticamente el desplegable
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      fetchProjects();
+      addDebugLog('Polled projects update.');
+      console.log('DEBUG: Payments - Polled projects update.');
+    }, 5000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleProjectChange = (e) => {
     const projectId = e.target.value;
+    console.log(`DEBUG: Payments - Selected project changed to ${projectId}`);
+    addDebugLog(`Selected project changed to ${projectId}`);
     setSelectedProject(projectId);
     setForm({ ...form, projectId, milestoneId: '' });
     setSelectedMilestone('');
@@ -122,6 +146,15 @@ function Payments() {
           ))}
         </ul>
       )}
+      {/* Debug Log Area */}
+      <div style={{ marginTop: '20px', background: '#f9f9f9', padding: '10px', border: '1px solid #ccc' }}>
+        <h3>Debug Log</h3>
+        <ul>
+          {debugLogs.map((log, index) => (
+            <li key={index}>{log}</li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
