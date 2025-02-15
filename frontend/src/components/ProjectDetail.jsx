@@ -18,12 +18,14 @@ import {
   ListItemText,
   Checkbox,
   Grid,
+  Tooltip,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PaymentIcon from '@mui/icons-material/Payment';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import WarningIcon from '@mui/icons-material/Warning';
 import MilestoneForm from './MilestoneForm';
 import TaskForm from './TaskForm';
 import PaymentForm from './PaymentForm';
@@ -352,8 +354,13 @@ const ProjectDetail = () => {
             >
               <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: '200px' }}>
-                  {milestone.paymentPercentage >= 100 && (
+                  {milestone.taskCompletionPercentage >= 100 && (
                     <TaskAltIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                  )}
+                  {milestone.paymentPercentage > milestone.taskCompletionPercentage && (
+                    <Tooltip title="El porcentaje de pago supera al porcentaje de tareas completadas">
+                      <WarningIcon sx={{ fontSize: 16, color: 'warning.main' }} />
+                    </Tooltip>
                   )}
                   <Typography variant="subtitle2" sx={{ 
                     fontWeight: 500,
@@ -365,10 +372,10 @@ const ProjectDetail = () => {
                   </Typography>
                 </Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: milestone.taskCompletionPercentage >= 100 ? 'success.main' : 'text.secondary' }}>
                   <TaskAltIcon sx={{ fontSize: 16 }} />
                   <Typography variant="body2">
-                    {Math.round(milestone.taskCompletionPercentage)}%
+                    {milestone.completedTasks}/{milestone.totalTasks} ({Math.round(milestone.taskCompletionPercentage)}%)
                   </Typography>
                 </Box>
 

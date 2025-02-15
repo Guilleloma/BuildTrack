@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import PaymentIcon from '@mui/icons-material/Payment';
+import WarningIcon from '@mui/icons-material/Warning';
 import { formatCurrency } from '../utils/formatters';
 
 const COLORS = {
@@ -75,6 +76,7 @@ const ProgressDisplay = ({ progress, variant = 'default', type = 'milestone' }) 
   } = progress || {};
 
   const displayVariant = type === 'project' ? 'project' : 'milestone';
+  const showWarning = paymentPercentage > taskCompletionPercentage;
 
   const TasksCount = () => {
     if (totalTasks === 0) {
@@ -148,7 +150,7 @@ const ProgressDisplay = ({ progress, variant = 'default', type = 'milestone' }) 
                 mr: 1,
                 fontSize: type === 'project' ? 28 : 24,
                 opacity: variant === 'compact' ? 0.9 : 1,
-                color: COLORS.tasks.icon,
+                color: taskCompletionPercentage >= 100 ? COLORS.tasks.icon : 'text.secondary',
               }} 
             />
             <Typography 
@@ -160,6 +162,17 @@ const ProgressDisplay = ({ progress, variant = 'default', type = 'milestone' }) 
             >
               Tareas Completadas
             </Typography>
+            {showWarning && (
+              <Tooltip title="El porcentaje de pago supera al porcentaje de tareas completadas">
+                <WarningIcon 
+                  sx={{ 
+                    ml: 1,
+                    fontSize: type === 'project' ? 24 : 20,
+                    color: 'warning.main'
+                  }} 
+                />
+              </Tooltip>
+            )}
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <Box sx={{ flexGrow: 1, mr: 4 }}>

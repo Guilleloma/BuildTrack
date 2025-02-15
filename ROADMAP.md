@@ -273,7 +273,39 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 
 **Estado: COMPLETADO**
 
-## Sprint 11: Dashboard, Reportes y Seguimiento de Presupuestos
+## Sprint 11: Avisos y alertas
+- Añadir un indicador en la tarjeta del hito y en el proyecto cuando el % pagado sea superior al % de tareas completadas
+- Incluir tareas completadas en el hito en un formato ej: 2/4 (50%)
+- Añadir indicador visual (check verde) cuando todas las tareas del hito estén completadas
+
+**Criterios de Aceptación:**
+- El hito debe mostrar un icono de advertencia (⚠️) cuando el porcentaje de pago supere al porcentaje de tareas completadas
+- El formato de tareas completadas debe mostrarse como "X/Y (Z%)" donde:
+  * X = número de tareas completadas
+  * Y = número total de tareas
+  * Z = porcentaje de completitud
+- El indicador de tareas debe mostrarse en verde cuando todas las tareas estén completadas (100%)
+- El indicador de pagos debe mostrarse en verde cuando el hito esté completamente pagado (100%)
+- Los indicadores deben ser consistentes tanto en la vista de hito como en la vista de progreso general
+
+**Validación y Resultados:**
+- Se implementaron los indicadores visuales en los componentes ProjectDetail y ProgressDisplay
+- Se realizaron pruebas verificando:
+  * Aparición correcta del icono de advertencia al realizar pagos que superan el progreso de tareas
+  * Visualización correcta del formato de tareas completadas (X/Y Z%)
+  * Cambio de color a verde del indicador de tareas al completar todas las tareas
+  * Cambio de color a verde del indicador de pagos al completar todos los pagos
+  * Consistencia visual entre la vista de hito y la vista de progreso general
+- Se validó la funcionalidad en diferentes estados de los hitos:
+  * Hitos sin tareas
+  * Hitos con tareas parcialmente completadas
+  * Hitos con todas las tareas completadas
+  * Hitos con diferentes estados de pago
+- Resultado: Los tests manuales confirman el correcto funcionamiento de todos los indicadores visuales y formatos de presentación.
+
+**Estado: COMPLETADO**
+
+## Sprint 12: Dashboard, Reportes y Seguimiento de Presupuestos
 - Crear un dashboard interactivo que brinde una vista general del progreso del proyecto, integrando información de proyectos, hitos, tareas, pagos y desviaciones presupuestarias.
 - Implementar la lógica para el seguimiento de desviaciones entre el presupuesto inicial y los gastos reales, permitiendo el registro de razones y cálculos de porcentajes.
 - Permitir la generación y exportación de reportes en formatos PDF y Excel.
@@ -282,7 +314,7 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 + - Se validarán los endpoints y la integración del dashboard mediante pruebas manuales y unitarias, confirmando la exactitud y actualización en tiempo real de la información.
 **Estado: TODO**
 
-## Sprint 12: Mejoras, Pruebas y Despliegue
+## Sprint 13: Mejoras, Pruebas y Despliegue
 - Optimizar la experiencia de usuario integrando la asociación de proyectos a usuarios, aprovechando la autenticación implementada en el Sprint 1.
 - Implementar pruebas unitarias y de integración con una cobertura mínima del 80%, asegurando la estabilidad de las funcionalidades implementadas.
 - Corregir bugs críticos y realizar mejoras de rendimiento en toda la aplicación.
