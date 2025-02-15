@@ -9,59 +9,59 @@ import {
   Typography,
 } from '@mui/material';
 
-const MilestoneForm = ({ open, onClose, onSubmit, initialData }) => {
+const MilestoneForm = ({ open, onClose, onSubmit, milestone }) => {
   const [formData, setFormData] = React.useState({
-    title: '',
+    name: '',
     description: '',
-    cost: ''
+    budget: ''
   });
   const [error, setError] = React.useState('');
-  const titleFieldRef = React.useRef(null);
+  const nameFieldRef = React.useRef(null);
 
   React.useEffect(() => {
     if (open) {
       // Reset form data when dialog opens
-      if (initialData) {
+      if (milestone) {
         setFormData({
-          title: initialData.title || '',
-          description: initialData.description || '',
-          cost: initialData.cost || ''
+          name: milestone.name || '',
+          description: milestone.description || '',
+          budget: milestone.budget || ''
         });
       } else {
         setFormData({
-          title: '',
+          name: '',
           description: '',
-          cost: ''
+          budget: ''
         });
       }
-      // Focus the title field after a short delay to ensure the dialog is fully rendered
+      // Focus the name field after a short delay to ensure the dialog is fully rendered
       setTimeout(() => {
-        if (titleFieldRef.current) {
-          titleFieldRef.current.focus();
+        if (nameFieldRef.current) {
+          nameFieldRef.current.focus();
         }
       }, 100);
     }
-  }, [open, initialData]);
+  }, [open, milestone]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.title.trim()) {
-      setError('Title is required');
+    if (!formData.name.trim()) {
+      setError('Name is required');
       return;
     }
     onSubmit({
-      title: formData.title,
+      name: formData.name,
       description: formData.description,
-      cost: parseFloat(formData.cost) || 0
+      budget: parseFloat(formData.budget) || 0
     });
     setError('');
   };
 
   const handleClose = () => {
     setFormData({
-      title: '',
+      name: '',
       description: '',
-      cost: ''
+      budget: ''
     });
     setError('');
     onClose();
@@ -70,17 +70,17 @@ const MilestoneForm = ({ open, onClose, onSubmit, initialData }) => {
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>
-        {initialData ? 'Edit Milestone' : 'New Milestone'}
+        {milestone ? 'Edit Milestone' : 'New Milestone'}
       </DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <TextField
-            inputRef={titleFieldRef}
-            label="Title"
+            inputRef={nameFieldRef}
+            label="Name"
             fullWidth
             margin="normal"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
@@ -101,17 +101,17 @@ const MilestoneForm = ({ open, onClose, onSubmit, initialData }) => {
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                document.getElementById('cost-field').focus();
+                document.getElementById('budget-field').focus();
               }
             }}
           />
           <TextField
-            id="cost-field"
-            label="Cost"
+            id="budget-field"
+            label="Budget"
             fullWidth
             margin="normal"
-            value={formData.cost}
-            onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+            value={formData.budget}
+            onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
             type="number"
             inputProps={{ min: 0, step: "0.01" }}
             onKeyDown={(e) => {
@@ -130,7 +130,7 @@ const MilestoneForm = ({ open, onClose, onSubmit, initialData }) => {
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
           <Button type="submit" variant="contained" color="primary">
-            {initialData ? 'Update' : 'Create'}
+            {milestone ? 'Update' : 'Create'}
           </Button>
         </DialogActions>
       </form>

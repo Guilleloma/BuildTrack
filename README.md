@@ -120,6 +120,7 @@ These technologies have been implemented and tested in production.
    ```bash
    git clone https://github.com/your-username/BuildTrack.git
    ```
+
 2. **Install dependencies**  
    For backend:
    ```bash
@@ -131,6 +132,7 @@ These technologies have been implemented and tested in production.
    cd BuildTrack/frontend
    npm install
    ```
+
 3. **Set up environment variables**  
    Create a `.env` file in the backend directory with:
    - Database connection details
@@ -142,6 +144,24 @@ These technologies have been implemented and tested in production.
    - Frontend port (default: 3001)
 
 4. **Run the application**  
+   You have three options to run the application:
+
+   **Option 1: Using the macOS App (Recommended)**
+   - Run the `create-app.command` script once to create the BuildTrack app
+   - Move the generated `BuildTrack.app` to your Applications folder
+   - Launch BuildTrack from your Applications like any other macOS app
+   - The app includes a custom icon and proper macOS integration
+
+   **Option 2: Using the startup script**
+   - Double click the `start-buildtrack.command` file
+   - The script will:
+     - Start both backend and frontend servers in the background
+     - Open the application in your default browser
+     - Store logs in the `logs` directory for easy debugging
+     - Clean up any existing processes on ports 3000 and 3001
+     - No terminal windows needed
+
+   **Option 3: Manual startup**  
    Start the backend:
    ```bash
    cd backend
@@ -152,8 +172,25 @@ These technologies have been implemented and tested in production.
    cd frontend
    npm start
    ```
-   
-   The backend will run on http://localhost:3000 and the frontend on http://localhost:3001
+
+5. **Accessing the Application**
+   - Backend API: http://localhost:3000
+   - Frontend Interface: http://localhost:3001
+   - Logs (when using Options 1 or 2): Available in the `logs` directory
+     - `backend.log`: Backend server logs
+     - `frontend.log`: Frontend development server logs
+
+6. **Stopping the Application**
+   - For Option 1 & 2: The startup script includes automatic cleanup
+   - For Option 3: Use Ctrl+C in each terminal window
+   - Alternative: Use Activity Monitor to find and quit the node processes
+
+7. **Development Mode**
+   All launch methods start the application in development mode, which includes:
+   - Hot reloading for frontend changes
+   - Automatic server restart for backend changes
+   - Real-time error reporting
+   - Development tools and debugging capabilities
 
 ---
 

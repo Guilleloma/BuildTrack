@@ -1,6 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Card, CardContent, Typography, TextField, Grid, CircularProgress, Container, Paper, Box, LinearProgress } from '@mui/material';
+import { 
+  Button, 
+  Card, 
+  CardContent, 
+  Typography, 
+  TextField, 
+  Grid, 
+  CircularProgress, 
+  Container, 
+  Paper, 
+  Box, 
+  LinearProgress,
+  IconButton 
+} from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { formatCurrency } from '../utils/formatters';
 
 const ProjectList = () => {
@@ -38,6 +52,24 @@ const ProjectList = () => {
   const handleProjectClick = (projectId) => {
     console.log('Project clicked:', projectId);
     navigate(`/projects/${projectId}`);
+  };
+
+  const handleDeleteProject = async (e, projectId) => {
+    e.stopPropagation(); // Prevent card click event
+    if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) return;
+    
+    try {
+      const response = await fetch(`/projects/${projectId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Error deleting project');
+      
+      // Remove project from local state
+      setProjects(projects.filter(p => p._id !== projectId));
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      setError(error.message);
+    }
   };
 
   const filteredProjects = projects.filter(project =>
@@ -104,9 +136,9 @@ const ProjectList = () => {
         ) : (
           <Grid container spacing={3} style={{ marginTop: '20px' }}>
             {filteredProjects.map(project => (
-              <Grid item xs={12} sm={6} md={4} key={project.id}>
+              <Grid item xs={12} sm={6} md={4} key={project._id}>
                 <Card 
-                  onClick={() => handleProjectClick(project.id)}
+                  onClick={() => handleProjectClick(project._id)}
                   sx={{
                     cursor: 'pointer',
                     transition: 'transform 0.2s, box-shadow 0.2s',
@@ -116,10 +148,27 @@ const ProjectList = () => {
                     },
                     height: '100%',
                     display: 'flex',
-                    flexDirection: 'column'
+                    flexDirection: 'column',
+                    position: 'relative'
                   }}
                 >
-                  <CardContent sx={{ flexGrow: 1 }}>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={(e) => handleDeleteProject(e, project._id)}
+                    sx={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      zIndex: 1,
+                      '&:hover': {
+                        backgroundColor: 'error.light',
+                      }
+                    }}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                  <CardContent sx={{ flexGrow: 1, pt: 4 }}>
                     <Typography variant="h6" gutterBottom>
                       {project.name}
                     </Typography>

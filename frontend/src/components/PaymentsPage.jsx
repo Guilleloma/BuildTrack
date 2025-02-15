@@ -74,21 +74,23 @@ const PaymentsPage = () => {
 
   // Calculate project-specific statistics
   const projectStats = projects.map(project => {
-    const projectPayments = payments.filter(p => p.projectId === project.id);
+    const projectPayments = payments.filter(p => 
+      project.milestones?.some(m => m._id === p.milestone?._id)
+    );
     const totalPaid = projectPayments.reduce((sum, p) => sum + p.amount, 0);
-    const totalCost = project.milestones?.reduce((sum, m) => sum + m.totalCost, 0) || 0;
+    const totalCost = project.progress?.totalCost || 0;
     const pendingAmount = totalCost - totalPaid;
     const completionPercentage = totalCost > 0 ? (totalPaid / totalCost) * 100 : 0;
 
     const milestoneStats = project.milestones?.map(milestone => {
-      const milestonePayments = payments.filter(p => p.milestoneId === milestone.id);
+      const milestonePayments = payments.filter(p => p.milestone?._id === milestone._id);
       const paidAmount = milestonePayments.reduce((sum, p) => sum + p.amount, 0);
-      const pendingAmount = milestone.totalCost - paidAmount;
+      const pendingAmount = milestone.budget - paidAmount;
       return {
         ...milestone,
         paidAmount,
         pendingAmount,
-        completionPercentage: (paidAmount / milestone.totalCost) * 100
+        completionPercentage: milestone.budget > 0 ? (paidAmount / milestone.budget) * 100 : 0
       };
     }) || [];
 
@@ -105,9 +107,9 @@ const PaymentsPage = () => {
 
   // Filter payments based on search term
   const filteredPayments = payments.filter(payment => {
-    const project = projects.find(p => p.id === payment.projectId);
-    const milestone = project?.milestones?.find(m => m.id === payment.milestoneId);
-    const searchString = `${project?.name} ${milestone?.title} ${payment.description}`.toLowerCase();
+    const project = projects.find(p => p._id === payment.projectId);
+    const milestone = project?.milestones?.find(m => m._id === payment.milestoneId);
+    const searchString = `${project?.name} ${milestone?.name} ${payment.description}`.toLowerCase();
     return searchString.includes(searchTerm.toLowerCase());
   });
 
@@ -182,9 +184,9 @@ const PaymentsPage = () => {
       
       {projectStats.map((project) => (
         <Accordion 
-          key={project.id}
-          expanded={expandedProject === project.id}
-          onChange={() => setExpandedProject(expandedProject === project.id ? null : project.id)}
+          key={project._id}
+          expanded={expandedProject === project._id}
+          onChange={() => setExpandedProject(expandedProject === project._id ? null : project._id)}
           sx={{ mb: 2 }}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -229,9 +231,9 @@ const PaymentsPage = () => {
                 </TableHead>
                 <TableBody>
                   {project.milestoneStats.map((milestone) => (
-                    <TableRow key={milestone.id}>
-                      <TableCell>{milestone.title}</TableCell>
-                      <TableCell align="right">{formatCurrency(milestone.totalCost)}</TableCell>
+                    <TableRow key={milestone._id}>
+                      <TableCell>{milestone.name}</TableCell>
+                      <TableCell align="right">{formatCurrency(milestone.budget)}</TableCell>
                       <TableCell align="right">{formatCurrency(milestone.paidAmount)}</TableCell>
                       <TableCell align="right">{formatCurrency(milestone.pendingAmount)}</TableCell>
                       <TableCell align="right">
@@ -285,13 +287,15 @@ const PaymentsPage = () => {
           </TableHead>
           <TableBody>
             {filteredPayments.map((payment) => {
-              const project = projects.find(p => p.id === payment.projectId);
-              const milestone = project?.milestones?.find(m => m.id === payment.milestoneId);
+              const project = projects.find(p => 
+                p.milestones?.some(m => m._id === payment.milestone?._id)
+              );
+              const milestone = project?.milestones?.find(m => m._id === payment.milestone?._id);
               
               return (
-                <TableRow key={payment.id}>
+                <TableRow key={payment._id}>
                   <TableCell>
-                    {new Date(payment.timestamp).toLocaleDateString('es-ES', {
+                    {new Date(payment.paymentDate || payment.createdAt).toLocaleDateString('es-ES', {
                       day: '2-digit',
                       month: '2-digit',
                       year: 'numeric',
@@ -300,13 +304,13 @@ const PaymentsPage = () => {
                     })}
                   </TableCell>
                   <TableCell>{project?.name || 'Unknown Project'}</TableCell>
-                  <TableCell>{milestone?.title || 'Unknown Milestone'}</TableCell>
+                  <TableCell>{milestone?.name || 'Unknown Milestone'}</TableCell>
                   <TableCell>{payment.description || '-'}</TableCell>
                   <TableCell align="right">{formatCurrency(payment.amount)}</TableCell>
                   <TableCell>
                     <Chip
-                      label={payment.status}
-                      color={payment.status === 'processed' ? 'success' : 'default'}
+                      label={payment.paymentMethod || 'BANK_TRANSFER'}
+                      color="default"
                       size="small"
                     />
                   </TableCell>

@@ -3,98 +3,109 @@
 //
 const express = require('express');
 const router = express.Router();
-const data = require('../data');
+const Payment = require('../models/payment');
+const Milestone = require('../models/milestone');
 
 // GET /payments - list all payments
-router.get('/', (req, res) => {
-  res.json(data.payments);
+router.get('/', async (req, res) => {
+  try {
+    const payments = await Payment.find().populate('milestone');
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 // GET payments for a specific milestone
-router.get('/milestone/:milestoneId', (req, res) => {
-  const milestoneId = parseInt(req.params.milestoneId);
-  const milestonePayments = data.payments.filter(p => p.milestoneId === milestoneId);
-  res.json(milestonePayments);
+router.get('/milestone/:milestoneId', async (req, res) => {
+  try {
+    const payments = await Payment.find({ milestone: req.params.milestoneId });
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 // POST /payments - process a new payment
-router.post('/', (req, res) => {
-  const { projectId, milestoneId, amount, description } = req.body;
-  
-  // Validate required fields
-  if (!projectId || !milestoneId || !amount) {
-    return res.status(400).json({ error: 'projectId, milestoneId, and amount are required' });
-  }
-
-  const project = data.projects.find(p => p.id === parseInt(projectId));
-  if (!project) {
-    return res.status(404).json({ error: 'Project not found' });
-  }
-
-  const milestone = project.milestones.find(m => m.id === parseInt(milestoneId));
-  if (!milestone) {
-    return res.status(404).json({ error: 'Milestone not found' });
-  }
-
-  const paymentAmount = parseFloat(amount);
-  
-  // Validate payment amount
-  if (paymentAmount <= 0) {
-    return res.status(400).json({ error: 'Payment amount must be greater than 0' });
-  }
-
-  // Check if payment would exceed total cost
-  if (milestone.paidAmount + paymentAmount > milestone.totalCost) {
-    return res.status(400).json({ 
-      error: 'Payment would exceed milestone total cost',
-      currentlyPaid: milestone.paidAmount,
-      totalCost: milestone.totalCost,
-      remaining: milestone.totalCost - milestone.paidAmount
-    });
-  }
-
-  // Update milestone payment values
-  milestone.paidAmount += paymentAmount;
-  milestone.pendingAmount = milestone.totalCost - milestone.paidAmount;
-  
-  // Update milestone status if fully paid
-  if (milestone.paidAmount >= milestone.totalCost) {
-    milestone.paymentStatus = 'PAID';
-  } else if (milestone.paidAmount > 0) {
-    milestone.paymentStatus = 'PARTIALLY_PAID';
-  }
-
-  const payment = {
-    id: data.nextPaymentId++,
-    projectId: parseInt(projectId),
-    milestoneId: parseInt(milestoneId),
-    amount: paymentAmount,
-    description: description || '',
-    status: 'processed',
-    timestamp: new Date().toISOString()
-  };
-  
-  data.payments.push(payment);
-  
-  res.status(201).json({ 
-    payment: payment, 
-    milestone: milestone,
-    milestoneStatus: {
-      totalCost: milestone.totalCost,
-      paidAmount: milestone.paidAmount,
-      pendingAmount: milestone.pendingAmount,
-      paymentStatus: milestone.paymentStatus
+router.post('/', async (req, res) => {
+  try {
+    const { milestoneId, amount, description, paymentMethod } = req.body;
+    
+    // Validate required fields
+    if (!milestoneId || !amount) {
+      return res.status(400).json({ error: 'milestoneId and amount are required' });
     }
-  });
+
+    const milestone = await Milestone.findById(milestoneId);
+    if (!milestone) {
+      return res.status(404).json({ error: 'Milestone not found' });
+    }
+
+    const paymentAmount = parseFloat(amount);
+    
+    // Validate payment amount
+    if (paymentAmount <= 0) {
+      return res.status(400).json({ error: 'Payment amount must be greater than 0' });
+    }
+
+    // Check if payment would exceed total cost
+    if (milestone.paidAmount + paymentAmount > milestone.budget) {
+      return res.status(400).json({ 
+        error: 'Payment would exceed milestone total cost',
+        currentlyPaid: milestone.paidAmount,
+        totalCost: milestone.budget,
+        remaining: milestone.budget - milestone.paidAmount
+      });
+    }
+
+    // Create and save the payment
+    const payment = new Payment({
+      milestone: milestoneId,
+      amount: paymentAmount,
+      description: description || '',
+      paymentMethod: paymentMethod || 'BANK_TRANSFER'
+    });
+    
+    await payment.save();
+
+    // Update milestone payment values
+    milestone.paidAmount += paymentAmount;
+    
+    // Update milestone status
+    if (milestone.paidAmount >= milestone.budget) {
+      milestone.status = 'PAID';
+    } else if (milestone.paidAmount > 0) {
+      milestone.status = 'PARTIALLY_PAID';
+    }
+
+    await milestone.save();
+    
+    res.status(201).json({ 
+      payment: payment, 
+      milestone: milestone,
+      milestoneStatus: {
+        totalCost: milestone.budget,
+        paidAmount: milestone.paidAmount,
+        pendingAmount: milestone.budget - milestone.paidAmount,
+        status: milestone.status
+      }
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 });
 
 // GET /payments/:id - get a specific payment by id
-router.get('/:id', (req, res) => {
-  const payment = data.payments.find(p => p.id === parseInt(req.params.id));
-  if (!payment) {
-    return res.status(404).json({ error: 'Payment not found' });
+router.get('/:id', async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.id).populate('milestone');
+    if (!payment) {
+      return res.status(404).json({ error: 'Payment not found' });
+    }
+    res.json(payment);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-  res.json(payment);
 });
 
 module.exports = router; 

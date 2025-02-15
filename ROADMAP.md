@@ -223,7 +223,57 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 
 **Estado: COMPLETADO**
 
-## Sprint 10: Dashboard, Reportes y Seguimiento de Presupuestos
+## Sprint 10: Implementación de Base de Datos MongoDB y Modelos de Datos
+- Implementación de MongoDB como base de datos principal para el almacenamiento de datos
+- Creación de modelos de datos con Mongoose para proyectos, hitos, tareas y pagos
+- Desarrollo de endpoints RESTful para la gestión de datos
+- Integración completa con el frontend React
+
+**Criterios de Aceptación:**
+- Los modelos de datos deben incluir:
+  * Proyecto: nombre, descripción, presupuesto total, fechas y estado
+  * Hito (Milestone): nombre, descripción, presupuesto, estado de pago y relación con proyecto
+  * Tarea: nombre, descripción, estado (PENDING/COMPLETED) y relación con hito
+  * Pago: monto, fecha, método de pago y relación con hito
+
+- La API debe proporcionar endpoints para:
+  * CRUD completo de proyectos, hitos y tareas
+  * Procesamiento de pagos con validaciones
+  * Consulta de progreso y estadísticas
+  * Historial de pagos por hito
+
+- La base de datos debe garantizar:
+  * Integridad referencial entre entidades
+  * Índices optimizados para consultas frecuentes
+  * Manejo eficiente de grandes volúmenes de datos
+
+**Validación y Resultados:**
+- Se implementó exitosamente MongoDB con los siguientes modelos:
+  * Project: campos básicos más relaciones con milestones
+  * Milestone: campos de seguimiento financiero y relación con proyecto
+  * Task: sistema de estados y relación con milestone
+  * Payment: registro detallado de transacciones
+
+- Se validaron los endpoints mediante pruebas:
+  * GET /projects: lista de proyectos con progreso calculado
+  * GET /projects/:id: detalles del proyecto con hitos y tareas
+  * POST/PUT/DELETE para todas las entidades
+  * Endpoints específicos para pagos y progreso
+
+- Se verificó la integridad de datos:
+  * Eliminación en cascada de hitos y tareas
+  * Actualización automática de estados de pago
+  * Cálculo correcto de porcentajes y totales
+  * Manejo adecuado de referencias entre documentos
+
+- Se comprobó el rendimiento:
+  * Tiempos de respuesta óptimos en consultas complejas
+  * Actualización eficiente de estados y progreso
+  * Escalabilidad con múltiples proyectos y transacciones
+
+**Estado: COMPLETADO**
+
+## Sprint 11: Dashboard, Reportes y Seguimiento de Presupuestos
 - Crear un dashboard interactivo que brinde una vista general del progreso del proyecto, integrando información de proyectos, hitos, tareas, pagos y desviaciones presupuestarias.
 - Implementar la lógica para el seguimiento de desviaciones entre el presupuesto inicial y los gastos reales, permitiendo el registro de razones y cálculos de porcentajes.
 - Permitir la generación y exportación de reportes en formatos PDF y Excel.
@@ -232,7 +282,7 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 + - Se validarán los endpoints y la integración del dashboard mediante pruebas manuales y unitarias, confirmando la exactitud y actualización en tiempo real de la información.
 **Estado: TODO**
 
-## Sprint 11: Mejoras, Pruebas y Despliegue
+## Sprint 12: Mejoras, Pruebas y Despliegue
 - Optimizar la experiencia de usuario integrando la asociación de proyectos a usuarios, aprovechando la autenticación implementada en el Sprint 1.
 - Implementar pruebas unitarias y de integración con una cobertura mínima del 80%, asegurando la estabilidad de las funcionalidades implementadas.
 - Corregir bugs críticos y realizar mejoras de rendimiento en toda la aplicación.

@@ -37,8 +37,8 @@ const PaymentForm = ({ open, onClose, milestone, onSubmit, projectId }) => {
     setLoading(true);
 
     const paymentData = {
-      projectId: parseInt(projectId),
-      milestoneId: milestone.id,
+      projectId: projectId,
+      milestoneId: milestone._id,
       amount: parseFloat(amount),
       description,
     };
@@ -63,7 +63,7 @@ const PaymentForm = ({ open, onClose, milestone, onSubmit, projectId }) => {
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Realizar Pago para {milestone?.title}</DialogTitle>
+      <DialogTitle>Realizar Pago para {milestone?.name}</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -78,7 +78,7 @@ const PaymentForm = ({ open, onClose, milestone, onSubmit, projectId }) => {
               fullWidth
               required
               inputProps={{ min: 0, step: "0.01" }}
-              helperText={`Monto pendiente: ${milestone?.pendingAmount || 0}€`}
+              helperText={`Monto pendiente: ${(milestone?.budget - milestone?.paidAmount) || 0}€`}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();

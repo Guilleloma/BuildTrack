@@ -12,13 +12,10 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  LinearProgress,
-  Chip,
   Divider,
   List,
   ListItem,
   ListItemText,
-  ListItemSecondary,
   Checkbox,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -31,7 +28,6 @@ import TaskForm from './TaskForm';
 import PaymentForm from './PaymentForm';
 import PaymentHistory from './PaymentHistory';
 import ProgressDisplay from './ProgressDisplay';
-import { formatCurrency } from '../utils/formatters';
 
 const ProjectDetail = () => {
   const { id } = useParams();
@@ -93,7 +89,7 @@ const ProjectDetail = () => {
 
   const handleUpdateMilestone = async (milestoneData) => {
     try {
-      const response = await fetch(`/projects/${id}/milestones/${selectedMilestone.id}`, {
+      const response = await fetch(`/projects/${id}/milestones/${selectedMilestone._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(milestoneData),
@@ -107,10 +103,10 @@ const ProjectDetail = () => {
     }
   };
 
-  const handleDeleteMilestone = async (milestoneId) => {
+  const handleDeleteMilestone = async (milestone_id) => {
     if (!window.confirm('Are you sure you want to delete this milestone?')) return;
     try {
-      const response = await fetch(`/projects/${id}/milestones/${milestoneId}`, {
+      const response = await fetch(`/projects/${id}/milestones/${milestone_id}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Error deleting milestone');
@@ -120,15 +116,52 @@ const ProjectDetail = () => {
     }
   };
 
+  const handleDeleteProject = async () => {
+    if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) return;
+    try {
+      const response = await fetch(`/projects/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Error deleting project');
+      navigate('/projects');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const handleCreateTask = async (taskData) => {
     try {
-      const response = await fetch(`/projects/${id}/milestones/${selectedMilestone.id}/tasks`, {
+      const response = await fetch(`/projects/${id}/milestones/${selectedMilestone._id}/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(taskData),
+        body: JSON.stringify({
+          ...taskData,
+          milestone: selectedMilestone._id,
+          status: 'PENDING'
+        }),
       });
       if (!response.ok) throw new Error('Error creating task');
-      await fetchProject();
+      
+      const data = await response.json();
+      
+      // Update the project data with the new task
+      setProject(prevProject => {
+        const updatedMilestones = prevProject.milestones.map(m => {
+          if (m._id === selectedMilestone._id) {
+            return {
+              ...m,
+              tasks: [...(m.tasks || []), data.task]
+            };
+          }
+          return m;
+        });
+        return {
+          ...prevProject,
+          milestones: updatedMilestones
+        };
+      });
+      
+      await fetchProjectProgress();
       setTaskFormOpen(false);
     } catch (err) {
       setError(err.message);
@@ -138,11 +171,15 @@ const ProjectDetail = () => {
   const handleUpdateTask = async (taskData) => {
     try {
       const response = await fetch(
-        `/projects/${id}/milestones/${selectedMilestone.id}/tasks/${selectedTask.id}`,
+        `/projects/${id}/milestones/${selectedMilestone._id}/tasks/${selectedTask._id}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(taskData),
+          body: JSON.stringify({
+            ...taskData,
+            milestone: selectedMilestone._id,
+            status: selectedTask.status
+          }),
         }
       );
       if (!response.ok) throw new Error('Error updating task');
@@ -154,10 +191,10 @@ const ProjectDetail = () => {
     }
   };
 
-  const handleDeleteTask = async (milestoneId, taskId) => {
+  const handleDeleteTask = async (milestone_id, task_id) => {
     if (!window.confirm('Are you sure you want to delete this task?')) return;
     try {
-      const response = await fetch(`/projects/${id}/milestones/${milestoneId}/tasks/${taskId}`, {
+      const response = await fetch(`/projects/${id}/milestones/${milestone_id}/tasks/${task_id}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Error deleting task');
@@ -167,14 +204,18 @@ const ProjectDetail = () => {
     }
   };
 
-  const handleToggleTask = async (milestoneId, task) => {
+  const handleToggleTask = async (milestone_id, task) => {
     try {
       const response = await fetch(
-        `/projects/${id}/milestones/${milestoneId}/tasks/${task.id}`,
+        `/projects/${id}/milestones/${milestone_id}/tasks/${task._id}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...task, completed: !task.completed }),
+          body: JSON.stringify({ 
+            ...task,
+            milestone: milestone_id,
+            status: task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED' 
+          }),
         }
       );
       if (!response.ok) throw new Error('Error updating task');
@@ -189,7 +230,12 @@ const ProjectDetail = () => {
       const response = await fetch('/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(paymentData),
+        body: JSON.stringify({
+          ...paymentData,
+          milestone: selectedMilestone._id,
+          paymentDate: new Date(),
+          paymentMethod: 'BANK_TRANSFER'
+        }),
       });
       
       if (!response.ok) {
@@ -236,16 +282,26 @@ const ProjectDetail = () => {
         >
           Back to Projects
         </Button>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => {
-            setSelectedMilestone(null);
-            setMilestoneFormOpen(true);
-          }}
-        >
-          Add Milestone
-        </Button>
+        <Box>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteProject}
+            sx={{ mr: 2 }}
+          >
+            Delete Project
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => {
+              setSelectedMilestone(null);
+              setMilestoneFormOpen(true);
+            }}
+          >
+            Add Milestone
+          </Button>
+        </Box>
       </Box>
 
       <Card sx={{ mb: 4 }}>
@@ -273,11 +329,11 @@ const ProjectDetail = () => {
       </Card>
 
       {projectProgress?.milestones?.map((milestone, index) => {
-        const milestoneData = project.milestones.find(m => m.id === milestone.id);
+        const milestoneData = project.milestones.find(m => m._id === milestone._id);
         if (!milestoneData) return null;
         
         return (
-          <Accordion key={milestone.id} sx={{ mb: 2 }}>
+          <Accordion key={milestone._id} sx={{ mb: 2 }}>
             <AccordionSummary 
               expandIcon={<ExpandMoreIcon />}
               sx={{
@@ -289,7 +345,7 @@ const ProjectDetail = () => {
             >
               <Box sx={{ width: '100%' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="h6">{milestoneData.title}</Typography>
+                  <Typography variant="h6">{milestoneData.name}</Typography>
                   <Box>
                     <IconButton
                       size="small"
@@ -303,9 +359,15 @@ const ProjectDetail = () => {
                     </IconButton>
                     <IconButton
                       size="small"
+                      color="error"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDeleteMilestone(milestone.id);
+                        handleDeleteMilestone(milestone._id);
+                      }}
+                      sx={{
+                        '&:hover': {
+                          backgroundColor: 'error.light',
+                        }
                       }}
                     >
                       <DeleteIcon />
@@ -324,7 +386,12 @@ const ProjectDetail = () => {
                   </Box>
                 </Box>
                 <ProgressDisplay 
-                  progress={milestone} 
+                  progress={{
+                    ...milestone,
+                    totalCost: milestoneData.budget,
+                    paidAmount: milestoneData.paidAmount || 0,
+                    paymentPercentage: milestoneData.paidAmount ? (milestoneData.paidAmount / milestoneData.budget) * 100 : 0
+                  }}
                   variant="compact" 
                   type="milestone"
                 />
@@ -349,9 +416,9 @@ const ProjectDetail = () => {
                 </Button>
               </Box>
               <List>
-                {milestoneData.tasks.map((task) => (
+                {(milestoneData.tasks || [])?.map((task) => (
                   <ListItem
-                    key={task.id}
+                    key={task._id}
                     secondaryAction={
                       <Box>
                         <IconButton
@@ -368,7 +435,13 @@ const ProjectDetail = () => {
                         <IconButton
                           edge="end"
                           size="small"
-                          onClick={() => handleDeleteTask(milestone.id, task.id)}
+                          color="error"
+                          onClick={() => handleDeleteTask(milestone._id, task._id)}
+                          sx={{
+                            '&:hover': {
+                              backgroundColor: 'error.light',
+                            }
+                          }}
                         >
                           <DeleteIcon />
                         </IconButton>
@@ -376,24 +449,24 @@ const ProjectDetail = () => {
                     }
                   >
                     <Checkbox
-                      checked={task.completed}
-                      onChange={() => handleToggleTask(milestone.id, task)}
+                      checked={task?.status === 'COMPLETED'}
+                      onChange={() => handleToggleTask(milestone._id, task)}
                     />
                     <ListItemText
-                      primary={task.title}
+                      primary={task.name}
                       secondary={task.description}
                       sx={{
-                        textDecoration: task.completed ? 'line-through' : 'none',
-                        color: task.completed ? 'text.secondary' : 'text.primary',
+                        textDecoration: task?.status === 'COMPLETED' ? 'line-through' : 'none',
+                        color: task?.status === 'COMPLETED' ? 'text.secondary' : 'text.primary',
                       }}
                     />
                   </ListItem>
                 ))}
               </List>
-              {milestoneData.tasks.length > 0 && <Divider sx={{ my: 2 }} />}
+              {milestoneData.tasks?.length > 0 && <Divider sx={{ my: 2 }} />}
               <PaymentHistory
                 projectId={id}
-                milestoneId={milestone.id}
+                milestoneId={milestone._id}
                 refreshTrigger={paymentsRefreshTrigger}
               />
             </AccordionDetails>

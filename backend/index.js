@@ -1,10 +1,21 @@
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
 const app = express();
 const port = process.env.PORT || 3000;
 const jwt = require('jsonwebtoken');
 const SECRET = 'mysecret';
 const users = {};
+
+// MongoDB connection
+mongoose.connect('mongodb://localhost:27017/buildtrack', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).then(() => {
+  console.log('Connected to MongoDB successfully');
+}).catch((error) => {
+  console.error('Error connecting to MongoDB:', error);
+});
 
 // Middleware configuration
 app.use(express.json());
