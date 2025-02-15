@@ -17,15 +17,11 @@ import {
   Alert,
   Box,
   Chip,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   LinearProgress,
   Divider,
   IconButton,
   Tooltip,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LaunchIcon from '@mui/icons-material/Launch';
 import { formatCurrency } from '../utils/formatters';
 import { useNavigate } from 'react-router-dom';
@@ -208,54 +204,53 @@ const PaymentsPage = () => {
       </Typography>
       
       {projectStats.map((project) => (
-        <Accordion 
+        <Paper 
           key={project._id}
-          expanded={expandedProject === project._id}
-          onChange={() => setExpandedProject(expandedProject === project._id ? null : project._id)}
-          sx={{ mb: 2 }}
+          sx={{ 
+            mb: 2, 
+            p: 2,
+            '&:hover': {
+              backgroundColor: 'rgba(0, 0, 0, 0.01)'
+            }
+          }}
         >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Box sx={{ width: '100%' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                    {project.name}
-                  </Typography>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/projects/${project._id}`);
-                    }}
-                    sx={{ ml: 1 }}
-                  >
-                    <Tooltip title="Ver detalles del proyecto">
-                      <LaunchIcon fontSize="small" />
-                    </Tooltip>
-                  </IconButton>
-                </Box>
-                <Typography variant="subtitle1">
-                  {formatCurrency(project.totalPaid)} / {formatCurrency(project.totalCost)}
+          <Box sx={{ width: '100%' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                  {project.name}
                 </Typography>
+                <IconButton
+                  size="small"
+                  onClick={() => navigate(`/projects/${project._id}`)}
+                  sx={{ ml: 1 }}
+                >
+                  <Tooltip title="Ver detalles del proyecto">
+                    <LaunchIcon fontSize="small" />
+                  </Tooltip>
+                </IconButton>
               </Box>
-              <Box sx={{ mb: 1 }}>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={Math.min(project.completionPercentage, 100)}
-                  sx={{ height: 8, borderRadius: 4 }}
-                />
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-                <Typography variant="body2" color="textSecondary">
-                  {project.paymentCount} {project.paymentCount === 1 ? 'pago' : 'pagos'}
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  {project.completionPercentage.toFixed(1)}% complete
-                </Typography>
-              </Box>
+              <Typography variant="subtitle1">
+                {formatCurrency(project.totalPaid)} / {formatCurrency(project.totalCost)}
+              </Typography>
             </Box>
-          </AccordionSummary>
-        </Accordion>
+            <Box sx={{ mb: 1 }}>
+              <LinearProgress 
+                variant="determinate" 
+                value={Math.min(project.completionPercentage, 100)}
+                sx={{ height: 8, borderRadius: 4 }}
+              />
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+              <Typography variant="body2" color="textSecondary">
+                {project.paymentCount} {project.paymentCount === 1 ? 'pago' : 'pagos'}
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                {project.completionPercentage.toFixed(1)}% complete
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
       ))}
 
       <Divider sx={{ my: 4 }} />
