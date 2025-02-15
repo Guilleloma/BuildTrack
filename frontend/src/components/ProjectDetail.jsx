@@ -238,8 +238,7 @@ const ProjectDetail = () => {
         body: JSON.stringify({
           ...paymentData,
           milestone: selectedMilestone._id,
-          paymentDate: new Date(),
-          paymentMethod: 'BANK_TRANSFER'
+          paymentDate: new Date()
         }),
       });
       

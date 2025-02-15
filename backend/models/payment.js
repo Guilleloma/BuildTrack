@@ -17,8 +17,8 @@ const paymentSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['BANK_TRANSFER', 'CREDIT_CARD', 'CASH', 'OTHER'],
-    default: 'BANK_TRANSFER'
+    enum: ['EFECTIVO', 'TRANSFERENCIA_BANCARIA', 'BIZUM', 'PAYPAL'],
+    default: 'TRANSFERENCIA_BANCARIA'
   }
 }, {
   timestamps: true

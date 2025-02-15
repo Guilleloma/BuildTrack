@@ -7,11 +7,16 @@ import {
   DialogActions,
   TextField,
   Alert,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 
 const PaymentForm = ({ open, onClose, milestone, onSubmit, projectId }) => {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('TRANSFERENCIA_BANCARIA');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const amountFieldRef = React.useRef(null);
@@ -21,6 +26,7 @@ const PaymentForm = ({ open, onClose, milestone, onSubmit, projectId }) => {
       // Reset form data when dialog opens
       setAmount('');
       setDescription('');
+      setPaymentMethod('TRANSFERENCIA_BANCARIA');
       setError(null);
       // Focus the amount field after a short delay to ensure the dialog is fully rendered
       setTimeout(() => {
@@ -38,15 +44,17 @@ const PaymentForm = ({ open, onClose, milestone, onSubmit, projectId }) => {
 
     const paymentData = {
       projectId: projectId,
-      milestoneId: milestone._id,
+      milestone: milestone._id,
       amount: parseFloat(amount),
       description,
+      paymentMethod,
     };
 
     try {
       await onSubmit(paymentData);
-      setAmount('');
-      setDescription('');
+        setAmount('');
+        setDescription('');
+        setPaymentMethod('TRANSFERENCIA_BANCARIA');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -57,6 +65,7 @@ const PaymentForm = ({ open, onClose, milestone, onSubmit, projectId }) => {
   const handleClose = () => {
     setAmount('');
     setDescription('');
+    setPaymentMethod('TRANSFERENCIA_BANCARIA');
     setError(null);
     onClose();
   };
@@ -82,10 +91,34 @@ const PaymentForm = ({ open, onClose, milestone, onSubmit, projectId }) => {
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  document.getElementById('payment-description-field').focus();
+                  document.getElementById('payment-method-select').focus();
                 }
               }}
             />
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <FormControl fullWidth>
+              <InputLabel id="payment-method-label">Método de Pago</InputLabel>
+              <Select
+                id="payment-method-select"
+                labelId="payment-method-label"
+                value={paymentMethod}
+                label="Método de Pago"
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    document.getElementById('payment-description-field').focus();
+                  }
+                }}
+              >
+                <MenuItem value="EFECTIVO">Efectivo</MenuItem>
+                <MenuItem value="TRANSFERENCIA_BANCARIA">Transferencia Bancaria</MenuItem>
+                <MenuItem value="BIZUM">Bizum</MenuItem>
+                <MenuItem value="PAYPAL">PayPal</MenuItem>
+              </Select>
+            </FormControl>
           </div>
           
           <TextField

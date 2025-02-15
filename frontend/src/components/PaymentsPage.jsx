@@ -22,9 +22,13 @@ import {
   AccordionDetails,
   LinearProgress,
   Divider,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import LaunchIcon from '@mui/icons-material/Launch';
 import { formatCurrency } from '../utils/formatters';
+import { useNavigate } from 'react-router-dom';
 
 const PaymentsPage = () => {
   const [payments, setPayments] = useState([]);
@@ -33,6 +37,7 @@ const PaymentsPage = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedProject, setExpandedProject] = useState(null);
+  const navigate = useNavigate();
 
   // Fetch all payments and projects
   useEffect(() => {
@@ -113,6 +118,26 @@ const PaymentsPage = () => {
     return searchString.includes(searchTerm.toLowerCase());
   });
 
+  const getPaymentMethodLabel = (method) => {
+    const labels = {
+      'EFECTIVO': 'Efectivo',
+      'TRANSFERENCIA_BANCARIA': 'Transferencia',
+      'BIZUM': 'Bizum',
+      'PAYPAL': 'PayPal'
+    };
+    return labels[method] || method;
+  };
+
+  const getPaymentMethodColor = (method) => {
+    const colors = {
+      'EFECTIVO': 'success',
+      'TRANSFERENCIA_BANCARIA': 'primary',
+      'BIZUM': 'info',
+      'PAYPAL': 'secondary'
+    };
+    return colors[method] || 'default';
+  };
+
   if (loading) {
     return (
       <Container>
@@ -192,21 +217,37 @@ const PaymentsPage = () => {
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Box sx={{ width: '100%' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                  {project.name}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                    {project.name}
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/projects/${project._id}`);
+                    }}
+                    sx={{ ml: 1 }}
+                  >
+                    <Tooltip title="Ver detalles del proyecto">
+                      <LaunchIcon fontSize="small" />
+                    </Tooltip>
+                  </IconButton>
+                </Box>
                 <Typography variant="subtitle1">
                   {formatCurrency(project.totalPaid)} / {formatCurrency(project.totalCost)}
                 </Typography>
               </Box>
-              <LinearProgress 
-                variant="determinate" 
-                value={Math.min(project.completionPercentage, 100)}
-                sx={{ height: 8, borderRadius: 4 }}
-              />
+              <Box sx={{ mb: 1 }}>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={Math.min(project.completionPercentage, 100)}
+                  sx={{ height: 8, borderRadius: 4 }}
+                />
+              </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
                 <Typography variant="body2" color="textSecondary">
-                  {project.paymentCount} payments
+                  {project.paymentCount} {project.paymentCount === 1 ? 'pago' : 'pagos'}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
                   {project.completionPercentage.toFixed(1)}% complete
@@ -214,46 +255,6 @@ const PaymentsPage = () => {
               </Box>
             </Box>
           </AccordionSummary>
-          <AccordionDetails>
-            <Typography variant="subtitle2" gutterBottom>
-              Milestone Payments
-            </Typography>
-            <TableContainer component={Paper} variant="outlined">
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Milestone</TableCell>
-                    <TableCell align="right">Total Cost</TableCell>
-                    <TableCell align="right">Paid Amount</TableCell>
-                    <TableCell align="right">Pending</TableCell>
-                    <TableCell align="right">Progress</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {project.milestoneStats.map((milestone) => (
-                    <TableRow key={milestone._id}>
-                      <TableCell>{milestone.name}</TableCell>
-                      <TableCell align="right">{formatCurrency(milestone.budget)}</TableCell>
-                      <TableCell align="right">{formatCurrency(milestone.paidAmount)}</TableCell>
-                      <TableCell align="right">{formatCurrency(milestone.pendingAmount)}</TableCell>
-                      <TableCell align="right">
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                          <LinearProgress
-                            variant="determinate"
-                            value={Math.min(milestone.completionPercentage, 100)}
-                            sx={{ width: 100, mr: 1, height: 6, borderRadius: 3 }}
-                          />
-                          <Typography variant="body2">
-                            {milestone.completionPercentage.toFixed(1)}%
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </AccordionDetails>
         </Accordion>
       ))}
 
@@ -309,9 +310,10 @@ const PaymentsPage = () => {
                   <TableCell align="right">{formatCurrency(payment.amount)}</TableCell>
                   <TableCell>
                     <Chip
-                      label={payment.paymentMethod || 'BANK_TRANSFER'}
-                      color="default"
+                      label={getPaymentMethodLabel(payment.paymentMethod)}
+                      color={getPaymentMethodColor(payment.paymentMethod)}
                       size="small"
+                      variant="outlined"
                     />
                   </TableCell>
                 </TableRow>

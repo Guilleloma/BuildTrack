@@ -11,7 +11,29 @@ import {
   Alert,
   CircularProgress,
   Box,
+  Chip,
 } from '@mui/material';
+import { formatCurrency } from '../utils/formatters';
+
+const getPaymentMethodLabel = (method) => {
+  const labels = {
+    'EFECTIVO': 'Efectivo',
+    'TRANSFERENCIA_BANCARIA': 'Transferencia',
+    'BIZUM': 'Bizum',
+    'PAYPAL': 'PayPal'
+  };
+  return labels[method] || method;
+};
+
+const getPaymentMethodColor = (method) => {
+  const colors = {
+    'EFECTIVO': 'success',
+    'TRANSFERENCIA_BANCARIA': 'primary',
+    'BIZUM': 'info',
+    'PAYPAL': 'secondary'
+  };
+  return colors[method] || 'default';
+};
 
 const PaymentHistory = ({ projectId, milestoneId, refreshTrigger }) => {
   const [payments, setPayments] = useState([]);
@@ -86,14 +108,14 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger }) => {
               <TableCell>Fecha</TableCell>
               <TableCell align="right">Monto</TableCell>
               <TableCell>Descripción</TableCell>
-              <TableCell>Estado</TableCell>
+              <TableCell>Método de Pago</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {payments.map((payment) => (
-              <TableRow key={payment.id}>
+              <TableRow key={payment._id}>
                 <TableCell>
-                  {new Date(payment.timestamp).toLocaleDateString('es-ES', {
+                  {new Date(payment.paymentDate || payment.createdAt).toLocaleDateString('es-ES', {
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric',
@@ -101,9 +123,16 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger }) => {
                     minute: '2-digit'
                   })}
                 </TableCell>
-                <TableCell align="right">{payment.amount.toFixed(2)} €</TableCell>
+                <TableCell align="right">{formatCurrency(payment.amount)}</TableCell>
                 <TableCell>{payment.description || '-'}</TableCell>
-                <TableCell>{payment.status}</TableCell>
+                <TableCell>
+                  <Chip
+                    label={getPaymentMethodLabel(payment.paymentMethod)}
+                    color={getPaymentMethodColor(payment.paymentMethod)}
+                    size="small"
+                    variant="outlined"
+                  />
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

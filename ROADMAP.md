@@ -305,7 +305,53 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 
 **Estado: COMPLETADO**
 
-## Sprint 12: Dashboard, Reportes y Seguimiento de Presupuestos
+## Sprint 12: Métodos de Pago
+- Implementación de categorías para los tipos de pago:
+  * Efectivo
+  * Transferencia Bancaria
+  * Bizum
+  * PayPal
+- Integración de los métodos de pago en el formulario de pagos
+- Visualización de métodos de pago en el historial
+- Diferenciación visual por colores según el método
+
+**Criterios de Aceptación:**
+- El modelo de Payment debe incluir el campo paymentMethod con los valores permitidos
+- El formulario de pago debe permitir:
+  * Selección del método de pago desde un menú desplegable
+  * Valor por defecto "Transferencia Bancaria"
+  * Navegación por teclado entre campos
+- En el historial de pagos:
+  * Cada método debe mostrarse con un chip de color distintivo
+  * Los colores deben ser consistentes:
+    - Verde para Efectivo
+    - Azul para Transferencia
+    - Celeste para Bizum
+    - Morado para PayPal
+  * El texto debe mostrarse en español
+- La interfaz debe mantener consistencia visual en todas las vistas donde se muestre el método de pago
+
+**Validación y Resultados:**
+- Se implementó exitosamente:
+  * Modelo de datos actualizado con el campo paymentMethod
+  * Formulario de pago con selección de método
+  * Visualización en el historial con chips de colores
+- Se validó la funcionalidad:
+  * Creación de pagos con diferentes métodos
+  * Persistencia correcta en la base de datos
+  * Visualización consistente en todas las vistas
+- Se verificó la usabilidad:
+  * Selección intuitiva del método de pago
+  * Navegación fluida por teclado
+  * Claridad visual en la diferenciación de métodos
+- Se confirmó la consistencia visual:
+  * Colores distintivos para cada método
+  * Diseño responsive de los chips
+  * Traducciones correctas al español
+
+**Estado: COMPLETADO**
+
+## Sprint 13: Dashboard, Reportes y Seguimiento de Presupuestos
 - Crear un dashboard interactivo que brinde una vista general del progreso del proyecto, integrando información de proyectos, hitos, tareas, pagos y desviaciones presupuestarias.
 - Implementar la lógica para el seguimiento de desviaciones entre el presupuesto inicial y los gastos reales, permitiendo el registro de razones y cálculos de porcentajes.
 - Permitir la generación y exportación de reportes en formatos PDF y Excel.
@@ -314,7 +360,7 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 + - Se validarán los endpoints y la integración del dashboard mediante pruebas manuales y unitarias, confirmando la exactitud y actualización en tiempo real de la información.
 **Estado: TODO**
 
-## Sprint 13: Mejoras, Pruebas y Despliegue
+## Sprint 14: Mejoras, Pruebas y Despliegue
 - Optimizar la experiencia de usuario integrando la asociación de proyectos a usuarios, aprovechando la autenticación implementada en el Sprint 1.
 - Implementar pruebas unitarias y de integración con una cobertura mínima del 80%, asegurando la estabilidad de las funcionalidades implementadas.
 - Corregir bugs críticos y realizar mejoras de rendimiento en toda la aplicación.
