@@ -236,22 +236,23 @@ const ProjectDetail = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...paymentData,
-          milestone: selectedMilestone._id,
-          paymentDate: new Date()
+          milestoneId: selectedMilestone._id,
+          amount: parseFloat(paymentData.amount),
+          description: paymentData.description,
+          paymentMethod: paymentData.paymentMethod
         }),
       });
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Error processing payment');
+        throw new Error(errorData.message || errorData.error || 'Error processing payment');
       }
       
       await fetchProject();
       setPaymentsRefreshTrigger(prev => prev + 1);
       setPaymentFormOpen(false);
     } catch (err) {
-      setError(err.message);
+      throw err; // Let the PaymentForm handle the error
     }
   };
 
@@ -339,18 +340,30 @@ const ProjectDetail = () => {
         const showWarning = milestone.paymentPercentage > milestone.taskCompletionPercentage;
         const showPaymentNeeded = milestone.taskCompletionPercentage > milestone.paymentPercentage;
         
+        // Calculate tax amounts
+        const baseAmount = milestoneData.budget;
+        const taxAmount = milestoneData.hasTax 
+          ? baseAmount * (milestoneData.taxRate || 21) / 100 
+          : 0;
+        const totalWithTax = baseAmount + taxAmount;
+        
         return (
           <Accordion key={milestone._id} sx={{ mb: 0.5 }}>
             <AccordionSummary 
               expandIcon={<ExpandMoreIcon />}
               sx={{
-                backgroundColor: '#fff',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '4px',
+                my: 0.5,
+                border: '1px solid rgba(0, 0, 0, 0.05)',
+                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
                 '&:hover': {
-                  backgroundColor: '#f5f5f5',
+                  backgroundColor: '#f0f2f5',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
                 },
-                minHeight: '40px !important',
+                minHeight: '48px !important',
                 '& .MuiAccordionSummary-content': {
-                  margin: '4px 0 !important',
+                  margin: '12px 0 !important',
                 }
               }}
             >
@@ -388,9 +401,15 @@ const ProjectDetail = () => {
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: milestone.paymentPercentage >= 100 ? 'success.main' : 'text.secondary' }}>
                   <PaymentIcon sx={{ fontSize: 16 }} />
-                  <Typography variant="body2">
-                    {formatCurrency(milestoneData.paidAmount || 0)}/{formatCurrency(milestoneData.budget)} ({Math.round(milestone.paymentPercentage)}%)
-                  </Typography>
+                  <Tooltip title={
+                    milestoneData.hasTax 
+                      ? `Base: ${formatCurrency(baseAmount)}\nIVA (${milestoneData.taxRate || 21}%): ${formatCurrency(taxAmount)}\nTotal: ${formatCurrency(totalWithTax)}`
+                      : "Sin IVA"
+                  }>
+                    <Typography variant="body2">
+                      {formatCurrency(milestoneData.paidAmount || 0)}/{formatCurrency(totalWithTax)} ({Math.round(milestone.paymentPercentage)}%)
+                    </Typography>
+                  </Tooltip>
                 </Box>
 
                 <Box sx={{ display: 'flex', gap: 0.5, ml: 'auto' }}>
@@ -442,6 +461,27 @@ const ProjectDetail = () => {
                   {milestoneData.description}
                 </Typography>
               )}
+
+              <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Base Amount: {formatCurrency(baseAmount)}
+                </Typography>
+                {milestoneData.hasTax && (
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Tax Amount ({milestoneData.taxRate || 21}%): {formatCurrency(taxAmount)}
+                  </Typography>
+                )}
+                <Typography variant="subtitle1" color="primary" sx={{ mt: 1 }}>
+                  Total Amount: {formatCurrency(totalWithTax)}
+                </Typography>
+                <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1 }}>
+                  Paid Amount: {formatCurrency(milestoneData.paidAmount || 0)}
+                </Typography>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Pending Amount: {formatCurrency(totalWithTax - (milestoneData.paidAmount || 0))}
+                </Typography>
+              </Box>
+
               <Box sx={{ mb: 2 }}>
                 <Button
                   variant="outlined"

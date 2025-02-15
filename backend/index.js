@@ -57,10 +57,12 @@ app.post('/login', (req, res) => {
 // Import and use routers
 const projectsRouter = require('./routes/projects');
 const paymentsRouter = require('./routes/payments');
+const settingsRouter = require('./routes/settings');
 
 // Register routers
 app.use('/projects', projectsRouter);
 app.use('/payments', paymentsRouter);
+app.use('/settings', settingsRouter);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

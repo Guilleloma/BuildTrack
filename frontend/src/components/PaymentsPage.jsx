@@ -21,16 +21,6 @@ import {
   Divider,
   IconButton,
   Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Snackbar,
 } from '@mui/material';
 import LaunchIcon from '@mui/icons-material/Launch';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
@@ -39,6 +29,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { formatCurrency } from '../utils/formatters';
 import { useNavigate } from 'react-router-dom';
+import PaymentForm from './PaymentForm';
 
 const PaymentsPage = () => {
   const [payments, setPayments] = useState([]);
@@ -47,14 +38,6 @@ const PaymentsPage = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingPayment, setEditingPayment] = useState(null);
-  const [editFormData, setEditFormData] = useState({
-    amount: '',
-    description: '',
-    paymentMethod: ''
-  });
-  const [showSnackbar, setShowSnackbar] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const navigate = useNavigate();
 
   // Fetch all payments and projects
@@ -106,9 +89,8 @@ const PaymentsPage = () => {
     const {
       taskCompletionPercentage = 0,
       paymentPercentage = 0,
-      totalTasks = 0,
-      completedTasks = 0,
       totalCost = 0,
+      totalCostWithTax = 0,
       paidAmount = 0
     } = project.progress || {};
 
@@ -116,17 +98,21 @@ const PaymentsPage = () => {
       ...project,
       totalPaid: paidAmount,
       totalCost,
-      pendingAmount: totalCost - paidAmount,
+      totalCostWithTax,
+      pendingAmount: totalCostWithTax - paidAmount,
       completionPercentage: paymentPercentage,
       taskCompletionPercentage,
       paymentCount: projectPayments.length,
       milestoneStats: project.milestones?.map(milestone => {
-        const milestonePayments = payments.filter(p => p.milestone?._id === milestone._id);
+        const totalWithTax = milestone.hasTax 
+          ? milestone.budget * (1 + (milestone.taxRate || 21) / 100)
+          : milestone.budget;
         return {
           ...milestone,
           paidAmount: milestone.paidAmount || 0,
-          pendingAmount: milestone.budget - (milestone.paidAmount || 0),
-          completionPercentage: milestone.budget > 0 ? ((milestone.paidAmount || 0) / milestone.budget) * 100 : 0
+          totalWithTax,
+          pendingAmount: totalWithTax - (milestone.paidAmount || 0),
+          completionPercentage: totalWithTax > 0 ? ((milestone.paidAmount || 0) / totalWithTax) * 100 : 0
         };
       }) || []
     };
@@ -159,50 +145,57 @@ const PaymentsPage = () => {
   };
 
   const showMessage = (message, severity = 'success') => {
-    setSnackbarMessage(message);
-    setSnackbarSeverity(severity);
-    setShowSnackbar(true);
+    console.log(`${severity}: ${message}`); // Temporary logging until we implement proper message display
   };
 
   const handleEditClick = (payment) => {
-    setEditingPayment(payment);
-    setEditFormData({
-      amount: payment.amount,
-      description: payment.description || '',
-      paymentMethod: payment.paymentMethod
-    });
+    // Obtener el milestone correspondiente del proyecto
+    const milestone = projects
+      .flatMap(p => p.milestones || [])
+      .find(m => m._id === payment.milestone._id);
+
+    if (milestone) {
+      // Añadir el pago que se está editando al milestone
+      const milestoneWithPayment = {
+        ...milestone,
+        editingPayment: payment
+      };
+      setEditingPayment(milestoneWithPayment);
+    }
   };
 
-  const handleEditClose = () => {
-    setEditingPayment(null);
-    setEditFormData({
-      amount: '',
-      description: '',
-      paymentMethod: ''
-    });
-  };
-
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleEditSubmit = async (formData) => {
     try {
-      const response = await fetch(`/payments/${editingPayment._id}`, {
+      const response = await fetch(`/payments/${editingPayment.editingPayment._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(editFormData),
+        body: JSON.stringify(formData),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error updating payment');
+        // Extraer la información detallada del error
+        const errorDetails = {
+          message: data.error,
+          currentlyPaid: data.currentlyPaid,
+          totalCost: data.totalCost,
+          totalWithTax: data.totalWithTax,
+          remaining: data.remaining
+        };
+        
+        // Lanzar el error con los detalles
+        const error = new Error();
+        error.details = errorDetails;
+        throw error;
       }
 
       // Refresh data
       const [paymentsRes, projectsRes] = await Promise.all([
-        fetch('http://localhost:3000/payments'),
-        fetch('http://localhost:3000/projects')
+        fetch('/payments'),
+        fetch('/projects')
       ]);
 
       const [paymentsData, projectsData] = await Promise.all([
@@ -212,12 +205,11 @@ const PaymentsPage = () => {
 
       setPayments(paymentsData);
       setProjects(projectsData);
-      handleEditClose();
+      setEditingPayment(null);
       showMessage('Pago actualizado correctamente');
     } catch (err) {
-      showMessage(err.message, 'error');
-    } finally {
-      setLoading(false);
+      // Propagar el error con los detalles al PaymentForm
+      throw err;
     }
   };
 
@@ -234,14 +226,18 @@ const PaymentsPage = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Error deleting payment');
+        throw new Error(errorData.message || 'Error deleting payment');
       }
 
       // Refresh data
       const [paymentsRes, projectsRes] = await Promise.all([
-        fetch('http://localhost:3000/payments'),
-        fetch('http://localhost:3000/projects')
+        fetch('/payments'),
+        fetch('/projects')
       ]);
+
+      if (!paymentsRes.ok || !projectsRes.ok) {
+        throw new Error('Error refreshing data');
+      }
 
       const [paymentsData, projectsData] = await Promise.all([
         paymentsRes.json(),
@@ -252,6 +248,7 @@ const PaymentsPage = () => {
       setProjects(projectsData);
       showMessage('Pago eliminado correctamente');
     } catch (err) {
+      console.error('Error deleting payment:', err);
       showMessage(err.message, 'error');
     } finally {
       setLoading(false);
@@ -370,14 +367,22 @@ const PaymentsPage = () => {
                     </Tooltip>
                   )}
                 </Box>
-                <Typography variant="subtitle1">
-                  {formatCurrency(project.totalPaid)} / {formatCurrency(project.totalCost)}
-                </Typography>
+                <Box sx={{ textAlign: 'right' }}>
+                  <Typography variant="subtitle1">
+                    {formatCurrency(project.progress.paidAmount)} / {formatCurrency(project.progress.totalCostWithTax)}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Base: {formatCurrency(project.progress.totalCost)}
+                    {project.progress.totalCostWithTax > project.progress.totalCost && (
+                      ` + IVA: ${formatCurrency(project.progress.totalCostWithTax - project.progress.totalCost)}`
+                    )}
+                  </Typography>
+                </Box>
               </Box>
               <Box sx={{ mb: 1 }}>
                 <LinearProgress 
                   variant="determinate" 
-                  value={Math.min(paymentProgress, 100)}
+                  value={Math.min(project.progress.paymentPercentage, 100)}
                   sx={{ height: 8, borderRadius: 4 }}
                 />
               </Box>
@@ -386,7 +391,7 @@ const PaymentsPage = () => {
                   {project.paymentCount} {project.paymentCount === 1 ? 'pago' : 'pagos'}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                  {paymentProgress.toFixed(1)}% complete
+                  {project.progress.paymentPercentage.toFixed(1)}% complete
                 </Typography>
               </Box>
             </Box>
@@ -470,73 +475,14 @@ const PaymentsPage = () => {
         </Table>
       </TableContainer>
 
-      <Dialog open={!!editingPayment} onClose={handleEditClose} maxWidth="sm" fullWidth>
-        <DialogTitle>Editar Pago</DialogTitle>
-        <form onSubmit={handleEditSubmit}>
-          <DialogContent>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-              <TextField
-                label="Monto"
-                type="number"
-                value={editFormData.amount}
-                onChange={(e) => setEditFormData({ ...editFormData, amount: e.target.value })}
-                fullWidth
-                required
-                inputProps={{ min: 0, step: "0.01" }}
-              />
-
-              <FormControl fullWidth>
-                <InputLabel>Método de Pago</InputLabel>
-                <Select
-                  value={editFormData.paymentMethod}
-                  label="Método de Pago"
-                  onChange={(e) => setEditFormData({ ...editFormData, paymentMethod: e.target.value })}
-                >
-                  <MenuItem value="EFECTIVO">Efectivo</MenuItem>
-                  <MenuItem value="TRANSFERENCIA_BANCARIA">Transferencia Bancaria</MenuItem>
-                  <MenuItem value="BIZUM">Bizum</MenuItem>
-                  <MenuItem value="PAYPAL">PayPal</MenuItem>
-                </Select>
-              </FormControl>
-
-              <TextField
-                label="Descripción"
-                value={editFormData.description}
-                onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
-                fullWidth
-                multiline
-                rows={2}
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleEditClose}>Cancelar</Button>
-            <Button 
-              type="submit" 
-              variant="contained" 
-              color="primary"
-              disabled={loading || !editFormData.amount || parseFloat(editFormData.amount) <= 0}
-            >
-              {loading ? 'Guardando...' : 'Guardar Cambios'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-
-      <Snackbar
-        open={showSnackbar}
-        autoHideDuration={6000}
-        onClose={() => setShowSnackbar(false)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert 
-          onClose={() => setShowSnackbar(false)} 
-          severity={snackbarSeverity}
-          sx={{ width: '100%' }}
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
+      {editingPayment && (
+        <PaymentForm
+          open={!!editingPayment}
+          onClose={() => setEditingPayment(null)}
+          onSubmit={handleEditSubmit}
+          milestone={editingPayment}
+        />
+      )}
     </Container>
   );
 };

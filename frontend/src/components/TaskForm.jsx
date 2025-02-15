@@ -19,13 +19,14 @@ const TaskForm = ({ open, onClose, onSubmit, task }) => {
 
   React.useEffect(() => {
     if (open) {
-      // Reset form data when dialog opens
+      // Solo rellenar el formulario si estamos editando una tarea existente
       if (task) {
         setFormData({
           name: task.name || '',
           description: task.description || ''
         });
       } else {
+        // Si es una nueva tarea, resetear el formulario
         setFormData({
           name: '',
           description: ''

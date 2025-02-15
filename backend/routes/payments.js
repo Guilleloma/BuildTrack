@@ -34,14 +34,22 @@ router.get('/', async (req, res) => {
 
       const totalProjectTasks = tasks.length;
       const totalCompletedTasks = tasks.filter(task => task.status === 'COMPLETED').length;
+      
+      // Calculate totals with tax
       const totalProjectCost = milestones.reduce((sum, m) => sum + m.budget, 0);
-      const totalPaidAmount = milestones.reduce((sum, m) => sum + m.paidAmount, 0);
+      const totalProjectCostWithTax = milestones.reduce((sum, m) => {
+        const milestoneWithTax = m.hasTax 
+          ? m.budget * (1 + (m.taxRate || 21) / 100)
+          : m.budget;
+        return sum + milestoneWithTax;
+      }, 0);
+      const totalPaidAmount = milestones.reduce((sum, m) => sum + (m.paidAmount || 0), 0);
 
       const taskCompletionPercentage = totalProjectTasks > 0 
         ? (totalCompletedTasks / totalProjectTasks) * 100 
         : 0;
-      const paymentPercentage = totalProjectCost > 0 
-        ? (totalPaidAmount / totalProjectCost) * 100 
+      const paymentPercentage = totalProjectCostWithTax > 0 
+        ? (totalPaidAmount / totalProjectCostWithTax) * 100 
         : 0;
 
       return {
@@ -52,6 +60,7 @@ router.get('/', async (req, res) => {
           totalTasks: totalProjectTasks,
           completedTasks: totalCompletedTasks,
           totalCost: totalProjectCost,
+          totalCostWithTax: totalProjectCostWithTax,
           paidAmount: totalPaidAmount
         }
       };
@@ -120,13 +129,19 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Payment amount must be greater than 0' });
     }
 
-    // Check if payment would exceed total cost
-    if (milestone.paidAmount + paymentAmount > milestone.budget) {
+    // Calculate total cost with tax
+    const totalWithTax = milestone.hasTax 
+      ? milestone.budget * (1 + (milestone.taxRate || 21) / 100)
+      : milestone.budget;
+
+    // Check if payment would exceed total cost with tax
+    if (milestone.paidAmount + paymentAmount > totalWithTax) {
       return res.status(400).json({ 
-        error: 'Payment would exceed milestone total cost',
+        error: 'Payment would exceed milestone total cost (including tax)',
         currentlyPaid: milestone.paidAmount,
         totalCost: milestone.budget,
-        remaining: milestone.budget - milestone.paidAmount
+        totalWithTax: totalWithTax,
+        remaining: totalWithTax - milestone.paidAmount
       });
     }
 
@@ -143,8 +158,8 @@ router.post('/', async (req, res) => {
     // Update milestone payment values
     milestone.paidAmount += paymentAmount;
     
-    // Update milestone status
-    if (milestone.paidAmount >= milestone.budget) {
+    // Update milestone status based on total with tax
+    if (milestone.paidAmount >= totalWithTax) {
       milestone.status = 'PAID';
     } else if (milestone.paidAmount > 0) {
       milestone.status = 'PARTIALLY_PAID';
@@ -166,9 +181,12 @@ router.post('/', async (req, res) => {
       milestone: milestone,
       milestoneStatus: {
         totalCost: milestone.budget,
+        totalWithTax: totalWithTax,
         paidAmount: milestone.paidAmount,
-        pendingAmount: milestone.budget - milestone.paidAmount,
-        status: milestone.status
+        pendingAmount: totalWithTax - milestone.paidAmount,
+        status: milestone.status,
+        hasTax: milestone.hasTax,
+        taxRate: milestone.taxRate || 21
       }
     });
   } catch (error) {
@@ -205,13 +223,19 @@ router.put('/:id', async (req, res) => {
     const newAmount = parseFloat(req.body.amount);
     const amountDiff = newAmount - payment.amount;
 
+    // Calculate total with tax
+    const totalWithTax = milestone.hasTax 
+      ? milestone.budget * (1 + (milestone.taxRate || 21) / 100)
+      : milestone.budget;
+
     // Check if new amount would exceed milestone total cost
-    if (milestone.paidAmount + amountDiff > milestone.budget) {
+    if (milestone.paidAmount + amountDiff > totalWithTax) {
       return res.status(400).json({ 
         error: 'Payment would exceed milestone total cost',
         currentlyPaid: milestone.paidAmount,
         totalCost: milestone.budget,
-        remaining: milestone.budget - milestone.paidAmount
+        totalWithTax: totalWithTax,
+        remaining: totalWithTax - milestone.paidAmount
       });
     }
 
@@ -222,8 +246,8 @@ router.put('/:id', async (req, res) => {
     await payment.save();
 
     // Update milestone
-    milestone.paidAmount += amountDiff;
-    if (milestone.paidAmount >= milestone.budget) {
+    milestone.paidAmount = parseFloat((milestone.paidAmount + amountDiff).toFixed(2));
+    if (milestone.paidAmount >= totalWithTax) {
       milestone.status = 'PAID';
     } else if (milestone.paidAmount > 0) {
       milestone.status = 'PARTIALLY_PAID';
@@ -237,13 +261,14 @@ router.put('/:id', async (req, res) => {
       milestone: milestone,
       milestoneStatus: {
         totalCost: milestone.budget,
+        totalWithTax: totalWithTax,
         paidAmount: milestone.paidAmount,
-        pendingAmount: milestone.budget - milestone.paidAmount,
+        pendingAmount: totalWithTax - milestone.paidAmount,
         status: milestone.status
       }
     });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ error: error.message });
   }
 });
 
@@ -252,39 +277,50 @@ router.delete('/:id', async (req, res) => {
   try {
     const payment = await Payment.findById(req.params.id);
     if (!payment) {
-      return res.status(404).json({ error: 'Payment not found' });
+      return res.status(404).json({ message: 'Payment not found' });
     }
 
     const milestone = await Milestone.findById(payment.milestone);
     if (!milestone) {
-      return res.status(404).json({ error: 'Milestone not found' });
+      return res.status(404).json({ message: 'Milestone not found' });
     }
 
-    // Update milestone
-    milestone.paidAmount -= payment.amount;
-    if (milestone.paidAmount <= 0) {
+    // Update milestone with precise decimal handling
+    const currentPaidAmount = parseFloat(milestone.paidAmount || 0);
+    const paymentAmount = parseFloat(payment.amount || 0);
+    let newPaidAmount = parseFloat((currentPaidAmount - paymentAmount).toFixed(2));
+
+    // Ensure we don't get negative values
+    if (newPaidAmount <= 0) {
       milestone.status = 'UNPAID';
-      milestone.paidAmount = 0; // Ensure we don't get negative values
-    } else if (milestone.paidAmount < milestone.budget) {
+      newPaidAmount = 0;
+    } else if (newPaidAmount < milestone.budget) {
       milestone.status = 'PARTIALLY_PAID';
     }
+
+    milestone.paidAmount = newPaidAmount;
     await milestone.save();
 
     // Delete payment
-    await payment.delete();
+    await Payment.findByIdAndDelete(payment._id);
+
+    // Calculate remaining amounts with precision
+    const totalCost = parseFloat(milestone.budget || 0);
+    const pendingAmount = parseFloat((totalCost - newPaidAmount).toFixed(2));
 
     res.json({
       message: 'Payment deleted successfully',
       milestone: milestone,
       milestoneStatus: {
-        totalCost: milestone.budget,
-        paidAmount: milestone.paidAmount,
-        pendingAmount: milestone.budget - milestone.paidAmount,
+        totalCost: totalCost,
+        paidAmount: newPaidAmount,
+        pendingAmount: pendingAmount,
         status: milestone.status
       }
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error deleting payment:', error);
+    res.status(500).json({ message: error.message || 'Error deleting payment' });
   }
 });
 

@@ -7,41 +7,87 @@ import {
   TextField,
   Button,
   Typography,
+  FormControlLabel,
+  Switch,
+  Box,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 
 const MilestoneForm = ({ open, onClose, onSubmit, milestone }) => {
   const [formData, setFormData] = React.useState({
     name: '',
     description: '',
-    budget: ''
+    budget: '',
+    hasTax: true,
+    taxRate: null
   });
   const [error, setError] = React.useState('');
+  const [loading, setLoading] = React.useState(true);
   const nameFieldRef = React.useRef(null);
 
   React.useEffect(() => {
     if (open) {
-      // Reset form data when dialog opens
+      fetchDefaultTaxRate();
+      
+      // Solo rellenar el formulario si estamos editando un milestone existente
       if (milestone) {
         setFormData({
           name: milestone.name || '',
           description: milestone.description || '',
-          budget: milestone.budget || ''
+          budget: milestone.budget || '',
+          hasTax: milestone.hasTax !== undefined ? milestone.hasTax : true,
+          taxRate: milestone.taxRate || null
         });
       } else {
+        // Si es un nuevo milestone, resetear el formulario
         setFormData({
           name: '',
           description: '',
-          budget: ''
+          budget: '',
+          hasTax: true,
+          taxRate: null
         });
       }
-      // Focus the name field after a short delay to ensure the dialog is fully rendered
-      setTimeout(() => {
-        if (nameFieldRef.current) {
-          nameFieldRef.current.focus();
-        }
-      }, 100);
     }
   }, [open, milestone]);
+
+  const fetchDefaultTaxRate = async () => {
+    try {
+      const response = await fetch('/settings');
+      if (!response.ok) throw new Error('Error fetching settings');
+      const data = await response.json();
+      
+      // Set form data with the default tax rate or milestone data
+      if (milestone) {
+        setFormData({
+          name: milestone.name || '',
+          description: milestone.description || '',
+          budget: milestone.budget || '',
+          hasTax: milestone.hasTax !== undefined ? milestone.hasTax : true,
+          taxRate: milestone.taxRate || data.defaultTaxRate
+        });
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          hasTax: true,
+          taxRate: data.defaultTaxRate
+        }));
+      }
+    } catch (err) {
+      console.error('Error fetching default tax rate:', err);
+      // Use a fallback value if we can't fetch the settings
+      if (!milestone) {
+        setFormData(prev => ({
+          ...prev,
+          hasTax: true,
+          taxRate: 21
+        }));
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -52,7 +98,9 @@ const MilestoneForm = ({ open, onClose, onSubmit, milestone }) => {
     onSubmit({
       name: formData.name,
       description: formData.description,
-      budget: parseFloat(formData.budget) || 0
+      budget: parseFloat(formData.budget) || 0,
+      hasTax: formData.hasTax,
+      taxRate: formData.hasTax ? parseFloat(formData.taxRate) || 21 : null
     });
     setError('');
   };
@@ -61,27 +109,45 @@ const MilestoneForm = ({ open, onClose, onSubmit, milestone }) => {
     setFormData({
       name: '',
       description: '',
-      budget: ''
+      budget: '',
+      hasTax: true,
+      taxRate: null
     });
     setError('');
     onClose();
   };
 
+  const totalWithTax = formData.hasTax 
+    ? (parseFloat(formData.budget) || 0) * (1 + (parseFloat(formData.taxRate) || 0) / 100)
+    : parseFloat(formData.budget) || 0;
+
+  if (loading && open) {
+    return (
+      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+        <DialogContent>
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+            <CircularProgress />
+          </Box>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {milestone ? 'Edit Milestone' : 'New Milestone'}
-      </DialogTitle>
+      <DialogTitle>{milestone ? 'Edit Milestone' : 'Create Milestone'}</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          
           <TextField
             inputRef={nameFieldRef}
             label="Name"
-            fullWidth
-            margin="normal"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            fullWidth
             required
+            margin="normal"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -89,15 +155,16 @@ const MilestoneForm = ({ open, onClose, onSubmit, milestone }) => {
               }
             }}
           />
+          
           <TextField
             id="description-field"
             label="Description"
-            fullWidth
-            margin="normal"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            fullWidth
             multiline
-            rows={3}
+            rows={2}
+            margin="normal"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -105,26 +172,53 @@ const MilestoneForm = ({ open, onClose, onSubmit, milestone }) => {
               }
             }}
           />
+          
           <TextField
             id="budget-field"
             label="Budget"
-            fullWidth
-            margin="normal"
+            type="number"
             value={formData.budget}
             onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-            type="number"
+            fullWidth
+            required
+            margin="normal"
             inputProps={{ min: 0, step: "0.01" }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleSubmit(e);
-              }
-            }}
           />
-          {error && (
-            <Typography color="error" variant="body2" sx={{ mt: 1 }}>
-              {error}
-            </Typography>
+
+          <Box sx={{ mt: 2 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.hasTax}
+                  onChange={(e) => setFormData({ ...formData, hasTax: e.target.checked })}
+                />
+              }
+              label="Apply Tax"
+            />
+
+            {formData.hasTax && (
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Using default tax rate: {formData.taxRate}%
+                <br />
+                You can change the default rate in Settings
+              </Typography>
+            )}
+          </Box>
+
+          {formData.budget && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Base Amount: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(parseFloat(formData.budget) || 0)}
+              </Typography>
+              {formData.hasTax && (
+                <Typography variant="subtitle2" color="text.secondary">
+                  Tax Amount ({formData.taxRate}%): {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format((parseFloat(formData.budget) || 0) * (parseFloat(formData.taxRate) || 0) / 100)}
+                </Typography>
+              )}
+              <Typography variant="subtitle1" color="primary" sx={{ mt: 1 }}>
+                Total Amount: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(totalWithTax)}
+              </Typography>
+            </Box>
           )}
         </DialogContent>
         <DialogActions>
