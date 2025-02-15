@@ -23,6 +23,8 @@ import {
   Tooltip,
 } from '@mui/material';
 import LaunchIcon from '@mui/icons-material/Launch';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+import WarningIcon from '@mui/icons-material/Warning';
 import { formatCurrency } from '../utils/formatters';
 import { useNavigate } from 'react-router-dom';
 
@@ -32,7 +34,6 @@ const PaymentsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [expandedProject, setExpandedProject] = useState(null);
   const navigate = useNavigate();
 
   // Fetch all payments and projects
@@ -203,55 +204,71 @@ const PaymentsPage = () => {
         Payments by Project
       </Typography>
       
-      {projectStats.map((project) => (
-        <Paper 
-          key={project._id}
-          sx={{ 
-            mb: 2, 
-            p: 2,
-            '&:hover': {
-              backgroundColor: 'rgba(0, 0, 0, 0.01)'
-            }
-          }}
-        >
-          <Box sx={{ width: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                  {project.name}
+      {projectStats.map((project) => {
+        const taskProgress = project.progress?.taskCompletionPercentage || 0;
+        const showWarning = project.completionPercentage > taskProgress;
+        const showPaymentNeeded = taskProgress > project.completionPercentage;
+
+        return (
+          <Paper 
+            key={project._id}
+            sx={{ 
+              mb: 2, 
+              p: 2,
+              '&:hover': {
+                backgroundColor: 'rgba(0, 0, 0, 0.01)'
+              }
+            }}
+          >
+            <Box sx={{ width: '100%' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                    {project.name}
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    onClick={() => navigate(`/projects/${project._id}`)}
+                    sx={{ ml: 1 }}
+                  >
+                    <Tooltip title="Ver detalles del proyecto">
+                      <LaunchIcon fontSize="small" />
+                    </Tooltip>
+                  </IconButton>
+                  {showWarning && (
+                    <Tooltip title="El porcentaje de pago supera al porcentaje de tareas completadas">
+                      <WarningIcon sx={{ color: 'warning.main', fontSize: 20 }} />
+                    </Tooltip>
+                  )}
+                  {showPaymentNeeded && (
+                    <Tooltip title="Hay más tareas completadas que pagos realizados">
+                      <MonetizationOnIcon sx={{ color: 'success.main', fontSize: 20 }} />
+                    </Tooltip>
+                  )}
+                </Box>
+                <Typography variant="subtitle1">
+                  {formatCurrency(project.totalPaid)} / {formatCurrency(project.totalCost)}
                 </Typography>
-                <IconButton
-                  size="small"
-                  onClick={() => navigate(`/projects/${project._id}`)}
-                  sx={{ ml: 1 }}
-                >
-                  <Tooltip title="Ver detalles del proyecto">
-                    <LaunchIcon fontSize="small" />
-                  </Tooltip>
-                </IconButton>
               </Box>
-              <Typography variant="subtitle1">
-                {formatCurrency(project.totalPaid)} / {formatCurrency(project.totalCost)}
-              </Typography>
+              <Box sx={{ mb: 1 }}>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={Math.min(project.completionPercentage, 100)}
+                  sx={{ height: 8, borderRadius: 4 }}
+                />
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                <Typography variant="body2" color="textSecondary">
+                  {project.paymentCount} {project.paymentCount === 1 ? 'pago' : 'pagos'}
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  {project.completionPercentage.toFixed(1)}% complete
+                </Typography>
+              </Box>
             </Box>
-            <Box sx={{ mb: 1 }}>
-              <LinearProgress 
-                variant="determinate" 
-                value={Math.min(project.completionPercentage, 100)}
-                sx={{ height: 8, borderRadius: 4 }}
-              />
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-              <Typography variant="body2" color="textSecondary">
-                {project.paymentCount} {project.paymentCount === 1 ? 'pago' : 'pagos'}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                {project.completionPercentage.toFixed(1)}% complete
-              </Typography>
-            </Box>
-          </Box>
-        </Paper>
-      ))}
+          </Paper>
+        );
+      })}
 
       <Divider sx={{ my: 4 }} />
 

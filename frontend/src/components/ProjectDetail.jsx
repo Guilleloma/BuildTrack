@@ -17,13 +17,13 @@ import {
   ListItem,
   ListItemText,
   Checkbox,
-  Grid,
   Tooltip,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PaymentIcon from '@mui/icons-material/Payment';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import WarningIcon from '@mui/icons-material/Warning';
 import MilestoneForm from './MilestoneForm';
@@ -336,6 +336,9 @@ const ProjectDetail = () => {
         const milestoneData = project.milestones.find(m => m._id === milestone._id);
         if (!milestoneData) return null;
         
+        const showWarning = milestone.paymentPercentage > milestone.taskCompletionPercentage;
+        const showPaymentNeeded = milestone.taskCompletionPercentage > milestone.paymentPercentage;
+        
         return (
           <Accordion key={milestone._id} sx={{ mb: 0.5 }}>
             <AccordionSummary 
@@ -356,9 +359,14 @@ const ProjectDetail = () => {
                   {milestone.taskCompletionPercentage >= 100 && (
                     <TaskAltIcon sx={{ fontSize: 16, color: 'success.main' }} />
                   )}
-                  {milestone.paymentPercentage > milestone.taskCompletionPercentage && (
+                  {showWarning && (
                     <Tooltip title="El porcentaje de pago supera al porcentaje de tareas completadas">
                       <WarningIcon sx={{ fontSize: 16, color: 'warning.main' }} />
+                    </Tooltip>
+                  )}
+                  {showPaymentNeeded && (
+                    <Tooltip title="Hay más tareas completadas que pagos realizados">
+                      <MonetizationOnIcon sx={{ fontSize: 16, color: 'success.main' }} />
                     </Tooltip>
                   )}
                   <Typography variant="subtitle2" sx={{ 
