@@ -38,22 +38,64 @@ BuildTrack is a platform designed to manage remodeling projects in a structured 
 ## Technologies Used
 - **Frontend:** React with Material UI
 - **Backend:** Node.js with Express
-- **Database:** PostgreSQL
+- **Database:** MongoDB with Mongoose
 - **Authentication:** JWT-based authentication
-- **Payment Processing:** ✓ Implemented
+- **State Management:** React Hooks and Context
+- **UI Components:** Material-UI v5
+- **API Integration:** RESTful endpoints
+- **Real-time Updates:** Auto-refresh mechanisms
 
-These technologies are suggested and may vary based on project needs.
+These technologies have been implemented and tested in production.
 
 ---
 
 ## Key Features
 1. **Registration & Authentication**: ✓ Implemented - JWT-based authentication with registration and login functionality.
-2. **Project Creation**: ✓ Implemented - Full CRUD functionality for projects with REST API endpoints.
-3. **Task/Milestone Management**: ✓ Implemented - Hierarchical structure with projects > milestones > tasks, including status tracking.
-4. **Payment System**: ✓ Implemented - Payment processing with milestone-based tracking and amount validation.
-5. **Validation & Documentation**: 🚧 In Progress
-6. **Dashboard**: ✓ Basic implementation with auto-updating UI and debug logging.
-7. **Feedback & Reviews**: 🚧 Planned
+2. **Project Management**: ✓ Implemented
+   - Full CRUD operations for projects
+   - Real-time progress tracking
+   - Automatic calculations of completion percentages
+   - Project deletion with cascade effect
+
+3. **Milestone & Task System**: ✓ Implemented
+   - Hierarchical structure (projects > milestones > tasks)
+   - Progress tracking for both tasks and payments
+   - Visual progress bars with distinct colors
+   - Automatic status updates
+
+4. **Payment Processing**: ✓ Implemented
+   - Milestone-based payment tracking
+   - Payment history with detailed records
+   - Multiple payment methods support
+   - Amount validation and status updates
+   - Real-time financial progress tracking
+
+5. **Progress Visualization**: ✓ Implemented
+   - Dual progress tracking (tasks vs payments)
+   - Color-coded progress bars
+   - Real-time updates
+   - Responsive design for all screen sizes
+
+6. **Data Management**: ✓ Implemented
+   - MongoDB database integration
+   - Mongoose models with relationships
+   - Efficient data querying and updates
+   - Cascade deletions for related entities
+
+7. **User Interface**: ✓ Implemented
+   - Material-UI components
+   - Responsive design
+   - Intuitive navigation
+   - Form validations and keyboard navigation
+   - Real-time updates without page refresh
+
+8. **Dashboard & Reports**: 🚧 In Progress
+   - Basic statistics implemented
+   - Payment tracking and history
+   - Project overview with progress indicators
+   - Advanced reporting features planned
+
+9. **Budget Deviation Tracking**: 🚧 Planned
 
 ---
 
