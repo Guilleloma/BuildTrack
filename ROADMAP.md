@@ -406,7 +406,16 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 
 **Estado: COMPLETADO**
 
-## Sprint 14: Dashboard, Reportes y Seguimiento de Presupuestos
+## Sprint 14: Control y representacion de impuestos
+- Algunos hitos pueden aplicar impuestos y otros no, los impuestos se aplican sobre el coste total del hito
+- Se debe diferenciar claramente el coste total del hito y el coste total con impuestos
+- El el proyecto se debe mostrar el coste total y el coste total con impuestos
+- En la pantalla payments se debe mostrar el coste total y el coste total con impuestos de cada proyecto en base a los hitos con y sin impuestos
+- El valor (%) de impuestos se debe poder configurar en la pagina de Settings
+
+**Estado: TODO**
+
+## Sprint 15: Dashboard, Reportes y Seguimiento de Presupuestos
 - Crear un dashboard interactivo que brinde una vista general del progreso del proyecto, integrando información de proyectos, hitos, tareas, pagos y desviaciones presupuestarias.
 - Implementar la lógica para el seguimiento de desviaciones entre el presupuesto inicial y los gastos reales, permitiendo el registro de razones y cálculos de porcentajes.
 - Permitir la generación y exportación de reportes en formatos PDF y Excel.
@@ -415,7 +424,7 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 + - Se validarán los endpoints y la integración del dashboard mediante pruebas manuales y unitarias, confirmando la exactitud y actualización en tiempo real de la información.
 **Estado: TODO**
 
-## Sprint 15: Mejoras, Pruebas y Despliegue
+## Sprint 16: Mejoras, Pruebas y Despliegue
 - Optimizar la experiencia de usuario integrando la asociación de proyectos a usuarios, aprovechando la autenticación implementada en el Sprint 1.
 - Implementar pruebas unitarias y de integración con una cobertura mínima del 80%, asegurando la estabilidad de las funcionalidades implementadas.
 - Corregir bugs críticos y realizar mejoras de rendimiento en toda la aplicación.
