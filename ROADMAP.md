@@ -305,7 +305,7 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 
 **Estado: COMPLETADO**
 
-## Sprint 12: Métodos de Pago
+## Sprint 12: Métodos de Pago e Indicadores Visuales
 - Implementación de categorías para los tipos de pago:
   * Efectivo
   * Transferencia Bancaria
@@ -314,6 +314,10 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 - Integración de los métodos de pago en el formulario de pagos
 - Visualización de métodos de pago en el historial
 - Diferenciación visual por colores según el método
+- Posicionamiento de indicadores visuales en las tarjetas de proyecto:
+  * Icono de advertencia (warning) en la esquina superior izquierda
+  * Icono de pago necesario (monetization) a la derecha del warning si existe
+  * Botón de eliminar en la esquina superior derecha
 
 **Criterios de Aceptación:**
 - El modelo de Payment debe incluir el campo paymentMethod con los valores permitidos
@@ -330,24 +334,35 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
     - Morado para PayPal
   * El texto debe mostrarse en español
 - La interfaz debe mantener consistencia visual en todas las vistas donde se muestre el método de pago
+- Los indicadores visuales en las tarjetas de proyecto deben:
+  * Mostrar el icono de warning (⚠️) cuando el % de pago supere al % de tareas
+  * Mostrar el icono de monetization (💰) cuando haya más tareas completadas que pagos
+  * Posicionarse correctamente sin solapamiento:
+    - Warning en (left: 8px, top: 8px)
+    - Monetization en (left: 32px, top: 8px) si hay warning, o (left: 8px, top: 8px) si no
+    - Botón eliminar en (right: 8px, top: 8px)
 
 **Validación y Resultados:**
 - Se implementó exitosamente:
   * Modelo de datos actualizado con el campo paymentMethod
   * Formulario de pago con selección de método
   * Visualización en el historial con chips de colores
+  * Posicionamiento correcto de indicadores en tarjetas de proyecto
 - Se validó la funcionalidad:
   * Creación de pagos con diferentes métodos
   * Persistencia correcta en la base de datos
   * Visualización consistente en todas las vistas
+  * No solapamiento de iconos en las tarjetas
 - Se verificó la usabilidad:
   * Selección intuitiva del método de pago
   * Navegación fluida por teclado
   * Claridad visual en la diferenciación de métodos
+  * Tooltips informativos en los iconos de estado
 - Se confirmó la consistencia visual:
   * Colores distintivos para cada método
   * Diseño responsive de los chips
   * Traducciones correctas al español
+  * Alineación correcta de todos los elementos visuales
 
 **Estado: COMPLETADO**
 
