@@ -12,9 +12,11 @@ import {
   Paper, 
   Box, 
   LinearProgress,
-  IconButton 
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import WarningIcon from '@mui/icons-material/Warning';
 import { formatCurrency } from '../utils/formatters';
 
 const ProjectList = () => {
@@ -152,6 +154,20 @@ const ProjectList = () => {
                     position: 'relative'
                   }}
                 >
+                  {(project.progress?.paymentPercentage || 0) > (project.progress?.taskCompletionPercentage || 0) && (
+                    <Tooltip title="El porcentaje de pago supera al porcentaje de tareas completadas">
+                      <WarningIcon 
+                        sx={{ 
+                          position: 'absolute',
+                          top: 8,
+                          left: 8,
+                          zIndex: 1,
+                          color: 'warning.main',
+                          fontSize: 20
+                        }} 
+                      />
+                    </Tooltip>
+                  )}
                   <IconButton
                     size="small"
                     color="error"
@@ -179,8 +195,9 @@ const ProjectList = () => {
                     )}
                     
                     <Box sx={{ mt: 2 }}>
-                      <Typography variant="subtitle2" color="primary" gutterBottom>
-                        Presupuesto total: {formatCurrency(project.progress?.totalCost || 0)}
+                      <Typography variant="subtitle2" color="primary" gutterBottom sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>Presupuesto:</span>
+                        <span>{formatCurrency(project.progress?.paidAmount || 0)} / {formatCurrency(project.progress?.totalCost || 0)}</span>
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                         <Typography variant="body2" sx={{ minWidth: 140 }}>
