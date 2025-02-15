@@ -125,8 +125,17 @@ router.get('/:id', async (req, res) => {
 
         // Get milestones for this project
         const milestones = await Milestone.find({ project: project._id });
+        
+        // Get tasks for each milestone
+        const milestonesWithTasks = await Promise.all(milestones.map(async (milestone) => {
+            const tasks = await Task.find({ milestone: milestone._id });
+            const milestoneObj = milestone.toObject();
+            milestoneObj.tasks = tasks;
+            return milestoneObj;
+        }));
+
         const projectData = project.toObject();
-        projectData.milestones = milestones;
+        projectData.milestones = milestonesWithTasks;
 
         res.json(projectData);
     } catch (error) {
