@@ -12,13 +12,14 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
+import { formatCurrency } from '../utils/formatters';
 
 const PaymentForm = ({ open, onClose, milestone, onSubmit, projectId }) => {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('TRANSFERENCIA_BANCARIA');
-  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const amountFieldRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -44,17 +45,40 @@ const PaymentForm = ({ open, onClose, milestone, onSubmit, projectId }) => {
 
     const paymentData = {
       projectId: projectId,
-      milestone: milestone._id,
+      milestoneId: milestone._id,
       amount: parseFloat(amount),
       description,
       paymentMethod,
     };
 
     try {
+      const response = await fetch('/payments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(paymentData),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        if (data.error === 'Payment would exceed milestone total cost') {
+          throw new Error(
+            `El pago excedería el presupuesto total del milestone:\n` +
+            `• Pagado: ${formatCurrency(data.currentlyPaid)}\n` +
+            `• Total: ${formatCurrency(data.totalCost)}\n` +
+            `• Restante: ${formatCurrency(data.remaining)}`
+          );
+        }
+        throw new Error(data.error || 'Error al procesar el pago');
+      }
+
+      setAmount('');
+      setDescription('');
+      setPaymentMethod('TRANSFERENCIA_BANCARIA');
+      onClose();
       await onSubmit(paymentData);
-        setAmount('');
-        setDescription('');
-        setPaymentMethod('TRANSFERENCIA_BANCARIA');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -75,8 +99,21 @@ const PaymentForm = ({ open, onClose, milestone, onSubmit, projectId }) => {
       <DialogTitle>Realizar Pago para {milestone?.name}</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-          
+          {error && (
+            <Alert 
+              severity="error" 
+              sx={{ 
+                mb: 2,
+                whiteSpace: 'pre-line',
+                '& .MuiAlert-message': {
+                  width: '100%'
+                }
+              }}
+            >
+              {error}
+            </Alert>
+          )}
+
           <div style={{ marginBottom: '1rem' }}>
             <TextField
               inputRef={amountFieldRef}
@@ -87,7 +124,7 @@ const PaymentForm = ({ open, onClose, milestone, onSubmit, projectId }) => {
               fullWidth
               required
               inputProps={{ min: 0, step: "0.01" }}
-              helperText={`Monto pendiente: ${(milestone?.budget - milestone?.paidAmount) || 0}€`}
+              helperText={`Monto pendiente: ${formatCurrency(milestone?.budget - milestone?.paidAmount || 0)}`}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();

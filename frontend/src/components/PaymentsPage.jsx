@@ -21,10 +21,22 @@ import {
   Divider,
   IconButton,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Snackbar,
 } from '@mui/material';
 import LaunchIcon from '@mui/icons-material/Launch';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import WarningIcon from '@mui/icons-material/Warning';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { formatCurrency } from '../utils/formatters';
 import { useNavigate } from 'react-router-dom';
 
@@ -34,6 +46,15 @@ const PaymentsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingPayment, setEditingPayment] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    amount: '',
+    description: '',
+    paymentMethod: ''
+  });
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const navigate = useNavigate();
 
   // Fetch all payments and projects
@@ -76,42 +97,44 @@ const PaymentsPage = () => {
 
   // Calculate project-specific statistics
   const projectStats = projects.map(project => {
-    const projectPayments = payments.filter(p => 
-      project.milestones?.some(m => m._id === p.milestone?._id)
+    // Get all payments for this project's milestones
+    const projectPayments = payments.filter(payment => 
+      payment.milestone?.project?._id === project._id
     );
-    const totalPaid = projectPayments.reduce((sum, p) => sum + p.amount, 0);
-    const totalCost = project.progress?.totalCost || 0;
-    const pendingAmount = totalCost - totalPaid;
-    const completionPercentage = totalCost > 0 ? (totalPaid / totalCost) * 100 : 0;
 
-    const milestoneStats = project.milestones?.map(milestone => {
-      const milestonePayments = payments.filter(p => p.milestone?._id === milestone._id);
-      const paidAmount = milestonePayments.reduce((sum, p) => sum + p.amount, 0);
-      const pendingAmount = milestone.budget - paidAmount;
-      return {
-        ...milestone,
-        paidAmount,
-        pendingAmount,
-        completionPercentage: milestone.budget > 0 ? (paidAmount / milestone.budget) * 100 : 0
-      };
-    }) || [];
+    // Use the project's progress information directly from the project data
+    const {
+      taskCompletionPercentage = 0,
+      paymentPercentage = 0,
+      totalTasks = 0,
+      completedTasks = 0,
+      totalCost = 0,
+      paidAmount = 0
+    } = project.progress || {};
 
     return {
       ...project,
-      totalPaid,
+      totalPaid: paidAmount,
       totalCost,
-      pendingAmount,
-      completionPercentage,
+      pendingAmount: totalCost - paidAmount,
+      completionPercentage: paymentPercentage,
+      taskCompletionPercentage,
       paymentCount: projectPayments.length,
-      milestoneStats
+      milestoneStats: project.milestones?.map(milestone => {
+        const milestonePayments = payments.filter(p => p.milestone?._id === milestone._id);
+        return {
+          ...milestone,
+          paidAmount: milestone.paidAmount || 0,
+          pendingAmount: milestone.budget - (milestone.paidAmount || 0),
+          completionPercentage: milestone.budget > 0 ? ((milestone.paidAmount || 0) / milestone.budget) * 100 : 0
+        };
+      }) || []
     };
   });
 
   // Filter payments based on search term
   const filteredPayments = payments.filter(payment => {
-    const project = projects.find(p => p._id === payment.projectId);
-    const milestone = project?.milestones?.find(m => m._id === payment.milestoneId);
-    const searchString = `${project?.name} ${milestone?.name} ${payment.description}`.toLowerCase();
+    const searchString = `${payment.milestone?.project?.name || ''} ${payment.milestone?.name || ''} ${payment.description}`.toLowerCase();
     return searchString.includes(searchTerm.toLowerCase());
   });
 
@@ -133,6 +156,106 @@ const PaymentsPage = () => {
       'PAYPAL': 'secondary'
     };
     return colors[method] || 'default';
+  };
+
+  const showMessage = (message, severity = 'success') => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setShowSnackbar(true);
+  };
+
+  const handleEditClick = (payment) => {
+    setEditingPayment(payment);
+    setEditFormData({
+      amount: payment.amount,
+      description: payment.description || '',
+      paymentMethod: payment.paymentMethod
+    });
+  };
+
+  const handleEditClose = () => {
+    setEditingPayment(null);
+    setEditFormData({
+      amount: '',
+      description: '',
+      paymentMethod: ''
+    });
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const response = await fetch(`/payments/${editingPayment._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editFormData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error updating payment');
+      }
+
+      // Refresh data
+      const [paymentsRes, projectsRes] = await Promise.all([
+        fetch('http://localhost:3000/payments'),
+        fetch('http://localhost:3000/projects')
+      ]);
+
+      const [paymentsData, projectsData] = await Promise.all([
+        paymentsRes.json(),
+        projectsRes.json()
+      ]);
+
+      setPayments(paymentsData);
+      setProjects(projectsData);
+      handleEditClose();
+      showMessage('Pago actualizado correctamente');
+    } catch (err) {
+      showMessage(err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteClick = async (payment) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este pago?')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`/payments/${payment._id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error deleting payment');
+      }
+
+      // Refresh data
+      const [paymentsRes, projectsRes] = await Promise.all([
+        fetch('http://localhost:3000/payments'),
+        fetch('http://localhost:3000/projects')
+      ]);
+
+      const [paymentsData, projectsData] = await Promise.all([
+        paymentsRes.json(),
+        projectsRes.json()
+      ]);
+
+      setPayments(paymentsData);
+      setProjects(projectsData);
+      showMessage('Pago eliminado correctamente');
+    } catch (err) {
+      showMessage(err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
@@ -205,9 +328,10 @@ const PaymentsPage = () => {
       </Typography>
       
       {projectStats.map((project) => {
-        const taskProgress = project.progress?.taskCompletionPercentage || 0;
-        const showWarning = project.completionPercentage > taskProgress;
-        const showPaymentNeeded = taskProgress > project.completionPercentage;
+        const taskProgress = project.taskCompletionPercentage || 0;
+        const paymentProgress = project.completionPercentage || 0;
+        const showWarning = paymentProgress > taskProgress;
+        const showPaymentNeeded = taskProgress > paymentProgress;
 
         return (
           <Paper 
@@ -253,7 +377,7 @@ const PaymentsPage = () => {
               <Box sx={{ mb: 1 }}>
                 <LinearProgress 
                   variant="determinate" 
-                  value={Math.min(project.completionPercentage, 100)}
+                  value={Math.min(paymentProgress, 100)}
                   sx={{ height: 8, borderRadius: 4 }}
                 />
               </Box>
@@ -262,7 +386,7 @@ const PaymentsPage = () => {
                   {project.paymentCount} {project.paymentCount === 1 ? 'pago' : 'pagos'}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                  {project.completionPercentage.toFixed(1)}% complete
+                  {paymentProgress.toFixed(1)}% complete
                 </Typography>
               </Box>
             </Box>
@@ -296,44 +420,123 @@ const PaymentsPage = () => {
               <TableCell>Description</TableCell>
               <TableCell align="right">Amount</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell align="center" width={120}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredPayments.map((payment) => {
-              const project = projects.find(p => 
-                p.milestones?.some(m => m._id === payment.milestone?._id)
-              );
-              const milestone = project?.milestones?.find(m => m._id === payment.milestone?._id);
-              
-              return (
-                <TableRow key={payment._id}>
-                  <TableCell>
-                    {new Date(payment.paymentDate || payment.createdAt).toLocaleDateString('es-ES', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </TableCell>
-                  <TableCell>{project?.name || 'Unknown Project'}</TableCell>
-                  <TableCell>{milestone?.name || 'Unknown Milestone'}</TableCell>
-                  <TableCell>{payment.description || '-'}</TableCell>
-                  <TableCell align="right">{formatCurrency(payment.amount)}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={getPaymentMethodLabel(payment.paymentMethod)}
-                      color={getPaymentMethodColor(payment.paymentMethod)}
+            {filteredPayments.map((payment) => (
+              <TableRow key={payment._id}>
+                <TableCell>
+                  {new Date(payment.paymentDate || payment.createdAt).toLocaleDateString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </TableCell>
+                <TableCell>{payment.milestone?.project?.name || 'Unknown Project'}</TableCell>
+                <TableCell>{payment.milestone?.name || 'Unknown Milestone'}</TableCell>
+                <TableCell>{payment.description || '-'}</TableCell>
+                <TableCell align="right">{formatCurrency(payment.amount)}</TableCell>
+                <TableCell>
+                  <Chip
+                    label={getPaymentMethodLabel(payment.paymentMethod)}
+                    color={getPaymentMethodColor(payment.paymentMethod)}
+                    size="small"
+                    variant="outlined"
+                  />
+                </TableCell>
+                <TableCell align="center">
+                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                    <IconButton
                       size="small"
-                      variant="outlined"
-                    />
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+                      onClick={() => handleEditClick(payment)}
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDeleteClick(payment)}
+                      color="error"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
+
+      <Dialog open={!!editingPayment} onClose={handleEditClose} maxWidth="sm" fullWidth>
+        <DialogTitle>Editar Pago</DialogTitle>
+        <form onSubmit={handleEditSubmit}>
+          <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+              <TextField
+                label="Monto"
+                type="number"
+                value={editFormData.amount}
+                onChange={(e) => setEditFormData({ ...editFormData, amount: e.target.value })}
+                fullWidth
+                required
+                inputProps={{ min: 0, step: "0.01" }}
+              />
+
+              <FormControl fullWidth>
+                <InputLabel>Método de Pago</InputLabel>
+                <Select
+                  value={editFormData.paymentMethod}
+                  label="Método de Pago"
+                  onChange={(e) => setEditFormData({ ...editFormData, paymentMethod: e.target.value })}
+                >
+                  <MenuItem value="EFECTIVO">Efectivo</MenuItem>
+                  <MenuItem value="TRANSFERENCIA_BANCARIA">Transferencia Bancaria</MenuItem>
+                  <MenuItem value="BIZUM">Bizum</MenuItem>
+                  <MenuItem value="PAYPAL">PayPal</MenuItem>
+                </Select>
+              </FormControl>
+
+              <TextField
+                label="Descripción"
+                value={editFormData.description}
+                onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                fullWidth
+                multiline
+                rows={2}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleEditClose}>Cancelar</Button>
+            <Button 
+              type="submit" 
+              variant="contained" 
+              color="primary"
+              disabled={loading || !editFormData.amount || parseFloat(editFormData.amount) <= 0}
+            >
+              {loading ? 'Guardando...' : 'Guardar Cambios'}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      <Snackbar
+        open={showSnackbar}
+        autoHideDuration={6000}
+        onClose={() => setShowSnackbar(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={() => setShowSnackbar(false)} 
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

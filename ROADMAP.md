@@ -366,7 +366,47 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 
 **Estado: COMPLETADO**
 
-## Sprint 13: Dashboard, Reportes y Seguimiento de Presupuestos
+## Sprint 13: Corrección de errores en pagos
+- Implementación de mensajes de error no intrusivos para pagos que exceden el coste total del milestone
+- Funcionalidad para modificar y eliminar pagos desde el historial de pagos
+- Integración de la gestión de pagos tanto en la página de pagos global como en los detalles de cada milestone
+
+**Criterios de Aceptación:**
+- Los mensajes de error deben:
+  * Mostrarse dentro del formulario de pago, no como popups
+  * Incluir información detallada (monto pagado, total y restante)
+  * Mantener consistencia visual con el resto de la aplicación
+- La edición y eliminación de pagos debe:
+  * Estar disponible tanto en la vista global como en el detalle del milestone
+  * Actualizar automáticamente el estado del milestone
+  * Mantener la consistencia de los montos totales
+- La interfaz debe:
+  * Mostrar botones de edición y eliminación alineados correctamente
+  * Proporcionar confirmación antes de eliminar pagos
+  * Actualizar en tiempo real tras modificaciones
+
+**Validación y Resultados:**
+- Mensajes de error:
+  * Se implementó el mensaje de error dentro del formulario usando el componente Alert
+  * Se verificó la correcta visualización de montos con formatCurrency
+  * Se comprobó que el mensaje incluye toda la información relevante
+- Gestión de pagos:
+  * Se añadieron endpoints en el backend para PUT y DELETE de pagos
+  * Se implementó la actualización automática del estado del milestone
+  * Se verificó la consistencia de datos tras modificaciones
+- Interfaz de usuario:
+  * Se alinearon correctamente los botones de acción en las tablas
+  * Se implementó diálogo de confirmación para eliminación
+  * Se verificó la actualización en tiempo real de los datos
+- Pruebas realizadas:
+  * Validación de montos al crear/editar pagos
+  * Eliminación de pagos y actualización de milestone
+  * Consistencia de datos en todas las vistas
+  * Navegación y usabilidad del formulario
+
+**Estado: COMPLETADO**
+
+## Sprint 14: Dashboard, Reportes y Seguimiento de Presupuestos
 - Crear un dashboard interactivo que brinde una vista general del progreso del proyecto, integrando información de proyectos, hitos, tareas, pagos y desviaciones presupuestarias.
 - Implementar la lógica para el seguimiento de desviaciones entre el presupuesto inicial y los gastos reales, permitiendo el registro de razones y cálculos de porcentajes.
 - Permitir la generación y exportación de reportes en formatos PDF y Excel.
@@ -375,7 +415,7 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 + - Se validarán los endpoints y la integración del dashboard mediante pruebas manuales y unitarias, confirmando la exactitud y actualización en tiempo real de la información.
 **Estado: TODO**
 
-## Sprint 14: Mejoras, Pruebas y Despliegue
+## Sprint 15: Mejoras, Pruebas y Despliegue
 - Optimizar la experiencia de usuario integrando la asociación de proyectos a usuarios, aprovechando la autenticación implementada en el Sprint 1.
 - Implementar pruebas unitarias y de integración con una cobertura mínima del 80%, asegurando la estabilidad de las funcionalidades implementadas.
 - Corregir bugs críticos y realizar mejoras de rendimiento en toda la aplicación.
