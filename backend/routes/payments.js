@@ -108,4 +108,14 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// TEMPORARY: DELETE all payments
+router.delete('/clean-all', async (req, res) => {
+  try {
+    await Payment.deleteMany({});
+    res.json({ message: 'All payments have been deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router; 

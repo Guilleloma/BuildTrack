@@ -176,9 +176,13 @@ router.delete('/:id', async (req, res) => {
         if (!project) {
             return res.status(404).json({ message: 'Project not found' });
         }
-        // Also delete all related milestones and tasks
+        // Get all milestones for this project
         const milestones = await Milestone.find({ project: project._id });
-        await Task.deleteMany({ milestone: { $in: milestones.map(m => m._id) } });
+        const milestoneIds = milestones.map(m => m._id);
+        
+        // Delete all related tasks, payments and milestones
+        await Task.deleteMany({ milestone: { $in: milestoneIds } });
+        await Payment.deleteMany({ milestone: { $in: milestoneIds } });
         await Milestone.deleteMany({ project: project._id });
         
         res.json({ message: 'Project deleted', project });
@@ -237,8 +241,9 @@ router.delete('/:projectId/milestones/:milestoneId', async (req, res) => {
         if (!milestone) {
             return res.status(404).json({ message: 'Milestone not found' });
         }
-        // Delete all related tasks
+        // Delete all related tasks and payments
         await Task.deleteMany({ milestone: milestone._id });
+        await Payment.deleteMany({ milestone: milestone._id });
         res.json({ message: 'Milestone deleted', milestone });
     } catch (error) {
         res.status(500).json({ message: error.message });
