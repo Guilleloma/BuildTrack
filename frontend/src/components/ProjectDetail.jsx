@@ -17,6 +17,7 @@ import {
   ListItem,
   ListItemText,
   Checkbox,
+  Grid,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -28,6 +29,8 @@ import TaskForm from './TaskForm';
 import PaymentForm from './PaymentForm';
 import PaymentHistory from './PaymentHistory';
 import ProgressDisplay from './ProgressDisplay';
+import { formatCurrency } from '../utils/formatters';
+import TaskAltIcon from '@mui/icons-material/TaskAlt';
 
 const ProjectDetail = () => {
   const { id } = useParams();
@@ -333,7 +336,7 @@ const ProjectDetail = () => {
         if (!milestoneData) return null;
         
         return (
-          <Accordion key={milestone._id} sx={{ mb: 2 }}>
+          <Accordion key={milestone._id} sx={{ mb: 0.5 }}>
             <AccordionSummary 
               expandIcon={<ExpandMoreIcon />}
               sx={{
@@ -341,66 +344,90 @@ const ProjectDetail = () => {
                 '&:hover': {
                   backgroundColor: '#f5f5f5',
                 },
+                minHeight: '40px !important',
+                '& .MuiAccordionSummary-content': {
+                  margin: '4px 0 !important',
+                }
               }}
             >
-              <Box sx={{ width: '100%' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="h6">{milestoneData.name}</Typography>
-                  <Box>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedMilestone(milestoneData);
-                        setMilestoneFormOpen(true);
-                      }}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteMilestone(milestone._id);
-                      }}
-                      sx={{
-                        '&:hover': {
-                          backgroundColor: 'error.light',
-                        }
-                      }}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedMilestone(milestoneData);
-                        setPaymentFormOpen(true);
-                      }}
-                      disabled={milestone.paymentPercentage >= 100}
-                    >
-                      <PaymentIcon />
-                    </IconButton>
-                  </Box>
+              <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: '200px' }}>
+                  {milestone.paymentPercentage >= 100 && (
+                    <TaskAltIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                  )}
+                  <Typography variant="subtitle2" sx={{ 
+                    fontWeight: 500,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
+                    {milestoneData.name}
+                  </Typography>
                 </Box>
-                <ProgressDisplay 
-                  progress={{
-                    ...milestone,
-                    totalCost: milestoneData.budget,
-                    paidAmount: milestoneData.paidAmount || 0,
-                    paymentPercentage: milestoneData.paidAmount ? (milestoneData.paidAmount / milestoneData.budget) * 100 : 0
-                  }}
-                  variant="compact" 
-                  type="milestone"
-                />
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
+                  <TaskAltIcon sx={{ fontSize: 16 }} />
+                  <Typography variant="body2">
+                    {Math.round(milestone.taskCompletionPercentage)}%
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: milestone.paymentPercentage >= 100 ? 'success.main' : 'text.secondary' }}>
+                  <PaymentIcon sx={{ fontSize: 16 }} />
+                  <Typography variant="body2">
+                    {formatCurrency(milestoneData.paidAmount || 0)}/{formatCurrency(milestoneData.budget)} ({Math.round(milestone.paymentPercentage)}%)
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', gap: 0.5, ml: 'auto' }}>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedMilestone(milestoneData);
+                      setMilestoneFormOpen(true);
+                    }}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteMilestone(milestone._id);
+                    }}
+                    sx={{
+                      '&:hover': {
+                        backgroundColor: 'error.light',
+                      }
+                    }}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedMilestone(milestoneData);
+                      setPaymentFormOpen(true);
+                    }}
+                    disabled={milestone.paymentPercentage >= 100}
+                    sx={{
+                      color: milestone.paymentPercentage >= 100 ? 'success.main' : 'inherit'
+                    }}
+                  >
+                    <PaymentIcon fontSize="small" />
+                  </IconButton>
+                </Box>
               </Box>
             </AccordionSummary>
-            <AccordionDetails>
-              <Typography color="textSecondary" paragraph>
-                {milestoneData.description}
-              </Typography>
+            <AccordionDetails sx={{ pt: 1, pb: 2 }}>
+              {milestoneData.description && (
+                <Typography color="text.secondary" variant="body2" paragraph sx={{ mb: 2 }}>
+                  {milestoneData.description}
+                </Typography>
+              )}
               <Box sx={{ mb: 2 }}>
                 <Button
                   variant="outlined"
@@ -415,7 +442,7 @@ const ProjectDetail = () => {
                   Add Task
                 </Button>
               </Box>
-              <List>
+              <List dense>
                 {(milestoneData.tasks || [])?.map((task) => (
                   <ListItem
                     key={task._id}
@@ -430,7 +457,7 @@ const ProjectDetail = () => {
                             setTaskFormOpen(true);
                           }}
                         >
-                          <EditIcon />
+                          <EditIcon fontSize="small" />
                         </IconButton>
                         <IconButton
                           edge="end"
@@ -443,27 +470,41 @@ const ProjectDetail = () => {
                             }
                           }}
                         >
-                          <DeleteIcon />
+                          <DeleteIcon fontSize="small" />
                         </IconButton>
                       </Box>
                     }
+                    disableGutters
                   >
                     <Checkbox
                       checked={task?.status === 'COMPLETED'}
                       onChange={() => handleToggleTask(milestone._id, task)}
+                      size="small"
                     />
                     <ListItemText
                       primary={task.name}
                       secondary={task.description}
-                      sx={{
-                        textDecoration: task?.status === 'COMPLETED' ? 'line-through' : 'none',
-                        color: task?.status === 'COMPLETED' ? 'text.secondary' : 'text.primary',
+                      primaryTypographyProps={{
+                        variant: 'body2',
+                        style: {
+                          textDecoration: task?.status === 'COMPLETED' ? 'line-through' : 'none',
+                          color: task?.status === 'COMPLETED' ? 'text.secondary' : 'text.primary',
+                        }
+                      }}
+                      secondaryTypographyProps={{
+                        variant: 'caption'
                       }}
                     />
                   </ListItem>
                 ))}
               </List>
               {milestoneData.tasks?.length > 0 && <Divider sx={{ my: 2 }} />}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                <PaymentIcon sx={{ color: 'text.secondary' }} />
+                <Typography variant="h6">
+                  Pagos Realizados
+                </Typography>
+              </Box>
               <PaymentHistory
                 projectId={id}
                 milestoneId={milestone._id}

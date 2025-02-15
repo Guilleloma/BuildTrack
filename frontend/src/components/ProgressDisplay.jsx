@@ -8,7 +8,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
-import PaymentsIcon from '@mui/icons-material/Payments';
+import PaymentIcon from '@mui/icons-material/Payment';
 import { formatCurrency } from '../utils/formatters';
 
 const COLORS = {
@@ -175,12 +175,12 @@ const ProgressDisplay = ({ progress, variant = 'default', type = 'milestone' }) 
 
         <Grid item xs={12}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-            <PaymentsIcon 
+            <PaymentIcon 
               sx={{ 
                 mr: 1,
                 fontSize: type === 'project' ? 28 : 24,
                 opacity: variant === 'compact' ? 0.9 : 1,
-                color: COLORS.payments.icon,
+                color: paymentPercentage >= 100 ? COLORS.payments.icon : 'text.secondary',
               }} 
             />
             <Typography 
