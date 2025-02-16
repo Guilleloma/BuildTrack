@@ -19,6 +19,11 @@ import {
   Checkbox,
   Tooltip,
   LinearProgress,
+  ButtonGroup,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -28,6 +33,8 @@ import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import WarningIcon from '@mui/icons-material/Warning';
 import PercentIcon from '@mui/icons-material/Percent';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import TableViewIcon from '@mui/icons-material/TableView';
 import MilestoneForm from './MilestoneForm';
 import TaskForm from './TaskForm';
 import PaymentForm from './PaymentForm';
@@ -49,6 +56,7 @@ const ProjectDetail = () => {
   const [selectedMilestone, setSelectedMilestone] = React.useState(null);
   const [selectedTask, setSelectedTask] = React.useState(null);
   const [paymentsRefreshTrigger, setPaymentsRefreshTrigger] = React.useState(0);
+  const [reportDialogOpen, setReportDialogOpen] = React.useState(false);
 
   const fetchProjectProgress = useCallback(async () => {
     try {
@@ -274,6 +282,52 @@ const ProjectDetail = () => {
     }
   };
 
+  const handleExportPDF = async () => {
+    try {
+      const response = await fetch(`/projects/${id}/report/pdf`, {
+        method: 'GET',
+      });
+      if (!response.ok) throw new Error('Error generating PDF report');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `project-${project.name.toLowerCase().replace(/\s+/g, '-')}-report.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      const response = await fetch(`/projects/${id}/report/excel`, {
+        method: 'GET',
+      });
+      if (!response.ok) throw new Error('Error generating Excel report');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `project-${project.name.toLowerCase().replace(/\s+/g, '-')}-report.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleReportDialogClose = () => {
+    setReportDialogOpen(false);
+  };
+
   if (loading) {
     return (
       <Container style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
@@ -296,403 +350,478 @@ const ProjectDetail = () => {
   }
 
   return (
-    <Container>
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Button
-          variant="outlined"
-          onClick={() => navigate('/projects')}
-          sx={{ mr: 2 }}
-        >
-          Back to Projects
-        </Button>
-        <Button
-          variant="contained"
-          color="error"
-          onClick={handleDeleteProject}
-          sx={{ mr: 2 }}
-        >
-          Delete Project
-        </Button>
-      </Box>
-
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-            <Typography variant="h4" gutterBottom>
-              {project?.name}
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => {
-                  setSelectedMilestone(null);
-                  setMilestoneFormOpen(true);
-                }}
-                color="primary"
-              >
-                Add Milestone
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<PaymentIcon />}
-                onClick={() => {
-                  setSelectedMilestone(null);
-                  setPaymentFormOpen(true);
-                }}
-              >
-                Distributed Payment
-              </Button>
-            </Box>
-          </Box>
-          {project?.description && (
-            <Typography color="textSecondary" paragraph>
-              {project.description}
-            </Typography>
-          )}
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Progreso General del Proyecto
-            </Typography>
-            
-            {/* Barra de progreso de tareas */}
-            <Box sx={{ mb: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Tareas Completadas
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {projectProgress?.overallProgress?.completedTasks}/{projectProgress?.overallProgress?.totalTasks} ({Math.round(projectProgress?.overallProgress?.taskCompletionPercentage || 0)}%)
-                </Typography>
-              </Box>
-              <LinearProgress 
-                variant="determinate" 
-                value={projectProgress?.overallProgress?.taskCompletionPercentage || 0}
-                sx={{ height: 8, borderRadius: 4, bgcolor: 'grey.200' }}
-              />
-            </Box>
-
-            {/* Barra de progreso de pagos base */}
-            <Box sx={{ mb: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Base
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {formatCurrency(projectProgress?.totals?.base_paid || 0)}/{formatCurrency(projectProgress?.totals?.base || 0)} ({Math.round((projectProgress?.totals?.base_paid / projectProgress?.totals?.base || 0) * 100)}%)
-                </Typography>
-              </Box>
-              <LinearProgress 
-                variant="determinate" 
-                value={(projectProgress?.totals?.base_paid / projectProgress?.totals?.base || 0) * 100}
-                sx={{ height: 8, borderRadius: 4, bgcolor: 'grey.200' }}
-              />
-            </Box>
-
-            {/* Barra de progreso de IVA */}
-            {projectProgress?.totals?.tax > 0 && (
-              <Box sx={{ mb: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    IVA ({projectProgress?.defaultTaxRate || 21}%)
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {formatCurrency(projectProgress?.totals?.tax_paid || 0)}/{formatCurrency(projectProgress?.totals?.tax || 0)} ({Math.round((projectProgress?.totals?.tax_paid / projectProgress?.totals?.tax || 0) * 100)}%)
-                  </Typography>
-                </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={(projectProgress?.totals?.tax_paid / projectProgress?.totals?.tax || 0) * 100}
-                  sx={{ height: 8, borderRadius: 4, bgcolor: 'grey.200' }}
-                />
-              </Box>
-            )}
-
-            {/* Total con IVA */}
-            <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-              <Typography variant="subtitle1" color="text.secondary">
-                Total Pagado: {formatCurrency(projectProgress?.totals?.paid || 0)} / {formatCurrency(projectProgress?.totals?.totalWithTax || 0)} ({Math.round(projectProgress?.totals?.paymentPercentage || 0)}%)
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-
-      {projectProgress?.milestones?.map((milestone, index) => {
-        const milestoneData = project.milestones.find(m => m._id === milestone._id);
-        if (!milestoneData) return null;
-        
-        const showWarning = milestone.paymentPercentage > milestone.taskCompletionPercentage;
-        const showPaymentNeeded = milestone.taskCompletionPercentage > milestone.paymentPercentage;
-        
-        // Calculate tax amounts
-        const baseAmount = milestoneData.budget;
-        const taxAmount = milestoneData.hasTax 
-          ? baseAmount * (milestoneData.taxRate || 21) / 100 
-          : 0;
-        const totalWithTax = baseAmount + taxAmount;
-        
-        return (
-          <Accordion key={milestone._id} sx={{ mb: 0.5 }}>
-            <AccordionSummary 
-              expandIcon={<ExpandMoreIcon />}
-              sx={{
-                backgroundColor: '#f8f9fa',
-                borderRadius: '4px',
-                my: 0.5,
-                border: '1px solid rgba(0, 0, 0, 0.05)',
-                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-                '&:hover': {
-                  backgroundColor: '#f0f2f5',
-                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                },
-                minHeight: '48px !important',
-                '& .MuiAccordionSummary-content': {
-                  margin: '12px 0 !important',
-                }
-              }}
+    <Container maxWidth="lg">
+      {loading ? (
+        <CircularProgress />
+      ) : error ? (
+        <Typography color="error">{error}</Typography>
+      ) : project ? (
+        <>
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Button
+              variant="outlined"
+              onClick={() => navigate('/projects')}
             >
-              <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: '200px' }}>
-                  {milestone.taskCompletionPercentage >= 100 && (
-                    <TaskAltIcon sx={{ fontSize: 16, color: 'success.main' }} />
-                  )}
-                  {showWarning && (
-                    <Tooltip title="El porcentaje de pago supera al porcentaje de tareas completadas">
-                      <WarningIcon sx={{ fontSize: 16, color: 'warning.main' }} />
-                    </Tooltip>
-                  )}
-                  {showPaymentNeeded && (
-                    <Tooltip title="Hay más tareas completadas que pagos realizados">
-                      <MonetizationOnIcon sx={{ fontSize: 16, color: 'success.main' }} />
-                    </Tooltip>
-                  )}
-                  {milestoneData.hasTax && (
-                    <Tooltip title={`IVA ${milestoneData.taxRate || 21}%`}>
-                      <PercentIcon sx={{ fontSize: 16, color: 'secondary.main' }} />
-                    </Tooltip>
-                  )}
-                  <Typography variant="subtitle2" sx={{ 
-                    fontWeight: 500,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
-                  }}>
-                    {milestoneData.name}
-                  </Typography>
-                </Box>
+              Back to Projects
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleDeleteProject}
+            >
+              Delete Project
+            </Button>
+          </Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: milestone.taskCompletionPercentage >= 100 ? 'success.main' : 'text.secondary' }}>
-                  <TaskAltIcon sx={{ fontSize: 16 }} />
-                  <Typography variant="body2">
-                    {milestone.completedTasks}/{milestone.totalTasks} ({Math.round(milestone.taskCompletionPercentage)}%)
-                  </Typography>
-                </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+            <Typography variant="h4" component="h1">
+              {project.name}
+            </Typography>
+          </Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: milestone.paymentPercentage >= 100 ? 'success.main' : 'text.secondary' }}>
-                  <PaymentIcon sx={{ fontSize: 16 }} />
-                  <Tooltip title={
-                    milestoneData.hasTax 
-                      ? `Base: ${formatCurrency(baseAmount)}\nIVA (${milestoneData.taxRate || 21}%): ${formatCurrency(taxAmount)}\nTotal: ${formatCurrency(totalWithTax)}`
-                      : "Sin IVA"
-                  }>
-                    <Typography variant="body2">
-                      {formatCurrency(milestoneData.paidAmount || 0)}/{formatCurrency(totalWithTax)} ({Math.round(milestone.paymentPercentage)}%)
+          <Card sx={{ mb: 4 }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Box>
+                  {project?.description && (
+                    <Typography color="textSecondary" paragraph>
+                      {project.description}
                     </Typography>
-                  </Tooltip>
+                  )}
                 </Box>
-
-                <Box sx={{ display: 'flex', gap: 0.5, ml: 'auto' }}>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedMilestone(milestoneData);
-                      setMilestoneFormOpen(true);
-                    }}
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteMilestone(milestone._id);
-                    }}
-                    sx={{
-                      '&:hover': {
-                        backgroundColor: 'error.light',
-                      }
-                    }}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedMilestone(milestoneData);
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    startIcon={<PaymentIcon />}
+                    onClick={() => {
+                      setSelectedMilestone(null);
                       setPaymentFormOpen(true);
                     }}
-                    disabled={milestone.paymentPercentage >= 100}
-                    sx={{
-                      color: milestone.paymentPercentage >= 100 ? 'success.main' : 'inherit'
-                    }}
                   >
-                    <PaymentIcon fontSize="small" />
-                  </IconButton>
+                    Distributed Payment
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<PictureAsPdfIcon />}
+                    onClick={() => setReportDialogOpen(true)}
+                  >
+                    Generate Report
+                  </Button>
                 </Box>
               </Box>
-            </AccordionSummary>
-            <AccordionDetails sx={{ pt: 1, pb: 2 }}>
-              {milestoneData.description && (
-                <Typography color="text.secondary" variant="body2" paragraph sx={{ mb: 2 }}>
-                  {milestoneData.description}
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  Progreso General del Proyecto
                 </Typography>
-              )}
+                
+                {/* Barra de progreso de tareas */}
+                <Box sx={{ mb: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Tareas Completadas
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {projectProgress?.overallProgress?.completedTasks}/{projectProgress?.overallProgress?.totalTasks} ({Math.round(projectProgress?.overallProgress?.taskCompletionPercentage || 0)}%)
+                    </Typography>
+                  </Box>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={projectProgress?.overallProgress?.taskCompletionPercentage || 0}
+                    sx={{ height: 8, borderRadius: 4, bgcolor: 'grey.200' }}
+                  />
+                </Box>
 
-              <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Base Amount: {formatCurrency(baseAmount)}
-                </Typography>
-                {milestoneData.hasTax && (
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Tax Amount ({milestoneData.taxRate || 21}%): {formatCurrency(taxAmount)}
-                  </Typography>
+                {/* Barra de progreso de pagos base */}
+                <Box sx={{ mb: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Base
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {formatCurrency(projectProgress?.totals?.base_paid || 0)}/{formatCurrency(projectProgress?.totals?.base || 0)} ({Math.round((projectProgress?.totals?.base_paid / projectProgress?.totals?.base || 0) * 100)}%)
+                    </Typography>
+                  </Box>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={(projectProgress?.totals?.base_paid / projectProgress?.totals?.base || 0) * 100}
+                    sx={{ height: 8, borderRadius: 4, bgcolor: 'grey.200' }}
+                  />
+                </Box>
+
+                {/* Barra de progreso de IVA */}
+                {projectProgress?.totals?.tax > 0 && (
+                  <Box sx={{ mb: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        IVA ({projectProgress?.defaultTaxRate || 21}%)
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {formatCurrency(projectProgress?.totals?.tax_paid || 0)}/{formatCurrency(projectProgress?.totals?.tax || 0)} ({Math.round((projectProgress?.totals?.tax_paid / projectProgress?.totals?.tax || 0) * 100)}%)
+                      </Typography>
+                    </Box>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={(projectProgress?.totals?.tax_paid / projectProgress?.totals?.tax || 0) * 100}
+                      sx={{ height: 8, borderRadius: 4, bgcolor: 'grey.200' }}
+                    />
+                  </Box>
                 )}
-                <Typography variant="subtitle1" color="primary" sx={{ mt: 1 }}>
-                  Total Amount: {formatCurrency(totalWithTax)}
-                </Typography>
-                <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1 }}>
-                  Paid Amount: {formatCurrency(milestoneData.paidAmount || 0)}
-                </Typography>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Pending Amount: {formatCurrency(totalWithTax - (milestoneData.paidAmount || 0))}
-                </Typography>
-              </Box>
 
-              <Box sx={{ mb: 2 }}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<AddIcon />}
-                  onClick={() => {
-                    setSelectedMilestone(milestoneData);
-                    setSelectedTask(null);
-                    setTaskFormOpen(true);
+                {/* Total con IVA */}
+                <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography variant="subtitle1" color="text.secondary">
+                    Total Pagado: {formatCurrency(projectProgress?.totals?.paid || 0)} / {formatCurrency(projectProgress?.totals?.totalWithTax || 0)} ({Math.round(projectProgress?.totals?.paymentPercentage || 0)}%)
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+
+          {/* Botón New Milestone antes de la lista de milestones */}
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => {
+                setSelectedMilestone(null);
+                setMilestoneFormOpen(true);
+              }}
+            >
+              New Milestone
+            </Button>
+          </Box>
+
+          {projectProgress?.milestones?.map((milestone, index) => {
+            const milestoneData = project.milestones.find(m => m._id === milestone._id);
+            if (!milestoneData) return null;
+            
+            const showWarning = milestone.paymentPercentage > milestone.taskCompletionPercentage;
+            const showPaymentNeeded = milestone.taskCompletionPercentage > milestone.paymentPercentage;
+            
+            // Calculate tax amounts
+            const baseAmount = milestoneData.budget;
+            const taxAmount = milestoneData.hasTax 
+              ? baseAmount * (milestoneData.taxRate || 21) / 100 
+              : 0;
+            const totalWithTax = baseAmount + taxAmount;
+            
+            return (
+              <Accordion key={milestone._id} sx={{ mb: 0.5 }}>
+                <AccordionSummary 
+                  expandIcon={<ExpandMoreIcon />}
+                  sx={{
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '4px',
+                    my: 0.5,
+                    border: '1px solid rgba(0, 0, 0, 0.05)',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                    '&:hover': {
+                      backgroundColor: '#f0f2f5',
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                    },
+                    minHeight: '48px !important',
+                    '& .MuiAccordionSummary-content': {
+                      margin: '12px 0 !important',
+                    }
                   }}
                 >
-                  Add Task
-                </Button>
-              </Box>
-              <List dense>
-                {(milestoneData.tasks || [])?.map((task) => (
-                  <ListItem
-                    key={task._id}
-                    secondaryAction={
-                      <Box>
-                        <IconButton
-                          edge="end"
+                  <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: '200px' }}>
+                      {milestone.taskCompletionPercentage >= 100 && (
+                        <TaskAltIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                      )}
+                      {showWarning && (
+                        <Tooltip title="El porcentaje de pago supera al porcentaje de tareas completadas">
+                          <WarningIcon sx={{ fontSize: 16, color: 'warning.main' }} />
+                        </Tooltip>
+                      )}
+                      {showPaymentNeeded && (
+                        <Tooltip title="Hay más tareas completadas que pagos realizados">
+                          <MonetizationOnIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                        </Tooltip>
+                      )}
+                      {milestoneData.hasTax && (
+                        <Tooltip title={`IVA ${milestoneData.taxRate || 21}%`}>
+                          <PercentIcon sx={{ fontSize: 16, color: 'secondary.main' }} />
+                        </Tooltip>
+                      )}
+                      <Typography variant="subtitle2" sx={{ 
+                        fontWeight: 500,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {milestoneData.name}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: milestone.taskCompletionPercentage >= 100 ? 'success.main' : 'text.secondary' }}>
+                      <TaskAltIcon sx={{ fontSize: 16 }} />
+                      <Typography variant="body2">
+                        {milestone.completedTasks}/{milestone.totalTasks} ({Math.round(milestone.taskCompletionPercentage)}%)
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: milestone.paymentPercentage >= 100 ? 'success.main' : 'text.secondary' }}>
+                      <PaymentIcon sx={{ fontSize: 16 }} />
+                      <Tooltip title={
+                        milestoneData.hasTax 
+                          ? `Base: ${formatCurrency(baseAmount)}\nIVA (${milestoneData.taxRate || 21}%): ${formatCurrency(taxAmount)}\nTotal: ${formatCurrency(totalWithTax)}`
+                          : "Sin IVA"
+                      }>
+                        <Typography variant="body2">
+                          {formatCurrency(milestoneData.paidAmount || 0)}/{formatCurrency(totalWithTax)} ({Math.round(milestone.paymentPercentage)}%)
+                        </Typography>
+                      </Tooltip>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', gap: 0.5, ml: 'auto' }}>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedMilestone(milestoneData);
+                          setMilestoneFormOpen(true);
+                        }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteMilestone(milestone._id);
+                        }}
+                        sx={{
+                          '&:hover': {
+                            backgroundColor: 'error.light',
+                          }
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedMilestone(milestoneData);
+                          setPaymentFormOpen(true);
+                        }}
+                        disabled={milestone.paymentPercentage >= 100}
+                        sx={{
+                          color: milestone.paymentPercentage >= 100 ? 'success.main' : 'inherit'
+                        }}
+                      >
+                        <PaymentIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails sx={{ pt: 1, pb: 2 }}>
+                  {milestoneData.description && (
+                    <Typography color="text.secondary" variant="body2" paragraph sx={{ mb: 2 }}>
+                      {milestoneData.description}
+                    </Typography>
+                  )}
+
+                  <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Base Amount: {formatCurrency(baseAmount)}
+                    </Typography>
+                    {milestoneData.hasTax && (
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Tax Amount ({milestoneData.taxRate || 21}%): {formatCurrency(taxAmount)}
+                      </Typography>
+                    )}
+                    <Typography variant="subtitle1" color="primary" sx={{ mt: 1 }}>
+                      Total Amount: {formatCurrency(totalWithTax)}
+                    </Typography>
+                    <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1 }}>
+                      Paid Amount: {formatCurrency(milestoneData.paidAmount || 0)}
+                    </Typography>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Pending Amount: {formatCurrency(totalWithTax - (milestoneData.paidAmount || 0))}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ mb: 2 }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<AddIcon />}
+                      onClick={() => {
+                        setSelectedMilestone(milestoneData);
+                        setSelectedTask(null);
+                        setTaskFormOpen(true);
+                      }}
+                    >
+                      Add Task
+                    </Button>
+                  </Box>
+                  <List dense>
+                    {(milestoneData.tasks || [])?.map((task) => (
+                      <ListItem
+                        key={task._id}
+                        secondaryAction={
+                          <Box>
+                            <IconButton
+                              edge="end"
+                              size="small"
+                              onClick={() => {
+                                setSelectedMilestone(milestoneData);
+                                setSelectedTask(task);
+                                setTaskFormOpen(true);
+                              }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              edge="end"
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteTask(milestone._id, task._id)}
+                              sx={{
+                                '&:hover': {
+                                  backgroundColor: 'error.light',
+                                }
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        }
+                        disableGutters
+                      >
+                        <Checkbox
+                          checked={task?.status === 'COMPLETED'}
+                          onChange={() => handleToggleTask(milestone._id, task)}
                           size="small"
-                          onClick={() => {
-                            setSelectedMilestone(milestoneData);
-                            setSelectedTask(task);
-                            setTaskFormOpen(true);
-                          }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          edge="end"
-                          size="small"
-                          color="error"
-                          onClick={() => handleDeleteTask(milestone._id, task._id)}
-                          sx={{
-                            '&:hover': {
-                              backgroundColor: 'error.light',
+                        />
+                        <ListItemText
+                          primary={task.name}
+                          secondary={task.description}
+                          primaryTypographyProps={{
+                            variant: 'body2',
+                            style: {
+                              textDecoration: task?.status === 'COMPLETED' ? 'line-through' : 'none',
+                              color: task?.status === 'COMPLETED' ? 'text.secondary' : 'text.primary',
                             }
                           }}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    }
-                    disableGutters
-                  >
-                    <Checkbox
-                      checked={task?.status === 'COMPLETED'}
-                      onChange={() => handleToggleTask(milestone._id, task)}
-                      size="small"
-                    />
-                    <ListItemText
-                      primary={task.name}
-                      secondary={task.description}
-                      primaryTypographyProps={{
-                        variant: 'body2',
-                        style: {
-                          textDecoration: task?.status === 'COMPLETED' ? 'line-through' : 'none',
-                          color: task?.status === 'COMPLETED' ? 'text.secondary' : 'text.primary',
-                        }
-                      }}
-                      secondaryTypographyProps={{
-                        variant: 'caption'
-                      }}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-              {milestoneData.tasks?.length > 0 && <Divider sx={{ my: 2 }} />}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <PaymentIcon sx={{ color: 'text.secondary' }} />
-                <Typography variant="h6">
-                  Pagos Realizados
-                </Typography>
+                          secondaryTypographyProps={{
+                            variant: 'caption'
+                          }}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                  {milestoneData.tasks?.length > 0 && <Divider sx={{ my: 2 }} />}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <PaymentIcon sx={{ color: 'text.secondary' }} />
+                    <Typography variant="h6">
+                      Pagos Realizados
+                    </Typography>
+                  </Box>
+                  <PaymentHistory
+                    projectId={id}
+                    milestoneId={milestone._id}
+                    refreshTrigger={paymentsRefreshTrigger}
+                    onPaymentDeleted={async () => {
+                      await Promise.all([
+                        fetchProject(),
+                        fetchProjectProgress()
+                      ]);
+                    }}
+                  />
+                </AccordionDetails>
+              </Accordion>
+            );
+          })}
+
+          <MilestoneForm
+            open={milestoneFormOpen}
+            onClose={() => {
+              setMilestoneFormOpen(false);
+              setSelectedMilestone(null);
+            }}
+            onSubmit={selectedMilestone ? handleUpdateMilestone : handleCreateMilestone}
+            milestone={selectedMilestone}
+          />
+
+          <TaskForm
+            open={taskFormOpen}
+            onClose={() => {
+              setTaskFormOpen(false);
+              setSelectedTask(null);
+            }}
+            onSubmit={selectedTask ? handleUpdateTask : handleCreateTask}
+            task={selectedTask}
+          />
+
+          {paymentFormOpen && (
+            <PaymentForm
+              open={paymentFormOpen}
+              onClose={() => setPaymentFormOpen(false)}
+              onSubmit={handlePaymentComplete}
+              milestone={selectedMilestone}
+              project={project}
+            />
+          )}
+
+          <Dialog
+            open={reportDialogOpen}
+            onClose={handleReportDialogClose}
+            aria-labelledby="report-dialog-title"
+          >
+            <DialogTitle id="report-dialog-title">
+              Select Report Format
+            </DialogTitle>
+            <DialogContent sx={{ pt: 1 }}>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<PictureAsPdfIcon />}
+                  onClick={() => {
+                    handleExportPDF();
+                    handleReportDialogClose();
+                  }}
+                  sx={{ 
+                    minWidth: '120px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1,
+                    py: 2
+                  }}
+                >
+                  PDF
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<TableViewIcon />}
+                  onClick={() => {
+                    handleExportExcel();
+                    handleReportDialogClose();
+                  }}
+                  sx={{ 
+                    minWidth: '120px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1,
+                    py: 2
+                  }}
+                >
+                  Excel
+                </Button>
               </Box>
-              <PaymentHistory
-                projectId={id}
-                milestoneId={milestone._id}
-                refreshTrigger={paymentsRefreshTrigger}
-                onPaymentDeleted={async () => {
-                  await Promise.all([
-                    fetchProject(),
-                    fetchProjectProgress()
-                  ]);
-                }}
-              />
-            </AccordionDetails>
-          </Accordion>
-        );
-      })}
-
-      <MilestoneForm
-        open={milestoneFormOpen}
-        onClose={() => {
-          setMilestoneFormOpen(false);
-          setSelectedMilestone(null);
-        }}
-        onSubmit={selectedMilestone ? handleUpdateMilestone : handleCreateMilestone}
-        milestone={selectedMilestone}
-      />
-
-      <TaskForm
-        open={taskFormOpen}
-        onClose={() => {
-          setTaskFormOpen(false);
-          setSelectedTask(null);
-        }}
-        onSubmit={selectedTask ? handleUpdateTask : handleCreateTask}
-        task={selectedTask}
-      />
-
-      {paymentFormOpen && (
-        <PaymentForm
-          open={paymentFormOpen}
-          onClose={() => setPaymentFormOpen(false)}
-          onSubmit={handlePaymentComplete}
-          milestone={selectedMilestone}
-          project={project}
-        />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleReportDialogClose}>Cancel</Button>
+            </DialogActions>
+          </Dialog>
+        </>
+      ) : (
+        <Typography color="error">{error}</Typography>
       )}
     </Container>
   );

@@ -5,6 +5,8 @@ const Milestone = require('../models/milestone');
 const Task = require('../models/task');
 const Payment = require('../models/payment');
 const Settings = require('../models/settings');
+const { generatePDFReport, generateExcelReport } = require('../utils/reportGenerator');
+const XLSX = require('xlsx');
 
 // GET all projects
 router.get('/', async (req, res) => {
@@ -484,5 +486,162 @@ router.delete('/:projectId/milestones/:milestoneId/tasks/:taskId', async (req, r
         res.status(500).json({ message: error.message || 'Error deleting task' });
     }
 });
+
+// GET project report in PDF format
+router.get('/:id/report/pdf', async (req, res) => {
+    try {
+        const project = await Project.findById(req.params.id);
+        if (!project) {
+            return res.status(404).json({ message: 'Project not found' });
+        }
+
+        // Get complete project data with milestones, tasks and payments
+        const milestones = await Milestone.find({ project: project._id });
+        const milestoneIds = milestones.map(m => m._id);
+        
+        const payments = await Payment.find({
+            $or: [
+                { milestone: { $in: milestoneIds } },
+                { 'distributions.milestone': { $in: milestoneIds } }
+            ]
+        }).populate('milestone distributions.milestone');
+
+        const tasks = await Task.find({ milestone: { $in: milestoneIds } });
+
+        // Calculate project totals and progress
+        const projectData = await calculateProjectData(project, milestones, payments, tasks);
+
+        // Set response headers
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=project-${project.name.toLowerCase().replace(/\s+/g, '-')}-report.pdf`);
+
+        // Manejar errores del stream
+        const chunks = [];
+        const stream = new require('stream').PassThrough();
+
+        stream.on('data', chunk => chunks.push(chunk));
+        stream.on('end', () => {
+            const result = Buffer.concat(chunks);
+            res.end(result);
+        });
+        stream.on('error', err => {
+            console.error('Error en el stream:', err);
+            res.status(500).json({ message: 'Error generating PDF' });
+        });
+
+        // Generate PDF
+        generatePDFReport(projectData, stream);
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// GET project report in Excel format
+router.get('/:id/report/excel', async (req, res) => {
+    try {
+        const project = await Project.findById(req.params.id);
+        if (!project) {
+            return res.status(404).json({ message: 'Project not found' });
+        }
+
+        // Get complete project data with milestones, tasks and payments
+        const milestones = await Milestone.find({ project: project._id });
+        const milestoneIds = milestones.map(m => m._id);
+        
+        const payments = await Payment.find({
+            $or: [
+                { milestone: { $in: milestoneIds } },
+                { 'distributions.milestone': { $in: milestoneIds } }
+            ]
+        }).populate('milestone distributions.milestone');
+
+        const tasks = await Task.find({ milestone: { $in: milestoneIds } });
+
+        // Calculate project totals and progress
+        const projectData = await calculateProjectData(project, milestones, payments, tasks);
+
+        // Generate Excel workbook
+        const workbook = generateExcelReport(projectData);
+
+        // Convert workbook to buffer
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+        // Set response headers
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=project-${project.name.toLowerCase().replace(/\s+/g, '-')}-report.xlsx`);
+
+        // Send buffer
+        res.send(buffer);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Helper function to calculate project data
+async function calculateProjectData(project, milestones, payments, tasks) {
+    const milestonesWithData = await Promise.all(milestones.map(async (milestone) => {
+        const milestoneTasks = tasks.filter(t => t.milestone.toString() === milestone._id.toString());
+        const totalTasks = milestoneTasks.length;
+        const completedTasks = milestoneTasks.filter(t => t.status === 'COMPLETED').length;
+
+        // Calculate payments for this milestone
+        const singlePayments = payments
+            .filter(p => p.type === 'SINGLE' && p.milestone?._id.toString() === milestone._id.toString());
+        
+        const distributedPayments = payments
+            .filter(p => p.type === 'DISTRIBUTED' && p.distributions.some(d => 
+                d.milestone._id.toString() === milestone._id.toString()
+            ));
+
+        const milestonePayments = [
+            ...singlePayments,
+            ...distributedPayments.map(p => ({
+                ...p.toObject(),
+                amount: p.distributions.find(d => 
+                    d.milestone._id.toString() === milestone._id.toString()
+                ).amount
+            }))
+        ];
+
+        const totalPaid = milestonePayments.reduce((sum, p) => sum + p.amount, 0);
+        
+        const baseAmount = milestone.budget;
+        const taxAmount = milestone.hasTax ? baseAmount * (milestone.taxRate || 21) / 100 : 0;
+        const totalWithTax = baseAmount + taxAmount;
+
+        return {
+            ...milestone.toObject(),
+            tasks: milestoneTasks,
+            payments: milestonePayments,
+            totalTasks,
+            completedTasks,
+            taskCompletionPercentage: totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0,
+            paymentPercentage: totalWithTax > 0 ? (totalPaid / totalWithTax) * 100 : 0,
+            paidAmount: totalPaid,
+            totalWithTax,
+            baseAmount,
+            taxAmount
+        };
+    }));
+
+    // Calculate project totals
+    const totalBase = milestonesWithData.reduce((sum, m) => sum + m.baseAmount, 0);
+    const totalTax = milestonesWithData.reduce((sum, m) => sum + m.taxAmount, 0);
+    const totalWithTax = milestonesWithData.reduce((sum, m) => sum + m.totalWithTax, 0);
+    const totalPaid = milestonesWithData.reduce((sum, m) => sum + m.paidAmount, 0);
+
+    return {
+        ...project.toObject(),
+        milestones: milestonesWithData,
+        totals: {
+            base: totalBase,
+            tax: totalTax,
+            totalWithTax,
+            paid: totalPaid,
+            paymentPercentage: totalWithTax > 0 ? (totalPaid / totalWithTax) * 100 : 0
+        }
+    };
+}
 
 module.exports = router;

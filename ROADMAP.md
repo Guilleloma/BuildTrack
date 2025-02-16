@@ -523,7 +523,67 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 
 **Estado: COMPLETADO**
 
-## Sprint 16: Dashboard, Reportes y Seguimiento de Presupuestos
+## Sprint 16: Exportar informe de proyectos
+- Implementación de exportación de informes en formatos PDF y Excel
+- Desarrollo de un diálogo de selección de formato siguiendo las mejores prácticas de UX/UI
+- El informe incluye:
+  * Nombre y descripción del proyecto
+  * Presupuesto total (base y con impuestos)
+  * Porcentajes de progreso (tareas y pagos)
+  * Desglose detallado de cada milestone:
+    - Nombre y descripción
+    - Presupuesto (base, impuestos y total)
+    - Porcentaje de tareas completadas
+    - Porcentaje de pagos realizados
+    - Lista detallada de tareas con su estado
+    - Historial completo de pagos
+
+**Criterios de Aceptación:**
+- La generación de informes debe ser accesible desde la vista de detalle del proyecto
+- El diálogo de selección de formato debe:
+  * Mostrar opciones claras para PDF y Excel
+  * Incluir iconos distintivos para cada formato
+  * Permitir cancelar la operación
+  * Ser accesible mediante teclado
+- Los informes PDF deben:
+  * Mantener un diseño profesional y consistente
+  * Incluir barras de progreso visuales
+  * Mostrar los montos formateados en euros
+  * Organizar la información de forma jerárquica y clara
+- Los informes Excel deben:
+  * Contener múltiples hojas organizadas por tipo de información
+  * Incluir una hoja de resumen general
+  * Proporcionar desglose detallado de milestones
+  * Separar tareas y pagos en hojas independientes
+
+**Validación y Resultados:**
+- Interfaz de Usuario:
+  * Se implementó un diálogo Material-UI para la selección de formato
+  * Se añadieron botones grandes con iconos distintivos
+  * Se incluyó la opción de cancelar
+  * Se verificó la navegación por teclado
+
+- Generación de PDF:
+  * Se validó la correcta generación del documento
+  * Se comprobó la inclusión de todos los datos requeridos
+  * Se verificó el formato correcto de montos y porcentajes
+  * Se confirmó la legibilidad y organización jerárquica
+
+- Generación de Excel:
+  * Se verificó la creación de hojas separadas (Overview, Milestones, Tasks, Payments)
+  * Se validó la correcta exportación de datos en cada hoja
+  * Se comprobó el formato de las celdas y fórmulas
+  * Se confirmó la facilidad de lectura y análisis
+
+- Pruebas de Integración:
+  * Se realizaron pruebas con proyectos de diferentes tamaños
+  * Se verificó el manejo correcto de casos especiales (sin tareas, sin pagos)
+  * Se comprobó la gestión de errores y mensajes al usuario
+  * Se validó la descarga correcta de archivos en diferentes navegadores
+
+**Estado: COMPLETADO**
+
+## Sprint 17: Dashboard, Reportes y Seguimiento de Presupuestos
 - Crear un dashboard interactivo que brinde una vista general del progreso del proyecto, integrando información de proyectos, hitos, tareas, pagos y desviaciones presupuestarias.
 - Implementar la lógica para el seguimiento de desviaciones entre el presupuesto inicial y los gastos reales, permitiendo el registro de razones y cálculos de porcentajes.
 - Permitir la generación y exportación de reportes en formatos PDF y Excel.
@@ -532,7 +592,7 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 + - Se validarán los endpoints y la integración del dashboard mediante pruebas manuales y unitarias, confirmando la exactitud y actualización en tiempo real de la información.
 **Estado: TODO**
 
-## Sprint 17: Mejoras, Pruebas y Despliegue
+## Sprint 18: Mejoras, Pruebas y Despliegue
 - Optimizar la experiencia de usuario integrando la asociación de proyectos a usuarios, aprovechando la autenticación implementada en el Sprint 1.
 - Implementar pruebas unitarias y de integración con una cobertura mínima del 80%, asegurando la estabilidad de las funcionalidades implementadas.
 - Corregir bugs críticos y realizar mejoras de rendimiento en toda la aplicación.
