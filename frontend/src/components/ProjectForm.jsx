@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, TextField, Button, Typography, Paper } from '@mui/material';
+import { getApiUrl } from '../config';
 
 const ProjectForm = () => {
   const [name, setName] = React.useState('');
@@ -14,7 +15,7 @@ const ProjectForm = () => {
     setSubmitting(true);
     setError(null);
     try {
-      const response = await fetch('/projects', {
+      const response = await fetch(getApiUrl('/projects'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, description })

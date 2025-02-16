@@ -41,6 +41,7 @@ import PaymentForm from './PaymentForm';
 import PaymentHistory from './PaymentHistory';
 import ProgressDisplay from './ProgressDisplay';
 import { formatCurrency } from '../utils/formatters';
+import { getApiUrl } from '../config';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
 
 const ProjectDetail = () => {
@@ -60,7 +61,7 @@ const ProjectDetail = () => {
 
   const fetchProjectProgress = useCallback(async () => {
     try {
-      const response = await fetch(`/projects/${id}/progress`);
+      const response = await fetch(getApiUrl(`/projects/${id}/progress`));
       if (!response.ok) throw new Error('Error fetching project progress');
       const data = await response.json();
       setProjectProgress(data);
@@ -71,12 +72,12 @@ const ProjectDetail = () => {
 
   const fetchProject = useCallback(async () => {
     try {
-      const response = await fetch(`/projects/${id}`);
+      const response = await fetch(getApiUrl(`/projects/${id}`));
       if (!response.ok) throw new Error('Project not found');
       const data = await response.json();
       
       // Obtener el progreso del proyecto
-      const progressResponse = await fetch(`/projects/${id}/progress`);
+      const progressResponse = await fetch(getApiUrl(`/projects/${id}/progress`));
       if (!progressResponse.ok) throw new Error('Error fetching project progress');
       const progressData = await progressResponse.json();
       
@@ -95,7 +96,7 @@ const ProjectDetail = () => {
 
   const handleCreateMilestone = async (milestoneData) => {
     try {
-      const response = await fetch(`/projects/${id}/milestones`, {
+      const response = await fetch(getApiUrl(`/projects/${id}/milestones`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(milestoneData),
@@ -110,7 +111,7 @@ const ProjectDetail = () => {
 
   const handleUpdateMilestone = async (milestoneData) => {
     try {
-      const response = await fetch(`/projects/${id}/milestones/${selectedMilestone._id}`, {
+      const response = await fetch(getApiUrl(`/projects/${id}/milestones/${selectedMilestone._id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(milestoneData),
@@ -127,7 +128,7 @@ const ProjectDetail = () => {
   const handleDeleteMilestone = async (milestone_id) => {
     if (!window.confirm('Are you sure you want to delete this milestone?')) return;
     try {
-      const response = await fetch(`/projects/${id}/milestones/${milestone_id}`, {
+      const response = await fetch(getApiUrl(`/projects/${id}/milestones/${milestone_id}`), {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Error deleting milestone');
@@ -140,7 +141,7 @@ const ProjectDetail = () => {
   const handleDeleteProject = async () => {
     if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) return;
     try {
-      const response = await fetch(`/projects/${id}`, {
+      const response = await fetch(getApiUrl(`/projects/${id}`), {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Error deleting project');
@@ -152,7 +153,7 @@ const ProjectDetail = () => {
 
   const handleCreateTask = async (taskData) => {
     try {
-      const response = await fetch(`/projects/${id}/milestones/${selectedMilestone._id}/tasks`, {
+      const response = await fetch(getApiUrl(`/projects/${id}/milestones/${selectedMilestone._id}/tasks`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -192,7 +193,7 @@ const ProjectDetail = () => {
   const handleUpdateTask = async (taskData) => {
     try {
       const response = await fetch(
-        `/projects/${id}/milestones/${selectedMilestone._id}/tasks/${selectedTask._id}`,
+        getApiUrl(`/projects/${id}/milestones/${selectedMilestone._id}/tasks/${selectedTask._id}`),
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -215,7 +216,7 @@ const ProjectDetail = () => {
   const handleDeleteTask = async (milestone_id, task_id) => {
     if (!window.confirm('Are you sure you want to delete this task?')) return;
     try {
-      const response = await fetch(`/projects/${id}/milestones/${milestone_id}/tasks/${task_id}`, {
+      const response = await fetch(getApiUrl(`/projects/${id}/milestones/${milestone_id}/tasks/${task_id}`), {
         method: 'DELETE',
       });
       
@@ -238,7 +239,7 @@ const ProjectDetail = () => {
   const handleToggleTask = async (milestone_id, task) => {
     try {
       const response = await fetch(
-        `/projects/${id}/milestones/${milestone_id}/tasks/${task._id}`,
+        getApiUrl(`/projects/${id}/milestones/${milestone_id}/tasks/${task._id}`),
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -258,7 +259,7 @@ const ProjectDetail = () => {
 
   const handlePaymentComplete = async (paymentData) => {
     try {
-      const response = await fetch('/payments', {
+      const response = await fetch(getApiUrl('/payments'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(paymentData),
@@ -284,7 +285,7 @@ const ProjectDetail = () => {
 
   const handleExportPDF = async () => {
     try {
-      const response = await fetch(`/projects/${id}/report/pdf`, {
+      const response = await fetch(getApiUrl(`/projects/${id}/report/pdf`), {
         method: 'GET',
       });
       if (!response.ok) throw new Error('Error generating PDF report');
@@ -305,7 +306,7 @@ const ProjectDetail = () => {
 
   const handleExportExcel = async () => {
     try {
-      const response = await fetch(`/projects/${id}/report/excel`, {
+      const response = await fetch(getApiUrl(`/projects/${id}/report/excel`), {
         method: 'GET',
       });
       if (!response.ok) throw new Error('Error generating Excel report');
