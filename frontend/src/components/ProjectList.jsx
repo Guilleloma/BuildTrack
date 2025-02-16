@@ -19,6 +19,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import WarningIcon from '@mui/icons-material/Warning';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import { formatCurrency } from '../utils/formatters';
+import { getApiUrl } from '../config';
 
 const ProjectList = () => {
   console.log('ProjectList component rendering');
@@ -32,7 +33,7 @@ const ProjectList = () => {
     const fetchProjects = async () => {
       console.log('Fetching projects...');
       try {
-        const response = await fetch('/projects');
+        const response = await fetch(getApiUrl('/projects'));
         console.log('Response:', response);
         if (!response.ok) throw new Error('Error fetching projects');
         const data = await response.json();
@@ -62,7 +63,7 @@ const ProjectList = () => {
     if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) return;
     
     try {
-      const response = await fetch(`/projects/${projectId}`, {
+      const response = await fetch(getApiUrl(`/projects/${projectId}`), {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Error deleting project');

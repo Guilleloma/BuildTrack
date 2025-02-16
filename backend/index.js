@@ -8,10 +8,9 @@ const SECRET = 'mysecret';
 const users = {};
 
 // MongoDB connection
-mongoose.connect('mongodb://localhost:27017/buildtrack', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => {
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://holaguillelopez:(Lokkito86)@buildtrack.ayjef.mongodb.net/buildtrack?retryWrites=true&w=majority';
+
+mongoose.connect(MONGODB_URI).then(() => {
   console.log('Connected to MongoDB successfully');
 }).catch((error) => {
   console.error('Error connecting to MongoDB:', error);

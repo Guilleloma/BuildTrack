@@ -583,21 +583,14 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 
 **Estado: COMPLETADO**
 
-## Sprint 17: Dashboard, Reportes y Seguimiento de Presupuestos
-- Crear un dashboard interactivo que brinde una vista general del progreso del proyecto, integrando información de proyectos, hitos, tareas, pagos y desviaciones presupuestarias.
-- Implementar la lógica para el seguimiento de desviaciones entre el presupuesto inicial y los gastos reales, permitiendo el registro de razones y cálculos de porcentajes.
-- Permitir la generación y exportación de reportes en formatos PDF y Excel.
-- Realizar refactorizaciones y mejoras en la interfaz para integrar los nuevos componentes visuales.
-+ Validación:
-+ - Se validarán los endpoints y la integración del dashboard mediante pruebas manuales y unitarias, confirmando la exactitud y actualización en tiempo real de la información.
-**Estado: TODO**
+## Sprint 17: Identificacio de usuarios
+- el usuario debe identificarse con un email y una contraseña
+- Cada usuario tendra su propio espacio de trabajo con sus propios proyectos, hitos, tareas, pagos, etc.
 
-## Sprint 18: Mejoras, Pruebas y Despliegue
-- Optimizar la experiencia de usuario integrando la asociación de proyectos a usuarios, aprovechando la autenticación implementada en el Sprint 1.
-- Implementar pruebas unitarias y de integración con una cobertura mínima del 80%, asegurando la estabilidad de las funcionalidades implementadas.
-- Corregir bugs críticos y realizar mejoras de rendimiento en toda la aplicación.
-- Preparar el despliegue del proyecto en un entorno de pre-producción y realizar pruebas de aceptación final (UAT).
-+ Validación:
-+ - Se confirmará el correcto funcionamiento del sistema mediante un conjunto completo de pruebas de integración y usabilidad en un entorno de pre-producción.
+
+## Sprint 18: Hacer una applicacion para produccion que pueda ser usada por los usuarios (MVP)
+- La aplicacion se debe poder instalar en un servidor de produccion
+- La aplicacion debe ser accesible desde cualquier navegador
+
 **Estado: TODO**
 
