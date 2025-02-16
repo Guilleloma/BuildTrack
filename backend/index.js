@@ -10,6 +10,15 @@ const users = {};
 // MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://holaguillelopez:(Lokkito86)@buildtrack.ayjef.mongodb.net/buildtrack?retryWrites=true&w=majority';
 
+console.log('Attempting to connect to MongoDB...');
+mongoose.connect(MONGODB_URI).then(() => {
+  console.log('Connected to MongoDB successfully');
+  console.log('Database:', MONGODB_URI.split('@')[1]); // Log only the non-sensitive part of the URI
+}).catch((error) => {
+  console.error('Error connecting to MongoDB:', error);
+  console.error('Connection string used:', MONGODB_URI.split('@')[1]); // Log only the non-sensitive part of the URI
+});
+
 // CORS configuration
 const corsOptions = {
   origin: ['https://buildtrack-c3e8a.web.app', 'http://localhost:3001'],
@@ -18,12 +27,6 @@ const corsOptions = {
   credentials: true,
   optionsSuccessStatus: 200
 };
-
-mongoose.connect(MONGODB_URI).then(() => {
-  console.log('Connected to MongoDB successfully');
-}).catch((error) => {
-  console.error('Error connecting to MongoDB:', error);
-});
 
 // Middleware configuration
 app.use(cors(corsOptions));

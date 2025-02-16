@@ -10,13 +10,20 @@ const XLSX = require('xlsx');
 
 // GET all projects
 router.get('/', async (req, res) => {
+    console.log('GET /projects - Fetching all projects');
     try {
         const projects = await Project.find();
+        console.log(`Found ${projects.length} projects`);
+        
         const projectsWithProgress = await Promise.all(projects.map(async (project) => {
+            console.log(`Processing project ${project._id}`);
             const milestones = await Milestone.find({ project: project._id });
+            console.log(`Found ${milestones.length} milestones for project ${project._id}`);
+            
             const tasks = await Task.find({ 
                 milestone: { $in: milestones.map(m => m._id) }
             });
+            console.log(`Found ${tasks.length} tasks for project ${project._id}`);
 
             const totalProjectTasks = tasks.length;
             const totalCompletedTasks = tasks.filter(task => task.status === 'COMPLETED').length;
