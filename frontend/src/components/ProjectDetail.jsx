@@ -305,26 +305,14 @@ const ProjectDetail = () => {
         >
           Back to Projects
         </Button>
-        <Box>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleDeleteProject}
-            sx={{ mr: 2 }}
-          >
-            Delete Project
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => {
-              setSelectedMilestone(null);
-              setMilestoneFormOpen(true);
-            }}
-          >
-            Add Milestone
-          </Button>
-        </Box>
+        <Button
+          variant="contained"
+          color="error"
+          onClick={handleDeleteProject}
+          sx={{ mr: 2 }}
+        >
+          Delete Project
+        </Button>
       </Box>
 
       <Card sx={{ mb: 4 }}>
@@ -333,17 +321,29 @@ const ProjectDetail = () => {
             <Typography variant="h4" gutterBottom>
               {project?.name}
             </Typography>
-            <Button
-              variant="outlined"
-              startIcon={<PaymentIcon />}
-              onClick={() => {
-                setSelectedMilestone(null);
-                setPaymentFormOpen(true);
-              }}
-              sx={{ ml: 2 }}
-            >
-              Pago Distribuido
-            </Button>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => {
+                  setSelectedMilestone(null);
+                  setMilestoneFormOpen(true);
+                }}
+                color="primary"
+              >
+                Add Milestone
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<PaymentIcon />}
+                onClick={() => {
+                  setSelectedMilestone(null);
+                  setPaymentFormOpen(true);
+                }}
+              >
+                Distributed Payment
+              </Button>
+            </Box>
           </Box>
           {project?.description && (
             <Typography color="textSecondary" paragraph>

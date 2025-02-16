@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Container,
+  TextField,
   Paper,
   Typography,
   Grid,
@@ -12,7 +13,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   CircularProgress,
   Alert,
   Box,
@@ -21,6 +21,9 @@ import {
   Divider,
   IconButton,
   Tooltip,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
 import LaunchIcon from '@mui/icons-material/Launch';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
@@ -374,6 +377,16 @@ const PaymentsPage = () => {
       <Typography variant="h4" gutterBottom>
         Pagos
       </Typography>
+
+      <TextField
+        fullWidth
+        label="Buscar pagos..."
+        variant="outlined"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        sx={{ mb: 4 }}
+        placeholder="Buscar por proyecto, hito o descripción..."
+      />
 
       <Box sx={{ mb: 4 }}>
         <Card>

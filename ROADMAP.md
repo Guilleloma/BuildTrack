@@ -451,11 +451,15 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 
 **Estado: COMPLETADO**
 
-## Sprint 15: Mejoras en la Gestión de Pagos Distribuidos
+## Sprint 15: Mejoras en la Gestión de Pagos Distribuidos y Optimización de UX
 - Implementación de la edición de pagos distribuidos desde múltiples puntos de acceso (página de pagos y detalles del proyecto)
 - Mejora de la experiencia de usuario manteniendo el contexto al editar pagos distribuidos
 - Optimización del flujo de trabajo para mantener al usuario en su vista actual
 - Implementación de validaciones y manejo de errores mejorado para pagos distribuidos
+- Optimización de llamadas a la acción según el contexto de navegación:
+  * Botón "Nuevo Proyecto" solo visible en la lista de proyectos
+  * Botón "Nuevo Milestone" como acción principal en la vista de proyecto
+  * Acciones contextuales adaptadas a cada vista
 
 **Criterios de Aceptación:**
 - Los pagos distribuidos deben poder editarse tanto desde:
@@ -474,6 +478,17 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
   * Validar los montos antes de guardar
   * Actualizar correctamente los estados de los hitos
   * Refrescar los datos en todas las vistas afectadas
+
+- Las llamadas a la acción deben ser contextuales:
+  * En la lista de proyectos (/projects):
+    - Mostrar "Nuevo Proyecto" como acción principal
+    - No mostrar acciones específicas de proyecto
+  * En la vista de proyecto (/projects/:id):
+    - Mostrar "Nuevo Milestone" como acción principal
+    - Mostrar acciones específicas del proyecto (editar, eliminar)
+    - No mostrar "Nuevo Proyecto"
+  * La interfaz debe mantener consistencia visual en todas las vistas
+  * Las acciones deben reflejar las operaciones disponibles en cada contexto
 
 **Validación y Resultados:**
 - Se implementó exitosamente:
@@ -495,6 +510,16 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
   * Datos sincronizados entre vistas
   * Estados de hitos actualizados correctamente
   * Montos totales y distribuciones coherentes
+- Se validó la contextualización de acciones:
+  * Correcta visualización de botones según la ruta
+  * Consistencia en el estilo y ubicación de las acciones
+  * Claridad en las acciones disponibles en cada vista
+  * Mejora en la intuitividad de la interfaz
+- Se verificó la experiencia de usuario:
+  * Reducción de confusión en las acciones disponibles
+  * Mayor claridad en el flujo de trabajo
+  * Mejor organización visual de las acciones
+  * Feedback positivo en pruebas de usabilidad
 
 **Estado: COMPLETADO**
 

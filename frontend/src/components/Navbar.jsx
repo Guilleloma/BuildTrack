@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
   Toolbar,
@@ -12,6 +12,10 @@ import AddIcon from '@mui/icons-material/Add';
 const Navbar = ({ drawerWidth }) => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Show New Project button only in the projects list view
+  const showNewProjectButton = location.pathname === '/projects';
 
   return (
     <AppBar 
@@ -35,19 +39,21 @@ const Navbar = ({ drawerWidth }) => {
         >
           BuildTrack
         </Typography>
-        <Button
-          color="primary"
-          startIcon={<AddIcon />}
-          variant="contained"
-          onClick={() => navigate('/projects/new')}
-          sx={{ 
-            borderRadius: '20px',
-            textTransform: 'none',
-            px: 3,
-          }}
-        >
-          New Project
-        </Button>
+        {showNewProjectButton && (
+          <Button
+            color="primary"
+            startIcon={<AddIcon />}
+            variant="contained"
+            onClick={() => navigate('/projects/new')}
+            sx={{ 
+              borderRadius: '20px',
+              textTransform: 'none',
+              px: 3,
+            }}
+          >
+            New Project
+          </Button>
+        )}
       </Toolbar>
     </AppBar>
   );
