@@ -26,6 +26,7 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import WarningIcon from '@mui/icons-material/Warning';
+import PercentIcon from '@mui/icons-material/Percent';
 import MilestoneForm from './MilestoneForm';
 import TaskForm from './TaskForm';
 import PaymentForm from './PaymentForm';
@@ -380,6 +381,11 @@ const ProjectDetail = () => {
                   {showPaymentNeeded && (
                     <Tooltip title="Hay más tareas completadas que pagos realizados">
                       <MonetizationOnIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                    </Tooltip>
+                  )}
+                  {milestoneData.hasTax && (
+                    <Tooltip title={`IVA ${milestoneData.taxRate || 21}%`}>
+                      <PercentIcon sx={{ fontSize: 16, color: 'secondary.main' }} />
                     </Tooltip>
                   )}
                   <Typography variant="subtitle2" sx={{ 
