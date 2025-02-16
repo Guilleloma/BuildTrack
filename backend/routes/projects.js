@@ -58,116 +58,135 @@ router.get('/:id/progress', async (req, res) => {
     try {
         const project = await Project.findById(req.params.id);
         if (!project) {
-            return res.status(404).json({ message: 'Project not found' });
+            return res.status(404).json({ error: 'Project not found' });
         }
 
-        const milestones = await Milestone.find({ project: project._id });
-        const tasks = await Task.find({
-            milestone: { $in: milestones.map(m => m._id) }
-        });
-
-        // Calculate milestone payments with tax tracking
-        const milestonesWithPayments = await Promise.all(milestones.map(async (milestone) => {
-            const payments = await Payment.find({ milestone: milestone._id });
-            const totalPaid = payments.reduce((sum, payment) => sum + (parseFloat(payment.amount) || 0), 0);
-            milestone.paidAmount = parseFloat(totalPaid.toFixed(2));
-            await milestone.save();
-            return milestone;
-        }));
-
-        // Calculate overall progress with separate base and tax tracking
-        const totalProjectTasks = tasks.length;
-        const totalCompletedTasks = tasks.filter(task => task.status === 'COMPLETED').length;
+        // Get all milestones for this project
+        const milestones = await Milestone.find({ project: req.params.id });
+        const milestoneIds = milestones.map(m => m._id);
         
-        // Calculate totals
-        const projectTotals = milestonesWithPayments.reduce((acc, m) => {
-            const milestoneBase = parseFloat(m.budget);
-            const milestoneTax = m.hasTax ? milestoneBase * (m.taxRate || 21) / 100 : 0;
-            const milestoneTotalWithTax = milestoneBase + milestoneTax;
-            const milestonePaid = parseFloat(m.paidAmount || 0);
+        // Get all payments related to these milestones
+        const payments = await Payment.find({
+            $or: [
+                { milestone: { $in: milestoneIds } },
+                { 'distributions.milestone': { $in: milestoneIds } }
+            ]
+        }).populate('milestone distributions.milestone');
 
-            // Calculate how much of the payment goes to base vs tax
-            const basePayment = Math.min(milestonePaid, milestoneBase);
-            const taxPayment = Math.max(milestonePaid - milestoneBase, 0);
-
-            return {
-                totalBase: acc.totalBase + milestoneBase,
-                totalTax: acc.totalTax + milestoneTax,
-                totalPaidBase: acc.totalPaidBase + basePayment,
-                totalPaidTax: acc.totalPaidTax + taxPayment,
-                totalWithTax: acc.totalWithTax + milestoneTotalWithTax,
-                totalPaid: acc.totalPaid + milestonePaid
-            };
-        }, {
-            totalBase: 0,
-            totalTax: 0,
-            totalPaidBase: 0,
-            totalPaidTax: 0,
-            totalWithTax: 0,
-            totalPaid: 0
+        // Get all tasks for these milestones
+        const tasks = await Task.find({ 
+            milestone: { $in: milestoneIds }
         });
 
-        const taskCompletionPercentage = totalProjectTasks > 0 
-            ? (totalCompletedTasks / totalProjectTasks) * 100 
-            : 0;
+        // Calculate milestone progress
+        const milestonesWithProgress = await Promise.all(milestones.map(async (milestone) => {
+            // Calculate payments for this milestone
+            const singlePayments = payments
+                .filter(p => p.type === 'SINGLE' && p.milestone?._id.toString() === milestone._id.toString())
+                .reduce((sum, p) => sum + p.amount, 0);
 
-        // Calculate progress for each milestone with separate base and tax tracking
-        const milestonesWithProgress = await Promise.all(milestonesWithPayments.map(async (milestone) => {
-            const milestoneTasks = tasks.filter(task => task.milestone.toString() === milestone._id.toString());
+            const distributedPayments = payments
+                .filter(p => p.type === 'DISTRIBUTED')
+                .reduce((sum, p) => {
+                    const distribution = p.distributions.find(d => 
+                        d.milestone._id.toString() === milestone._id.toString()
+                    );
+                    return sum + (distribution?.amount || 0);
+                }, 0);
+
+            const totalPaid = singlePayments + distributedPayments;
+            
+            // Calculate task progress
+            const milestoneTasks = tasks.filter(task => 
+                task.milestone.toString() === milestone._id.toString()
+            );
             const totalTasks = milestoneTasks.length;
-            const completedTasks = milestoneTasks.filter(task => task.status === 'COMPLETED').length;
-            const taskCompletionPercentage = totalTasks > 0 
-                ? (completedTasks / totalTasks) * 100 
+            const completedTasks = milestoneTasks.filter(task => 
+                task.status === 'COMPLETED'
+            ).length;
+
+            const baseAmount = milestone.budget;
+            const taxAmount = milestone.hasTax 
+                ? baseAmount * (milestone.taxRate || 21) / 100 
                 : 0;
+            const totalWithTax = baseAmount + taxAmount;
 
-            const milestoneBase = parseFloat(milestone.budget);
-            const milestoneTax = milestone.hasTax ? milestoneBase * (milestone.taxRate || 21) / 100 : 0;
-            const milestoneTotalWithTax = milestoneBase + milestoneTax;
-            const milestonePaid = parseFloat(milestone.paidAmount || 0);
-
-            // Calculate how much of the payment goes to base vs tax
-            const basePayment = Math.min(milestonePaid, milestoneBase);
-            const taxPayment = Math.max(milestonePaid - milestoneBase, 0);
+            // Update milestone with correct paid amount
+            milestone.paidAmount = totalPaid;
+            await milestone.save();
 
             return {
                 _id: milestone._id,
                 name: milestone.name,
                 description: milestone.description,
-                budget: milestoneBase,
+                budget: baseAmount,
                 hasTax: milestone.hasTax,
                 taxRate: milestone.taxRate || 21,
-                totalWithTax: parseFloat(milestoneTotalWithTax.toFixed(2)),
-                paidAmount: milestonePaid,
-                paidBase: basePayment,
-                paidTax: taxPayment,
+                totalWithTax,
+                paidAmount: totalPaid,
+                pendingAmount: totalWithTax - totalPaid,
                 status: milestone.status,
-                taskCompletionPercentage: Math.round(taskCompletionPercentage * 100) / 100,
-                paymentPercentage: Math.round((milestonePaid / milestoneTotalWithTax * 100) * 100) / 100,
-                basePaymentPercentage: Math.round((basePayment / milestoneBase * 100) * 100) / 100,
-                taxPaymentPercentage: milestoneTax > 0 ? Math.round((taxPayment / milestoneTax * 100) * 100) / 100 : 0,
+                taskCompletionPercentage: totalTasks > 0 
+                    ? Math.round((completedTasks / totalTasks) * 100 * 100) / 100 
+                    : 0,
+                paymentPercentage: totalWithTax > 0 
+                    ? Math.round((totalPaid / totalWithTax) * 100 * 100) / 100 
+                    : 0,
                 totalTasks,
                 completedTasks
             };
         }));
 
+        // Calculate overall progress
+        const totalTasks = tasks.length;
+        const completedTasks = tasks.filter(task => task.status === 'COMPLETED').length;
+        const taskCompletionPercentage = totalTasks > 0 
+            ? (completedTasks / totalTasks) * 100 
+            : 0;
+
+        // Calculate total amounts
+        const totalBase = milestones.reduce((sum, m) => sum + m.budget, 0);
+        const totalBasePaid = milestonesWithProgress.reduce((sum, m) => sum + (m.paidAmount || 0), 0);
+        const totalTax = milestones.reduce((sum, m) => {
+            if (m.hasTax) {
+                const taxRate = m.taxRate || 21;
+                return sum + (m.budget * (taxRate / 100));
+            }
+            return sum;
+        }, 0);
+        const totalTaxPaid = milestonesWithProgress.reduce((sum, m) => {
+            if (m.hasTax) {
+                const taxRate = m.taxRate || 21;
+                return sum + ((m.paidAmount || 0) * (taxRate / 100));
+            }
+            return sum;
+        }, 0);
+
+        const totalWithTax = totalBase + totalTax;
+        const totalPaid = totalBasePaid + totalTaxPaid;
+
         res.json({
             projectId: project._id,
             milestones: milestonesWithProgress,
             overallProgress: {
-                taskCompletionPercentage: Math.round(taskCompletionPercentage * 100) / 100,
-                paymentPercentage: Math.round((projectTotals.totalPaid / projectTotals.totalWithTax * 100) * 100) / 100,
-                totalTasks: totalProjectTasks,
-                completedTasks: totalCompletedTasks,
-                totalCost: parseFloat(projectTotals.totalBase.toFixed(2)),
-                totalTax: parseFloat(projectTotals.totalTax.toFixed(2)),
-                paidBase: parseFloat(projectTotals.totalPaidBase.toFixed(2)),
-                paidTax: parseFloat(projectTotals.totalPaidTax.toFixed(2)),
-                totalCostWithTax: parseFloat(projectTotals.totalWithTax.toFixed(2)),
-                paidAmount: parseFloat(projectTotals.totalPaid.toFixed(2))
-            }
+                totalTasks,
+                completedTasks,
+                taskCompletionPercentage: Math.round(taskCompletionPercentage * 100) / 100
+            },
+            totals: {
+                base: totalBase,
+                base_paid: totalBasePaid,
+                tax: totalTax,
+                tax_paid: totalTaxPaid,
+                totalWithTax,
+                paid: totalPaid,
+                paymentPercentage: totalWithTax > 0 ? Math.round((totalPaid / totalWithTax) * 100 * 100) / 100 : 0
+            },
+            defaultTaxRate: project.defaultTaxRate || 21
         });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Error getting project progress:', error);
+        res.status(500).json({ error: 'Error getting project progress' });
     }
 });
 
@@ -181,27 +200,77 @@ router.get('/:id', async (req, res) => {
 
         // Get milestones for this project
         const milestones = await Milestone.find({ project: project._id });
+        const milestoneIds = milestones.map(m => m._id);
+
+        // Get all payments (both single and distributed)
+        const payments = await Payment.find({
+            $or: [
+                { milestone: { $in: milestoneIds } },
+                { 'distributions.milestone': { $in: milestoneIds } }
+            ]
+        }).populate('milestone distributions.milestone');
         
         // Get tasks and payments for each milestone
         const milestonesWithTasksAndPayments = await Promise.all(milestones.map(async (milestone) => {
             const tasks = await Task.find({ milestone: milestone._id });
-            const payments = await Payment.find({ milestone: milestone._id });
+
+            // Calculate total paid amount including distributed payments
+            const singlePayments = payments
+                .filter(p => p.type === 'SINGLE' && p.milestone?._id.toString() === milestone._id.toString())
+                .reduce((sum, p) => sum + p.amount, 0);
+
+            const distributedPayments = payments
+                .filter(p => p.type === 'DISTRIBUTED')
+                .reduce((sum, p) => {
+                    const distribution = p.distributions.find(d => 
+                        d.milestone._id.toString() === milestone._id.toString()
+                    );
+                    return sum + (distribution?.amount || 0);
+                }, 0);
+
+            const totalPaid = singlePayments + distributedPayments;
             
-            // Calculate total paid amount from actual payments
-            const totalPaid = payments.reduce((sum, payment) => sum + (parseFloat(payment.amount) || 0), 0);
-            
+            // Calculate amounts with tax
+            const baseAmount = parseFloat(milestone.budget);
+            const taxAmount = milestone.hasTax ? baseAmount * (milestone.taxRate || 21) / 100 : 0;
+            const totalWithTax = baseAmount + taxAmount;
+
             // Update milestone with correct paid amount
             milestone.paidAmount = parseFloat(totalPaid.toFixed(2));
             await milestone.save();
 
             const milestoneObj = milestone.toObject();
             milestoneObj.tasks = tasks;
-            milestoneObj.payments = payments;
+            milestoneObj.payments = payments.filter(p => 
+                (p.type === 'SINGLE' && p.milestone?._id.toString() === milestone._id.toString()) ||
+                (p.type === 'DISTRIBUTED' && p.distributions.some(d => d.milestone._id.toString() === milestone._id.toString()))
+            );
+            milestoneObj.totalWithTax = totalWithTax;
+            milestoneObj.taxAmount = taxAmount;
+            milestoneObj.baseAmount = baseAmount;
+            milestoneObj.pendingAmount = totalWithTax - totalPaid;
+            milestoneObj.paymentPercentage = (totalPaid / totalWithTax) * 100;
+
             return milestoneObj;
         }));
 
+        // Calculate project totals
+        const projectTotals = milestonesWithTasksAndPayments.reduce((totals, m) => ({
+            totalBase: totals.totalBase + m.baseAmount,
+            totalTax: totals.totalTax + m.taxAmount,
+            totalWithTax: totals.totalWithTax + m.totalWithTax,
+            totalPaid: totals.totalPaid + m.paidAmount
+        }), { totalBase: 0, totalTax: 0, totalWithTax: 0, totalPaid: 0 });
+
         const projectData = project.toObject();
         projectData.milestones = milestonesWithTasksAndPayments;
+        projectData.totals = {
+            base: parseFloat(projectTotals.totalBase.toFixed(2)),
+            tax: parseFloat(projectTotals.totalTax.toFixed(2)),
+            totalWithTax: parseFloat(projectTotals.totalWithTax.toFixed(2)),
+            paid: parseFloat(projectTotals.totalPaid.toFixed(2)),
+            paymentPercentage: (projectTotals.totalPaid / projectTotals.totalWithTax) * 100
+        };
 
         res.json(projectData);
     } catch (error) {
@@ -396,6 +465,23 @@ router.put('/:projectId/milestones/:milestoneId/tasks/:taskId', async (req, res)
         });
     } catch (error) {
         res.status(400).json({ message: error.message });
+    }
+});
+
+// DELETE remove a task
+router.delete('/:projectId/milestones/:milestoneId/tasks/:taskId', async (req, res) => {
+    try {
+        const task = await Task.findOneAndDelete({
+            _id: req.params.taskId,
+            milestone: req.params.milestoneId
+        });
+        if (!task) {
+            return res.status(404).json({ message: 'Task not found' });
+        }
+        res.json({ message: 'Task deleted', task });
+    } catch (error) {
+        console.error('Error deleting task:', error);
+        res.status(500).json({ message: error.message || 'Error deleting task' });
     }
 });
 

@@ -18,6 +18,7 @@ import {
   ListItemText,
   Checkbox,
   Tooltip,
+  LinearProgress,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -65,14 +66,20 @@ const ProjectDetail = () => {
       const response = await fetch(`/projects/${id}`);
       if (!response.ok) throw new Error('Project not found');
       const data = await response.json();
+      
+      // Obtener el progreso del proyecto
+      const progressResponse = await fetch(`/projects/${id}/progress`);
+      if (!progressResponse.ok) throw new Error('Error fetching project progress');
+      const progressData = await progressResponse.json();
+      
       setProject(data);
-      await fetchProjectProgress();
+      setProjectProgress(progressData);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [id, fetchProjectProgress]);
+  }, [id]);
 
   useEffect(() => {
     fetchProject();
@@ -203,9 +210,19 @@ const ProjectDetail = () => {
       const response = await fetch(`/projects/${id}/milestones/${milestone_id}/tasks/${task_id}`, {
         method: 'DELETE',
       });
-      if (!response.ok) throw new Error('Error deleting task');
-      await fetchProject();
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error deleting task');
+      }
+
+      // Actualizar el proyecto y su progreso
+      await Promise.all([
+        fetchProject(),
+        fetchProjectProgress()
+      ]);
     } catch (err) {
+      console.error('Error deleting task:', err);
       setError(err.message);
     }
   };
@@ -236,12 +253,7 @@ const ProjectDetail = () => {
       const response = await fetch('/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          milestoneId: selectedMilestone._id,
-          amount: parseFloat(paymentData.amount),
-          description: paymentData.description,
-          paymentMethod: paymentData.paymentMethod
-        }),
+        body: JSON.stringify(paymentData),
       });
       
       if (!response.ok) {
@@ -249,11 +261,16 @@ const ProjectDetail = () => {
         throw new Error(errorData.message || errorData.error || 'Error processing payment');
       }
       
-      await fetchProject();
+      // Actualizar el proyecto y su progreso
+      await Promise.all([
+        fetchProject(),
+        fetchProjectProgress()
+      ]);
+
       setPaymentsRefreshTrigger(prev => prev + 1);
       setPaymentFormOpen(false);
     } catch (err) {
-      throw err; // Let the PaymentForm handle the error
+      throw err;
     }
   };
 
@@ -312,25 +329,92 @@ const ProjectDetail = () => {
 
       <Card sx={{ mb: 4 }}>
         <CardContent>
-          <Typography variant="h4" gutterBottom>
-            {project?.name}
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+            <Typography variant="h4" gutterBottom>
+              {project?.name}
+            </Typography>
+            <Button
+              variant="outlined"
+              startIcon={<PaymentIcon />}
+              onClick={() => {
+                setSelectedMilestone(null);
+                setPaymentFormOpen(true);
+              }}
+              sx={{ ml: 2 }}
+            >
+              Pago Distribuido
+            </Button>
+          </Box>
           {project?.description && (
             <Typography color="textSecondary" paragraph>
               {project.description}
             </Typography>
           )}
-          {projectProgress?.overallProgress && (
-            <>
-              <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                Progreso General del Proyecto
-              </Typography>
-              <ProgressDisplay 
-                progress={projectProgress.overallProgress} 
-                type="project"
+          <Box sx={{ mt: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Progreso General del Proyecto
+            </Typography>
+            
+            {/* Barra de progreso de tareas */}
+            <Box sx={{ mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Tareas Completadas
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {projectProgress?.overallProgress?.completedTasks}/{projectProgress?.overallProgress?.totalTasks} ({Math.round(projectProgress?.overallProgress?.taskCompletionPercentage || 0)}%)
+                </Typography>
+              </Box>
+              <LinearProgress 
+                variant="determinate" 
+                value={projectProgress?.overallProgress?.taskCompletionPercentage || 0}
+                sx={{ height: 8, borderRadius: 4, bgcolor: 'grey.200' }}
               />
-            </>
-          )}
+            </Box>
+
+            {/* Barra de progreso de pagos base */}
+            <Box sx={{ mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Base
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {formatCurrency(projectProgress?.totals?.base_paid || 0)}/{formatCurrency(projectProgress?.totals?.base || 0)} ({Math.round((projectProgress?.totals?.base_paid / projectProgress?.totals?.base || 0) * 100)}%)
+                </Typography>
+              </Box>
+              <LinearProgress 
+                variant="determinate" 
+                value={(projectProgress?.totals?.base_paid / projectProgress?.totals?.base || 0) * 100}
+                sx={{ height: 8, borderRadius: 4, bgcolor: 'grey.200' }}
+              />
+            </Box>
+
+            {/* Barra de progreso de IVA */}
+            {projectProgress?.totals?.tax > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    IVA ({projectProgress?.defaultTaxRate || 21}%)
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {formatCurrency(projectProgress?.totals?.tax_paid || 0)}/{formatCurrency(projectProgress?.totals?.tax || 0)} ({Math.round((projectProgress?.totals?.tax_paid / projectProgress?.totals?.tax || 0) * 100)}%)
+                  </Typography>
+                </Box>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={(projectProgress?.totals?.tax_paid / projectProgress?.totals?.tax || 0) * 100}
+                  sx={{ height: 8, borderRadius: 4, bgcolor: 'grey.200' }}
+                />
+              </Box>
+            )}
+
+            {/* Total con IVA */}
+            <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+              <Typography variant="subtitle1" color="text.secondary">
+                Total Pagado: {formatCurrency(projectProgress?.totals?.paid || 0)} / {formatCurrency(projectProgress?.totals?.totalWithTax || 0)} ({Math.round(projectProgress?.totals?.paymentPercentage || 0)}%)
+              </Typography>
+            </Box>
+          </Box>
         </CardContent>
       </Card>
 
@@ -569,6 +653,12 @@ const ProjectDetail = () => {
                 projectId={id}
                 milestoneId={milestone._id}
                 refreshTrigger={paymentsRefreshTrigger}
+                onPaymentDeleted={async () => {
+                  await Promise.all([
+                    fetchProject(),
+                    fetchProjectProgress()
+                  ]);
+                }}
               />
             </AccordionDetails>
           </Accordion>
@@ -595,16 +685,15 @@ const ProjectDetail = () => {
         task={selectedTask}
       />
 
-      <PaymentForm
-        open={paymentFormOpen}
-        onClose={() => {
-          setPaymentFormOpen(false);
-          setSelectedMilestone(null);
-        }}
-        onSubmit={handlePaymentComplete}
-        milestone={selectedMilestone}
-        projectId={id}
-      />
+      {paymentFormOpen && (
+        <PaymentForm
+          open={paymentFormOpen}
+          onClose={() => setPaymentFormOpen(false)}
+          onSubmit={handlePaymentComplete}
+          milestone={selectedMilestone}
+          project={project}
+        />
+      )}
     </Container>
   );
 };

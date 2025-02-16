@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Paper,
   Table,
@@ -24,10 +25,13 @@ import {
   Select,
   MenuItem,
   Snackbar,
+  Tooltip,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import LaunchIcon from '@mui/icons-material/Launch';
 import { formatCurrency } from '../utils/formatters';
+import PaymentForm from './PaymentForm';
 
 const getPaymentMethodLabel = (method) => {
   const labels = {
@@ -49,7 +53,8 @@ const getPaymentMethodColor = (method) => {
   return colors[method] || 'default';
 };
 
-const PaymentHistory = ({ projectId, milestoneId, refreshTrigger }) => {
+const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDeleted }) => {
+  const navigate = useNavigate();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -62,6 +67,7 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger }) => {
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [distributedPayment, setDistributedPayment] = useState(null);
 
   const showMessage = (message, severity = 'success') => {
     setSnackbarMessage(message);
@@ -79,7 +85,10 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger }) => {
         throw new Error('Error al cargar los pagos');
       }
       const data = await response.json();
-      setPayments(data);
+      
+      // Asegurarnos de que los pagos tienen la estructura correcta
+      const validPayments = data.filter(payment => payment && payment._id);
+      setPayments(validPayments);
       setError(null);
     } catch (err) {
       console.error('Error fetching payments:', err);
@@ -94,13 +103,50 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger }) => {
     fetchPayments();
   }, [projectId, milestoneId, refreshTrigger]);
 
-  const handleEditClick = (payment) => {
-    setEditingPayment(payment);
-    setEditFormData({
-      amount: payment.amount,
-      description: payment.description || '',
-      paymentMethod: payment.paymentMethod
-    });
+  const handleEditClick = async (payment) => {
+    try {
+      if (payment.type === 'DISTRIBUTED') {
+        console.log('Payment is distributed, fetching full payment...');
+        // Obtener el pago completo con todas sus distribuciones
+        const paymentResponse = await fetch(`/payments/${payment._id}`);
+        if (!paymentResponse.ok) {
+          throw new Error('Error al obtener el pago');
+        }
+        const fullPaymentData = await paymentResponse.json();
+        console.log('Full payment received:', JSON.stringify(fullPaymentData, null, 2));
+
+        const fullPayment = fullPaymentData.payment;
+        const project = fullPaymentData.project;
+
+        if (!fullPayment?.distributions?.[0]?.milestone) {
+          throw new Error('No se encontró información del milestone en el pago');
+        }
+
+        // Preparar el pago con el formato correcto para el PaymentForm
+        const paymentForForm = {
+          _id: fullPayment._id,
+          amount: fullPayment.amount.toString(),
+          description: fullPayment.description || '',
+          paymentMethod: fullPayment.paymentMethod,
+          type: 'DISTRIBUTED',
+          project,
+          distributions: fullPayment.distributions.map(dist => ({
+            milestoneId: dist.milestone._id,
+            amount: dist.amount.toString(),
+            name: dist.milestone.name
+          }))
+        };
+        console.log('Payment prepared for form:', paymentForForm);
+
+        setEditingPayment(paymentForForm);
+      } else {
+        console.log('Setting regular payment for editing');
+        setEditingPayment(payment);
+      }
+    } catch (err) {
+      console.error('Error in handleEditClick:', err);
+      showMessage(err.message, 'error');
+    }
   };
 
   const handleEditClose = () => {
@@ -112,27 +158,53 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger }) => {
     });
   };
 
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleEditSubmit = async (formData) => {
     try {
+      setLoading(true);
+      
+      // Preparar los datos según el tipo de pago
+      const dataToSend = editingPayment.type === 'DISTRIBUTED' ? 
+        {
+          amount: parseFloat(formData.amount),
+          description: formData.description,
+          paymentMethod: formData.paymentMethod,
+          type: 'DISTRIBUTED',
+          distributions: formData.distributions.map(dist => ({
+            milestoneId: dist.milestoneId,
+            amount: parseFloat(dist.amount)
+          }))
+        } : 
+        {
+          amount: parseFloat(formData.amount),
+          description: formData.description,
+          paymentMethod: formData.paymentMethod,
+          type: 'SINGLE',
+          milestoneId: editingPayment.milestone._id
+        };
+
+      console.log('Sending payment update:', dataToSend);
+
       const response = await fetch(`/payments/${editingPayment._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(editFormData),
+        body: JSON.stringify(dataToSend),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Error updating payment');
+        throw new Error(errorData.error || errorData.message || 'Error updating payment');
       }
 
       await fetchPayments();
+      if (onPaymentDeleted) {
+        await onPaymentDeleted();
+      }
       handleEditClose();
       showMessage('Pago actualizado correctamente');
     } catch (err) {
+      console.error('Error updating payment:', err);
       showMessage(err.message, 'error');
     } finally {
       setLoading(false);
@@ -146,18 +218,154 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger }) => {
 
     setLoading(true);
     try {
-      const response = await fetch(`/payments/${payment._id}`, {
-        method: 'DELETE',
+      if (payment.type === 'DISTRIBUTED') {
+        // 1. Obtener el pago distribuido completo
+        const response = await fetch(`/payments/${payment._id}`);
+        if (!response.ok) {
+          throw new Error('Error al obtener el pago distribuido');
+        }
+        const fullPayment = await response.json();
+
+        // 2. Eliminar la distribución del milestone actual y recalcular el total
+        const newDistributions = fullPayment.distributions
+          .filter(dist => dist.milestone.toString() !== milestoneId.toString())
+          .map(dist => ({
+            milestone: dist.milestone,
+            amount: dist.amount
+          }));
+        const newAmount = newDistributions.reduce((sum, dist) => sum + dist.amount, 0);
+
+        if (newDistributions.length > 0) {
+          // 3. Actualizar el pago con las nuevas distribuciones
+          const updateResponse = await fetch(`/payments/${payment._id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amount: newAmount,
+              description: fullPayment.description,
+              paymentMethod: fullPayment.paymentMethod,
+              type: 'DISTRIBUTED',
+              distributions: newDistributions
+            }),
+          });
+
+          if (!updateResponse.ok) {
+            const errorData = await updateResponse.json();
+            throw new Error(errorData.error || 'Error al actualizar el pago distribuido');
+          }
+        } else {
+          // Si no quedan distribuciones, eliminar el pago completo
+          const deleteResponse = await fetch(`/payments/${payment._id}`, {
+            method: 'DELETE',
+          });
+
+          if (!deleteResponse.ok) {
+            throw new Error('Error al eliminar el pago');
+          }
+        }
+      } else {
+        // Para pagos normales, eliminar directamente
+        const response = await fetch(`/payments/${payment._id}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) {
+          throw new Error('Error al eliminar el pago');
+        }
+      }
+
+      await fetchPayments();
+      if (onPaymentDeleted) {
+        await onPaymentDeleted();
+      }
+      showMessage('Pago eliminado correctamente');
+    } catch (err) {
+      console.error('Error deleting payment:', err);
+      showMessage(err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDistributedPaymentClick = async (payment) => {
+    try {
+      if (!payment?._id) {
+        throw new Error('ID de pago no válido');
+      }
+
+      console.log('Fetching distributed payment:', payment._id);
+      const paymentResponse = await fetch(`/payments/${payment._id}`);
+      if (!paymentResponse.ok) {
+        throw new Error('Error al obtener el pago');
+      }
+      const fullPaymentData = await paymentResponse.json();
+      console.log('Full payment data received:', fullPaymentData);
+
+      const fullPayment = fullPaymentData.payment;
+      const project = fullPaymentData.project;
+
+      if (!fullPayment?.distributions?.[0]?.milestone) {
+        throw new Error('No se encontró información del milestone en el pago');
+      }
+
+      // Preparar el pago con el formato correcto para el PaymentForm
+      const paymentForForm = {
+        _id: fullPayment._id,
+        amount: fullPayment.amount.toString(),
+        description: fullPayment.description || '',
+        paymentMethod: fullPayment.paymentMethod,
+        type: 'DISTRIBUTED',
+        project,
+        distributions: fullPayment.distributions.map(dist => ({
+          milestoneId: dist.milestone._id,
+          amount: dist.amount.toString(),
+          name: dist.milestone.name
+        }))
+      };
+
+      setDistributedPayment(paymentForForm);
+    } catch (err) {
+      console.error('Error in handleDistributedPaymentClick:', err);
+      showMessage(err.message, 'error');
+    }
+  };
+
+  const handleDistributedPaymentSubmit = async (formData) => {
+    try {
+      setLoading(true);
+      
+      const dataToSend = {
+        amount: parseFloat(formData.amount),
+        description: formData.description,
+        paymentMethod: formData.paymentMethod,
+        type: 'DISTRIBUTED',
+        distributions: formData.distributions.map(dist => ({
+          milestoneId: dist.milestoneId,
+          amount: parseFloat(dist.amount)
+        }))
+      };
+
+      const response = await fetch(`/payments/${distributedPayment._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToSend),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Error deleting payment');
+        throw new Error(errorData.error || errorData.message || 'Error updating payment');
       }
 
       await fetchPayments();
-      showMessage('Pago eliminado correctamente');
+      if (onPaymentDeleted) {
+        await onPaymentDeleted();
+      }
+      setDistributedPayment(null);
+      showMessage('Pago distribuido actualizado correctamente');
     } catch (err) {
+      console.error('Error updating distributed payment:', err);
       showMessage(err.message, 'error');
     } finally {
       setLoading(false);
@@ -208,7 +416,7 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger }) => {
               <TableCell align="right">Monto</TableCell>
               <TableCell>Descripción</TableCell>
               <TableCell>Método de Pago</TableCell>
-              <TableCell align="center" width={120}>Acciones</TableCell>
+              <TableCell align="center" width={140}>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -223,7 +431,22 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger }) => {
                     minute: '2-digit'
                   })}
                 </TableCell>
-                <TableCell align="right">{formatCurrency(payment.amount)}</TableCell>
+                <TableCell align="right">
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+                    {payment.type === 'DISTRIBUTED' && (
+                      <Tooltip title="Parte de un pago distribuido">
+                        <Chip
+                          label="Distribuido"
+                          size="small"
+                          color="info"
+                          variant="outlined"
+                          sx={{ mr: 1 }}
+                        />
+                      </Tooltip>
+                    )}
+                    {formatCurrency(payment.amount)}
+                  </Box>
+                </TableCell>
                 <TableCell>{payment.description || '-'}</TableCell>
                 <TableCell>
                   <Chip
@@ -235,19 +458,41 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger }) => {
                 </TableCell>
                 <TableCell align="center">
                   <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleEditClick(payment)}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleDeleteClick(payment)}
-                      color="error"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
+                    {payment.type === 'DISTRIBUTED' ? (
+                      <>
+                        <Tooltip title="Ver/Editar pago distribuido">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDistributedPaymentClick(payment)}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDeleteClick(payment)}
+                          color="error"
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </>
+                    ) : (
+                      <>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleEditClick(payment)}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDeleteClick(payment)}
+                          color="error"
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </>
+                    )}
                   </Box>
                 </TableCell>
               </TableRow>
@@ -308,6 +553,16 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger }) => {
           </DialogActions>
         </form>
       </Dialog>
+
+      {distributedPayment && (
+        <PaymentForm
+          open={!!distributedPayment}
+          onClose={() => setDistributedPayment(null)}
+          onSubmit={handleDistributedPaymentSubmit}
+          payment={distributedPayment}
+          project={distributedPayment.project}
+        />
+      )}
 
       <Snackbar
         open={showSnackbar}

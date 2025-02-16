@@ -451,7 +451,54 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 
 **Estado: COMPLETADO**
 
-## Sprint 15: Dashboard, Reportes y Seguimiento de Presupuestos
+## Sprint 15: Mejoras en la Gestión de Pagos Distribuidos
+- Implementación de la edición de pagos distribuidos desde múltiples puntos de acceso (página de pagos y detalles del proyecto)
+- Mejora de la experiencia de usuario manteniendo el contexto al editar pagos distribuidos
+- Optimización del flujo de trabajo para mantener al usuario en su vista actual
+- Implementación de validaciones y manejo de errores mejorado para pagos distribuidos
+
+**Criterios de Aceptación:**
+- Los pagos distribuidos deben poder editarse tanto desde:
+  * La página principal de pagos (/payments)
+  * El historial de pagos de cada hito en la vista de proyecto
+- La edición de un pago distribuido debe:
+  * Mostrar todas las distribuciones existentes
+  * Permitir modificar montos individuales
+  * Validar que la suma total coincida con el monto del pago
+  * Mantener la consistencia de los datos en todas las vistas
+- La interfaz debe:
+  * Mostrar claramente que es un pago distribuido
+  * Permitir ver y editar todas las distribuciones
+  * Mantener al usuario en su contexto actual tras la edición
+- El sistema debe:
+  * Validar los montos antes de guardar
+  * Actualizar correctamente los estados de los hitos
+  * Refrescar los datos en todas las vistas afectadas
+
+**Validación y Resultados:**
+- Se implementó exitosamente:
+  * Edición de pagos distribuidos desde múltiples vistas
+  * Formulario unificado para edición de pagos distribuidos
+  * Sistema de navegación contextual
+  * Validaciones de montos y distribuciones
+- Se validó la funcionalidad:
+  * Edición desde la página de pagos
+  * Edición desde el historial de pagos del proyecto
+  * Actualización correcta de montos y estados
+  * Persistencia de datos tras ediciones
+- Se verificó la usabilidad:
+  * Mantenimiento del contexto del usuario
+  * Claridad en la visualización de distribuciones
+  * Mensajes de error informativos
+  * Actualización en tiempo real de los datos
+- Se confirmó la consistencia:
+  * Datos sincronizados entre vistas
+  * Estados de hitos actualizados correctamente
+  * Montos totales y distribuciones coherentes
+
+**Estado: COMPLETADO**
+
+## Sprint 16: Dashboard, Reportes y Seguimiento de Presupuestos
 - Crear un dashboard interactivo que brinde una vista general del progreso del proyecto, integrando información de proyectos, hitos, tareas, pagos y desviaciones presupuestarias.
 - Implementar la lógica para el seguimiento de desviaciones entre el presupuesto inicial y los gastos reales, permitiendo el registro de razones y cálculos de porcentajes.
 - Permitir la generación y exportación de reportes en formatos PDF y Excel.
@@ -460,7 +507,7 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 + - Se validarán los endpoints y la integración del dashboard mediante pruebas manuales y unitarias, confirmando la exactitud y actualización en tiempo real de la información.
 **Estado: TODO**
 
-## Sprint 16: Mejoras, Pruebas y Despliegue
+## Sprint 17: Mejoras, Pruebas y Despliegue
 - Optimizar la experiencia de usuario integrando la asociación de proyectos a usuarios, aprovechando la autenticación implementada en el Sprint 1.
 - Implementar pruebas unitarias y de integración con una cobertura mínima del 80%, asegurando la estabilidad de las funcionalidades implementadas.
 - Corregir bugs críticos y realizar mejoras de rendimiento en toda la aplicación.

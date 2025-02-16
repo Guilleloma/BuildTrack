@@ -28,7 +28,7 @@ import WarningIcon from '@mui/icons-material/Warning';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { formatCurrency } from '../utils/formatters';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import PaymentForm from './PaymentForm';
 
 const PaymentsPage = () => {
@@ -39,15 +39,19 @@ const PaymentsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingPayment, setEditingPayment] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Fetch all payments and projects
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // Get payment ID from URL query params
+        const params = new URLSearchParams(location.search);
+        const paymentId = params.get('id');
+
         const [paymentsRes, projectsRes] = await Promise.all([
-          fetch('http://localhost:3000/payments'),
-          fetch('http://localhost:3000/projects')
+          fetch('/payments'),
+          fetch('/projects')
         ]);
 
         if (!paymentsRes.ok || !projectsRes.ok) {
@@ -61,6 +65,24 @@ const PaymentsPage = () => {
 
         setPayments(paymentsData);
         setProjects(projectsData);
+
+        // If we have a payment ID in the URL, find and open that payment for editing
+        if (paymentId) {
+          const paymentToEdit = paymentsData.find(p => p._id === paymentId);
+          if (paymentToEdit && paymentToEdit.type === 'DISTRIBUTED') {
+            // For distributed payments, we need to get the milestone info
+            const milestones = paymentToEdit.distributions.map(dist => ({
+              _id: dist.milestone._id,
+              name: dist.milestone.name,
+              amount: dist.amount
+            }));
+            
+            setEditingPayment({
+              ...paymentToEdit,
+              milestones
+            });
+          }
+        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -69,21 +91,28 @@ const PaymentsPage = () => {
     };
 
     fetchData();
-  }, []);
+  }, [location]);
 
   // Calculate global statistics
   const statistics = {
-    totalPayments: payments.reduce((sum, p) => sum + p.amount, 0),
+    totalPayments: payments.reduce((sum, p) => sum + (p?.amount || 0), 0),
     totalCount: payments.length,
-    averagePayment: payments.length ? payments.reduce((sum, p) => sum + p.amount, 0) / payments.length : 0
+    averagePayment: payments.length ? payments.reduce((sum, p) => sum + (p?.amount || 0), 0) / payments.length : 0
   };
 
   // Calculate project-specific statistics
   const projectStats = projects.map(project => {
+    if (!project?._id) return null;
+
     // Get all payments for this project's milestones
-    const projectPayments = payments.filter(payment => 
-      payment.milestone?.project?._id === project._id
-    );
+    const projectPayments = payments.filter(payment => {
+      if (payment.type === 'DISTRIBUTED') {
+        return payment.distributions?.some(dist => 
+          dist?.milestone?.project?._id === project._id
+        );
+      }
+      return payment?.milestone?.project?._id === project._id;
+    });
 
     // Use the project's progress information directly from the project data
     const {
@@ -94,34 +123,49 @@ const PaymentsPage = () => {
       paidAmount = 0
     } = project.progress || {};
 
+    const milestoneStats = (project.milestones || []).map(milestone => {
+      if (!milestone) return null;
+      
+      const totalWithTax = milestone.hasTax 
+        ? (milestone.budget || 0) * (1 + ((milestone.taxRate || 21) / 100))
+        : (milestone.budget || 0);
+
+      return {
+        ...milestone,
+        paidAmount: milestone.paidAmount || 0,
+        totalWithTax,
+        pendingAmount: totalWithTax - (milestone.paidAmount || 0),
+        completionPercentage: totalWithTax > 0 ? ((milestone.paidAmount || 0) / totalWithTax) * 100 : 0
+      };
+    }).filter(Boolean);
+
     return {
       ...project,
-      totalPaid: paidAmount,
-      totalCost,
-      totalCostWithTax,
-      pendingAmount: totalCostWithTax - paidAmount,
-      completionPercentage: paymentPercentage,
-      taskCompletionPercentage,
+      totalPaid: paidAmount || 0,
+      totalCost: totalCost || 0,
+      totalCostWithTax: totalCostWithTax || 0,
+      pendingAmount: (totalCostWithTax || 0) - (paidAmount || 0),
+      completionPercentage: paymentPercentage || 0,
+      taskCompletionPercentage: taskCompletionPercentage || 0,
       paymentCount: projectPayments.length,
-      milestoneStats: project.milestones?.map(milestone => {
-        const totalWithTax = milestone.hasTax 
-          ? milestone.budget * (1 + (milestone.taxRate || 21) / 100)
-          : milestone.budget;
-        return {
-          ...milestone,
-          paidAmount: milestone.paidAmount || 0,
-          totalWithTax,
-          pendingAmount: totalWithTax - (milestone.paidAmount || 0),
-          completionPercentage: totalWithTax > 0 ? ((milestone.paidAmount || 0) / totalWithTax) * 100 : 0
-        };
-      }) || []
+      milestoneStats
     };
-  });
+  }).filter(Boolean);
 
   // Filter payments based on search term
   const filteredPayments = payments.filter(payment => {
-    const searchString = `${payment.milestone?.project?.name || ''} ${payment.milestone?.name || ''} ${payment.description}`.toLowerCase();
-    return searchString.includes(searchTerm.toLowerCase());
+    if (!payment) return false;
+    
+    let searchString = '';
+    if (payment.type === 'DISTRIBUTED') {
+      searchString = `${payment.distributions?.[0]?.milestone?.project?.name || ''} ${
+        payment.distributions?.map(d => d?.milestone?.name || '').join(' ') || ''
+      } ${payment.description || ''}`;
+    } else {
+      searchString = `${payment.milestone?.project?.name || ''} ${payment.milestone?.name || ''} ${payment.description || ''}`;
+    }
+    
+    return searchString.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const getPaymentMethodLabel = (method) => {
@@ -148,55 +192,101 @@ const PaymentsPage = () => {
     console.log(`${severity}: ${message}`); // Temporary logging until we implement proper message display
   };
 
-  const handleEditClick = (payment) => {
-    // Obtener el milestone correspondiente del proyecto
-    const milestone = projects
-      .flatMap(p => p.milestones || [])
-      .find(m => m._id === payment.milestone._id);
+  const handleEditClick = async (payment) => {
+    console.log('handleEditClick called with payment:', payment);
+    try {
+      if (payment.type === 'DISTRIBUTED') {
+        console.log('Payment is distributed, fetching full payment...');
+        // Obtener el pago completo con todas sus distribuciones
+        const paymentResponse = await fetch(`/payments/${payment._id}`);
+        if (!paymentResponse.ok) {
+          throw new Error('Error al obtener el pago');
+        }
+        const fullPaymentData = await paymentResponse.json();
+        console.log('Full payment received:', JSON.stringify(fullPaymentData, null, 2));
 
-    if (milestone) {
-      // Añadir el pago que se está editando al milestone
-      const milestoneWithPayment = {
-        ...milestone,
-        editingPayment: payment
-      };
-      setEditingPayment(milestoneWithPayment);
+        const fullPayment = fullPaymentData.payment;
+        const project = fullPaymentData.project;
+
+        if (!fullPayment?.distributions?.[0]?.milestone) {
+          throw new Error('No se encontró información del milestone en el pago');
+        }
+
+        // Preparar el pago con el formato correcto para el PaymentForm
+        const paymentForForm = {
+          _id: fullPayment._id,
+          amount: fullPayment.amount.toString(),
+          description: fullPayment.description || '',
+          paymentMethod: fullPayment.paymentMethod,
+          type: 'DISTRIBUTED',
+          project,
+          distributions: fullPayment.distributions.map(dist => ({
+            milestoneId: dist.milestone._id,
+            amount: dist.amount.toString(),
+            name: dist.milestone.name
+          }))
+        };
+        console.log('Payment prepared for form:', paymentForForm);
+
+        setEditingPayment(paymentForForm);
+      } else {
+        console.log('Setting regular payment for editing');
+        setEditingPayment(payment);
+      }
+    } catch (err) {
+      console.error('Error in handleEditClick:', err);
+      showMessage(err.message, 'error');
     }
   };
 
   const handleEditSubmit = async (formData) => {
     try {
-      const response = await fetch(`/payments/${editingPayment.editingPayment._id}`, {
+      setLoading(true);
+      
+      // Preparar los datos según el tipo de pago
+      const dataToSend = editingPayment.type === 'DISTRIBUTED' ? 
+        {
+          amount: parseFloat(formData.amount),
+          description: formData.description,
+          paymentMethod: formData.paymentMethod,
+          type: 'DISTRIBUTED',
+          distributions: formData.distributions.map(dist => ({
+            milestoneId: dist.milestoneId,
+            amount: parseFloat(dist.amount)
+          }))
+        } : 
+        {
+          amount: parseFloat(formData.amount),
+          description: formData.description,
+          paymentMethod: formData.paymentMethod,
+          type: 'SINGLE',
+          milestoneId: editingPayment.milestone._id
+        };
+
+      console.log('Sending payment update:', dataToSend);
+
+      const response = await fetch(`/payments/${editingPayment._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(dataToSend),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        // Extraer la información detallada del error
-        const errorDetails = {
-          message: data.error,
-          currentlyPaid: data.currentlyPaid,
-          totalCost: data.totalCost,
-          totalWithTax: data.totalWithTax,
-          remaining: data.remaining
-        };
-        
-        // Lanzar el error con los detalles
-        const error = new Error();
-        error.details = errorDetails;
-        throw error;
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || 'Error updating payment');
       }
 
-      // Refresh data
+      // Refresh both payments and projects data
       const [paymentsRes, projectsRes] = await Promise.all([
         fetch('/payments'),
         fetch('/projects')
       ]);
+
+      if (!paymentsRes.ok || !projectsRes.ok) {
+        throw new Error('Error refreshing data');
+      }
 
       const [paymentsData, projectsData] = await Promise.all([
         paymentsRes.json(),
@@ -205,11 +295,17 @@ const PaymentsPage = () => {
 
       setPayments(paymentsData);
       setProjects(projectsData);
+      
       setEditingPayment(null);
       showMessage('Pago actualizado correctamente');
+      
+      // Clear the payment ID from the URL
+      navigate('/payments', { replace: true });
     } catch (err) {
-      // Propagar el error con los detalles al PaymentForm
-      throw err;
+      console.error('Error updating payment:', err);
+      showMessage(err.message, 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -276,156 +372,53 @@ const PaymentsPage = () => {
   return (
     <Container>
       <Typography variant="h4" gutterBottom>
-        Payments Overview
+        Pagos
       </Typography>
 
-      {/* Global Statistics Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Total Payments
-              </Typography>
-              <Typography variant="h5">
-                {formatCurrency(statistics.totalPayments)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Number of Payments
-              </Typography>
-              <Typography variant="h5">
-                {statistics.totalCount}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Average Payment
-              </Typography>
-              <Typography variant="h5">
-                {formatCurrency(statistics.averagePayment)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Project-specific Payment Overview */}
-      <Typography variant="h5" gutterBottom sx={{ mt: 4, mb: 2 }}>
-        Payments by Project
-      </Typography>
-      
-      {projectStats.map((project) => {
-        const taskProgress = project.taskCompletionPercentage || 0;
-        const paymentProgress = project.completionPercentage || 0;
-        const showWarning = paymentProgress > taskProgress;
-        const showPaymentNeeded = taskProgress > paymentProgress;
-
-        return (
-          <Paper 
-            key={project._id}
-            sx={{ 
-              mb: 2, 
-              p: 2,
-              '&:hover': {
-                backgroundColor: 'rgba(0, 0, 0, 0.01)'
-              }
-            }}
-          >
-            <Box sx={{ width: '100%' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                    {project.name}
-                  </Typography>
-                  <IconButton
-                    size="small"
-                    onClick={() => navigate(`/projects/${project._id}`)}
-                    sx={{ ml: 1 }}
-                  >
-                    <Tooltip title="Ver detalles del proyecto">
-                      <LaunchIcon fontSize="small" />
-                    </Tooltip>
-                  </IconButton>
-                  {showWarning && (
-                    <Tooltip title="El porcentaje de pago supera al porcentaje de tareas completadas">
-                      <WarningIcon sx={{ color: 'warning.main', fontSize: 20 }} />
-                    </Tooltip>
-                  )}
-                  {showPaymentNeeded && (
-                    <Tooltip title="Hay más tareas completadas que pagos realizados">
-                      <MonetizationOnIcon sx={{ color: 'success.main', fontSize: 20 }} />
-                    </Tooltip>
-                  )}
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="subtitle1">
-                    {formatCurrency(project.progress.paidAmount)} / {formatCurrency(project.progress.totalCostWithTax)}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Base: {formatCurrency(project.progress.totalCost)}
-                    {project.progress.totalCostWithTax > project.progress.totalCost && (
-                      ` + IVA: ${formatCurrency(project.progress.totalCostWithTax - project.progress.totalCost)}`
-                    )}
-                  </Typography>
-                </Box>
-              </Box>
-              <Box sx={{ mb: 1 }}>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={Math.min(project.progress.paymentPercentage, 100)}
-                  sx={{ height: 8, borderRadius: 4 }}
-                />
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-                <Typography variant="body2" color="textSecondary">
-                  {project.paymentCount} {project.paymentCount === 1 ? 'pago' : 'pagos'}
+      <Box sx={{ mb: 4 }}>
+        <Card>
+          <CardContent>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={4}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Total Pagado
                 </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  {project.progress.paymentPercentage.toFixed(1)}% complete
+                <Typography variant="h4">
+                  {formatCurrency(statistics.totalPayments)}
                 </Typography>
-              </Box>
-            </Box>
-          </Paper>
-        );
-      })}
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Número de Pagos
+                </Typography>
+                <Typography variant="h4">
+                  {statistics.totalCount}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Promedio por Pago
+                </Typography>
+                <Typography variant="h4">
+                  {formatCurrency(statistics.averagePayment)}
+                </Typography>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      </Box>
 
-      <Divider sx={{ my: 4 }} />
-
-      {/* Search Field */}
-      <Typography variant="h5" gutterBottom>
-        Payment History
-      </Typography>
-      <TextField
-        fullWidth
-        label="Search payments"
-        variant="outlined"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        sx={{ mb: 3 }}
-      />
-
-      {/* Payments Table */}
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Date</TableCell>
-              <TableCell>Project</TableCell>
-              <TableCell>Milestone</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell align="right">Amount</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="center" width={120}>Actions</TableCell>
+              <TableCell>Fecha</TableCell>
+              <TableCell>Proyecto</TableCell>
+              <TableCell>Hitos</TableCell>
+              <TableCell>Descripción</TableCell>
+              <TableCell align="right">Monto</TableCell>
+              <TableCell>Método</TableCell>
+              <TableCell align="center" width={120}>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -440,8 +433,16 @@ const PaymentsPage = () => {
                     minute: '2-digit'
                   })}
                 </TableCell>
-                <TableCell>{payment.milestone?.project?.name || 'Unknown Project'}</TableCell>
-                <TableCell>{payment.milestone?.name || 'Unknown Milestone'}</TableCell>
+                <TableCell>{payment.projectName || 'Unknown Project'}</TableCell>
+                <TableCell>
+                  {payment.milestonesInfo?.map((info, index) => (
+                    <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                      <Typography variant="body2">
+                        {info.name}: {formatCurrency(info.amount)}
+                      </Typography>
+                    </Box>
+                  ))}
+                </TableCell>
                 <TableCell>{payment.description || '-'}</TableCell>
                 <TableCell align="right">{formatCurrency(payment.amount)}</TableCell>
                 <TableCell>
@@ -477,10 +478,15 @@ const PaymentsPage = () => {
 
       {editingPayment && (
         <PaymentForm
-          open={!!editingPayment}
-          onClose={() => setEditingPayment(null)}
+          open={true}
+          onClose={() => {
+            console.log('Closing payment form');
+            setEditingPayment(null);
+            navigate('/payments', { replace: true });
+          }}
           onSubmit={handleEditSubmit}
-          milestone={editingPayment}
+          payment={editingPayment}
+          project={editingPayment.project}
         />
       )}
     </Container>
