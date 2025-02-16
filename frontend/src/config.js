@@ -1,5 +1,7 @@
 // Backend API URL configuration
-export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+export const API_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://buildtrack.onrender.com'
+  : 'http://localhost:3000';
 
 // Function to get the full API URL
 export const getApiUrl = (endpoint) => {

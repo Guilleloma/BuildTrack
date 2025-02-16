@@ -4,11 +4,20 @@ const mongoose = require('mongoose');
 const app = express();
 const port = process.env.PORT || 3000;
 const jwt = require('jsonwebtoken');
-const SECRET = 'mysecret';
+const SECRET = process.env.JWT_SECRET || 'mysecret';
 const users = {};
 
 // MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://holaguillelopez:(Lokkito86)@buildtrack.ayjef.mongodb.net/buildtrack?retryWrites=true&w=majority';
+
+// CORS configuration
+const corsOptions = {
+  origin: ['https://buildtrack-c3e8a.web.app', 'http://localhost:3001'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
 
 mongoose.connect(MONGODB_URI).then(() => {
   console.log('Connected to MongoDB successfully');
@@ -17,12 +26,12 @@ mongoose.connect(MONGODB_URI).then(() => {
 });
 
 // Middleware configuration
+app.use(cors(corsOptions));
 app.use(express.json());
-app.use(cors());
 
-// Basic route
+// Basic route for health check
 app.get('/', (req, res) => {
-  res.send('Hello from BuildTrack backend!');
+  res.json({ status: 'ok', message: 'BuildTrack API is running' });
 });
 
 // Auth routes
@@ -65,8 +74,29 @@ app.use('/settings', settingsRouter);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  console.error('Error occurred:', err);
+  console.error('Stack trace:', err.stack);
+  
+  // Handle specific types of errors
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({ 
+      error: 'Validation Error', 
+      details: err.message 
+    });
+  }
+  
+  if (err.name === 'CastError') {
+    return res.status(400).json({ 
+      error: 'Invalid ID format',
+      details: err.message 
+    });
+  }
+  
+  // Default error response
+  res.status(500).json({ 
+    error: 'Something went wrong!',
+    message: err.message
+  });
 });
 
 // Start server

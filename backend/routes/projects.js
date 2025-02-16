@@ -195,13 +195,17 @@ router.get('/:id/progress', async (req, res) => {
 // GET a single project by id
 router.get('/:id', async (req, res) => {
     try {
+        console.log('Getting project with id:', req.params.id);
         const project = await Project.findById(req.params.id);
         if (!project) {
+            console.log('Project not found');
             return res.status(404).json({ message: 'Project not found' });
         }
+        console.log('Project found:', project);
 
         // Get milestones for this project
         const milestones = await Milestone.find({ project: project._id });
+        console.log('Milestones found:', milestones.length);
         const milestoneIds = milestones.map(m => m._id);
 
         // Get all payments (both single and distributed)
@@ -211,10 +215,12 @@ router.get('/:id', async (req, res) => {
                 { 'distributions.milestone': { $in: milestoneIds } }
             ]
         }).populate('milestone distributions.milestone');
+        console.log('Payments found:', payments.length);
         
         // Get tasks and payments for each milestone
         const milestonesWithTasksAndPayments = await Promise.all(milestones.map(async (milestone) => {
             const tasks = await Task.find({ milestone: milestone._id });
+            console.log(`Tasks found for milestone ${milestone._id}:`, tasks.length);
 
             // Calculate total paid amount including distributed payments
             const singlePayments = payments
@@ -274,8 +280,11 @@ router.get('/:id', async (req, res) => {
             paymentPercentage: (projectTotals.totalPaid / projectTotals.totalWithTax) * 100
         };
 
+        // Send the response
+        console.log('Sending response');
         res.json(projectData);
     } catch (error) {
+        console.error('Error in GET /:id:', error);
         res.status(500).json({ message: error.message });
     }
 });
