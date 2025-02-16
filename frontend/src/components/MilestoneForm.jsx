@@ -200,7 +200,7 @@ const MilestoneForm = ({ open, onClose, onSubmit, milestone }) => {
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 Using default tax rate: {formData.taxRate}%
                 <br />
-                You can change the default rate in Settings
+                The tax rate can be configured in Settings
               </Typography>
             )}
           </Box>

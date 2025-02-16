@@ -96,7 +96,7 @@ const SettingsPage = () => {
           <Box sx={{ mb: 3 }}>
             <Typography variant="body2" color="text.secondary" paragraph>
               Configure the default tax rate (IVA) that will be applied to new milestones.
-              This rate can be modified for individual milestones during creation.
+              This rate will be used when creating milestones with tax enabled.
             </Typography>
           </Box>
 
