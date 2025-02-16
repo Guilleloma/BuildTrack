@@ -409,11 +409,47 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 ## Sprint 14: Control y representacion de impuestos
 - Algunos hitos pueden aplicar impuestos y otros no, los impuestos se aplican sobre el coste total del hito
 - Se debe diferenciar claramente el coste total del hito y el coste total con impuestos
-- El el proyecto se debe mostrar el coste total y el coste total con impuestos
+- En el proyecto se debe mostrar el coste total y el coste total con impuestos
 - En la pantalla payments se debe mostrar el coste total y el coste total con impuestos de cada proyecto en base a los hitos con y sin impuestos
 - El valor (%) de impuestos se debe poder configurar en la pagina de Settings
 
-**Estado: TODO**
+**Criterios de Aceptación:**
+- El modelo de Milestone debe incluir:
+  * Campo `hasTax` (boolean) para indicar si aplica impuestos
+  * Campo `taxRate` (number) para almacenar el porcentaje de impuestos
+  * Cálculo automático del total con impuestos
+- La interfaz debe mostrar claramente:
+  * En el formulario de milestone: opción para habilitar/deshabilitar impuestos
+  * En el detalle del milestone: monto base, monto de impuestos y total
+  * En el proyecto: totales con y sin impuestos agregados
+  * En la página de pagos: montos base y con impuestos para cada proyecto
+- La página de Settings debe permitir:
+  * Configurar el porcentaje de impuestos por defecto (IVA)
+  * Validar que el valor esté entre 0 y 100
+  * Mostrar el valor actual y la última actualización
+
+**Validación y Resultados:**
+- Se implementó exitosamente:
+  * Modelo de datos con campos `hasTax` y `taxRate`
+  * Cálculo automático de totales con impuestos en el backend
+  * Visualización de montos base e impuestos en todas las vistas
+  * Página de configuración de impuestos
+- Se validó la funcionalidad:
+  * Creación de hitos con y sin impuestos
+  * Cálculo correcto de totales en proyectos
+  * Persistencia del porcentaje de impuestos en la base de datos
+  * Actualización del porcentaje por defecto
+- Se verificó la interfaz:
+  * Visualización clara de montos base e impuestos
+  * Tooltips informativos con desglose de montos
+  * Barras de progreso separadas para base e impuestos
+  * Mensajes de éxito/error en la configuración
+- Se confirmó la consistencia:
+  * Formato correcto de montos en euros
+  * Cálculos precisos con dos decimales
+  * Actualización en tiempo real de los totales
+
+**Estado: COMPLETADO**
 
 ## Sprint 15: Dashboard, Reportes y Seguimiento de Presupuestos
 - Crear un dashboard interactivo que brinde una vista general del progreso del proyecto, integrando información de proyectos, hitos, tareas, pagos y desviaciones presupuestarias.
