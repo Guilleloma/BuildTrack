@@ -10,6 +10,7 @@ import {
   CircularProgress,
   Divider,
 } from '@mui/material';
+import { getApiUrl } from '../utils/apiUtils';
 
 const SettingsPage = () => {
   const [settings, setSettings] = useState(null);
@@ -19,22 +20,28 @@ const SettingsPage = () => {
   const [editedTaxRate, setEditedTaxRate] = useState('');
 
   useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(getApiUrl('/settings'), {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!response.ok) throw new Error('Error fetching settings');
+        const data = await response.json();
+        setSettings(data);
+        setEditedTaxRate(data.defaultTaxRate.toString());
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+        setError('Error al cargar la configuración');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchSettings();
   }, []);
-
-  const fetchSettings = async () => {
-    try {
-      const response = await fetch('/settings');
-      if (!response.ok) throw new Error('Error fetching settings');
-      const data = await response.json();
-      setSettings(data);
-      setEditedTaxRate(data.defaultTaxRate.toString());
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,10 +54,12 @@ const SettingsPage = () => {
         throw new Error('Tax rate must be a number between 0 and 100');
       }
 
-      const response = await fetch('/settings', {
+      const token = localStorage.getItem('token');
+      const response = await fetch(getApiUrl('/settings'), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           defaultTaxRate: taxRate,

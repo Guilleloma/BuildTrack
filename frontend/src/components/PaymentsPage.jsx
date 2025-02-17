@@ -208,7 +208,12 @@ const PaymentsPage = () => {
       if (payment.type === 'DISTRIBUTED') {
         console.log('Payment is distributed, fetching full payment...');
         // Obtener el pago completo con todas sus distribuciones
-        const paymentResponse = await fetch(`/payments/${payment._id}`);
+        const token = localStorage.getItem('token');
+        const paymentResponse = await fetch(getApiUrl(`/payments/${payment._id}`), {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         if (!paymentResponse.ok) {
           throw new Error('Error al obtener el pago');
         }

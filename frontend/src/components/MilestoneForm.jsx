@@ -54,38 +54,18 @@ const MilestoneForm = ({ open, onClose, onSubmit, milestone }) => {
 
   const fetchDefaultTaxRate = async () => {
     try {
-      const response = await fetch('/settings');
+      const token = localStorage.getItem('token');
+      const response = await fetch(getApiUrl('/settings'), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (!response.ok) throw new Error('Error fetching settings');
       const data = await response.json();
-      
-      // Set form data with the default tax rate or milestone data
-      if (milestone) {
-        setFormData({
-          name: milestone.name || '',
-          description: milestone.description || '',
-          budget: milestone.budget || '',
-          hasTax: milestone.hasTax !== undefined ? milestone.hasTax : true,
-          taxRate: milestone.taxRate || data.defaultTaxRate
-        });
-      } else {
-        setFormData(prev => ({
-          ...prev,
-          hasTax: true,
-          taxRate: data.defaultTaxRate
-        }));
-      }
-    } catch (err) {
-      console.error('Error fetching default tax rate:', err);
-      // Use a fallback value if we can't fetch the settings
-      if (!milestone) {
-        setFormData(prev => ({
-          ...prev,
-          hasTax: true,
-          taxRate: 21
-        }));
-      }
-    } finally {
-      setLoading(false);
+      setDefaultTaxRate(data.defaultTaxRate || 21);
+    } catch (error) {
+      console.error('Error fetching default tax rate:', error);
+      setDefaultTaxRate(21);
     }
   };
 

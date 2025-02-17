@@ -225,7 +225,12 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
       }
 
       console.log('Fetching distributed payment:', payment._id);
-      const paymentResponse = await fetch(`/payments/${payment._id}`);
+      const token = localStorage.getItem('token');
+      const paymentResponse = await fetch(getApiUrl(`/payments/${payment._id}`), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (!paymentResponse.ok) {
         throw new Error('Error al obtener el pago');
       }
@@ -276,10 +281,12 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
         }))
       };
 
-      const response = await fetch(`/payments/${distributedPayment._id}`, {
+      const token = localStorage.getItem('token');
+      const response = await fetch(getApiUrl(`/payments/${distributedPayment._id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(dataToSend),
       });
