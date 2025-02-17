@@ -135,7 +135,10 @@ const ProjectList = () => {
             <Button 
               variant="contained" 
               color="primary" 
-              onClick={() => navigate('/projects/new')}
+              onClick={() => {
+                const basePath = location.pathname.startsWith('/app') ? '/app' : '';
+                navigate(`${basePath}/projects/new`);
+              }}
               style={{ marginTop: '20px' }}
             >
               Crear Proyecto
