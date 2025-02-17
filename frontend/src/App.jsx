@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import ProjectList from './components/ProjectList';
 import ProjectDetail from './components/ProjectDetail';
@@ -27,7 +27,7 @@ function App() {
       <Router>
         <Routes>
           <Route 
-            index
+            path="/"
             element={
               <>
                 {console.log('Rendering Home route')}
