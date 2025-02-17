@@ -15,11 +15,6 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 const menuItems = [
   {
-    text: 'Dashboard',
-    icon: <DashboardIcon />,
-    path: '/dashboard'
-  },
-  {
     text: 'Projects',
     icon: <BusinessIcon />,
     path: '/projects'
