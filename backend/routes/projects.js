@@ -27,19 +27,36 @@ router.get('/', async (req, res) => {
 
             const totalProjectTasks = tasks.length;
             const totalCompletedTasks = tasks.filter(task => task.status === 'COMPLETED').length;
-            const totalProjectCost = milestones.reduce((sum, m) => sum + m.budget, 0);
-            const totalProjectCostWithTax = milestones.reduce((sum, m) => {
-                if (!m.hasTax) return sum + m.budget;
-                const taxRate = m.taxRate || 21;
-                return sum + (m.budget * (1 + taxRate / 100));
+            
+            // Calculate base amounts
+            const totalBase = milestones.reduce((sum, m) => sum + m.budget, 0);
+            const totalBasePaid = milestones.reduce((sum, m) => sum + (m.paidAmount || 0), 0);
+            
+            // Calculate tax amounts
+            const totalTax = milestones.reduce((sum, m) => {
+                if (m.hasTax) {
+                    const taxRate = m.taxRate || 21;
+                    return sum + (m.budget * (taxRate / 100));
+                }
+                return sum;
             }, 0);
-            const totalPaidAmount = milestones.reduce((sum, m) => sum + m.paidAmount, 0);
+            const totalTaxPaid = milestones.reduce((sum, m) => {
+                if (m.hasTax) {
+                    const taxRate = m.taxRate || 21;
+                    const basePaid = m.paidAmount || 0;
+                    return sum + (basePaid * (taxRate / 100));
+                }
+                return sum;
+            }, 0);
+
+            const totalWithTax = totalBase + totalTax;
+            const totalPaid = totalBasePaid + totalTaxPaid;
 
             const taskCompletionPercentage = totalProjectTasks > 0 
                 ? (totalCompletedTasks / totalProjectTasks) * 100 
                 : 0;
-            const paymentPercentage = totalProjectCost > 0 
-                ? (totalPaidAmount / totalProjectCost) * 100 
+            const paymentPercentage = totalWithTax > 0 
+                ? (totalPaid / totalWithTax) * 100 
                 : 0;
 
             return {
@@ -49,9 +66,13 @@ router.get('/', async (req, res) => {
                     paymentPercentage: Math.round(paymentPercentage * 100) / 100,
                     totalTasks: totalProjectTasks,
                     completedTasks: totalCompletedTasks,
-                    totalCost: totalProjectCost,
-                    totalCostWithTax: Math.round(totalProjectCostWithTax * 100) / 100,
-                    paidAmount: totalPaidAmount
+                    totalCost: totalBase,
+                    totalCostWithTax: totalWithTax,
+                    paidAmount: totalPaid,
+                    base: totalBase,
+                    base_paid: totalBasePaid,
+                    tax: totalTax,
+                    tax_paid: totalTaxPaid
                 }
             };
         }));
