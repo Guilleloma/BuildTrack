@@ -158,7 +158,14 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
           description: payment.description || '',
           paymentMethod: payment.paymentMethod,
           type: 'SINGLE',
-          milestone: payment.milestone
+          milestone: {
+            _id: payment.milestone._id,
+            name: payment.milestone.name,
+            budget: payment.milestone.budget,
+            hasTax: payment.milestone.hasTax,
+            taxRate: payment.milestone.taxRate,
+            paidAmount: payment.milestone.paidAmount
+          }
         });
       }
     } catch (err) {
