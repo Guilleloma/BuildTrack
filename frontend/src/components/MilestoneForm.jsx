@@ -1,4 +1,5 @@
 import React from 'react';
+import { getApiUrl } from '../config';
 import {
   Dialog,
   DialogTitle,
@@ -24,6 +25,7 @@ const MilestoneForm = ({ open, onClose, onSubmit, milestone }) => {
   });
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(true);
+  const [defaultTaxRate, setDefaultTaxRate] = React.useState(21);
   const nameFieldRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -37,7 +39,7 @@ const MilestoneForm = ({ open, onClose, onSubmit, milestone }) => {
           description: milestone.description || '',
           budget: milestone.budget || '',
           hasTax: milestone.hasTax !== undefined ? milestone.hasTax : true,
-          taxRate: milestone.taxRate || null
+          taxRate: milestone.taxRate || defaultTaxRate
         });
       } else {
         // Si es un nuevo milestone, resetear el formulario
@@ -46,11 +48,12 @@ const MilestoneForm = ({ open, onClose, onSubmit, milestone }) => {
           description: '',
           budget: '',
           hasTax: true,
-          taxRate: null
+          taxRate: defaultTaxRate
         });
       }
+      setLoading(false);
     }
-  }, [open, milestone]);
+  }, [open, milestone, defaultTaxRate]);
 
   const fetchDefaultTaxRate = async () => {
     try {

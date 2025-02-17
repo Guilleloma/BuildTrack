@@ -19,27 +19,27 @@ const SettingsPage = () => {
   const [success, setSuccess] = useState(false);
   const [editedTaxRate, setEditedTaxRate] = useState('');
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(getApiUrl('/settings'), {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!response.ok) throw new Error('Error fetching settings');
-        const data = await response.json();
-        setSettings(data);
-        setEditedTaxRate(data.defaultTaxRate.toString());
-      } catch (error) {
-        console.error('Error fetching settings:', error);
-        setError('Error al cargar la configuración');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchSettings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(getApiUrl('/settings'), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error('Error fetching settings');
+      const data = await response.json();
+      setSettings(data);
+      setEditedTaxRate(data.defaultTaxRate.toString());
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      setError('Error al cargar la configuración');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchSettings();
   }, []);
 
