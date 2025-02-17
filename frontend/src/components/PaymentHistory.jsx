@@ -157,7 +157,8 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
           amount: payment.amount.toString(),
           description: payment.description || '',
           paymentMethod: payment.paymentMethod,
-          type: 'SINGLE'
+          type: 'SINGLE',
+          milestone: payment.milestone
         });
       }
     } catch (err) {
@@ -451,7 +452,7 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
           onClose={handleEditClose}
           onSubmit={handleEditSubmit}
           payment={editingPayment}
-          milestone={milestone}
+          milestone={editingPayment.milestone}
         />
       )}
 
