@@ -1,5 +1,5 @@
-import React, { useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useCallback, useState } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
   Card,
@@ -47,6 +47,7 @@ import TaskAltIcon from '@mui/icons-material/TaskAlt';
 const ProjectDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [project, setProject] = React.useState(null);
   const [projectProgress, setProjectProgress] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
@@ -58,6 +59,7 @@ const ProjectDetail = () => {
   const [selectedTask, setSelectedTask] = React.useState(null);
   const [paymentsRefreshTrigger, setPaymentsRefreshTrigger] = React.useState(0);
   const [reportDialogOpen, setReportDialogOpen] = React.useState(false);
+  const [expandedMilestoneId, setExpandedMilestoneId] = React.useState(null);
 
   const fetchProjectProgress = useCallback(async () => {
     try {
@@ -107,6 +109,14 @@ const ProjectDetail = () => {
   useEffect(() => {
     fetchProject();
   }, [fetchProject]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const milestoneId = params.get('milestone');
+    if (milestoneId) {
+      setExpandedMilestoneId(milestoneId);
+    }
+  }, [location]);
 
   const handleCreateMilestone = async (milestoneData) => {
     try {
@@ -533,7 +543,18 @@ const ProjectDetail = () => {
             const totalWithTax = baseAmount + taxAmount;
             
             return (
-              <Accordion key={milestone._id} sx={{ mb: 0.5 }}>
+              <Accordion 
+                key={milestone._id}
+                expanded={expandedMilestoneId === milestone._id}
+                onChange={(e, isExpanded) => {
+                  setExpandedMilestoneId(isExpanded ? milestone._id : null);
+                  // Update URL without reloading
+                  const newUrl = isExpanded 
+                    ? `${location.pathname}?milestone=${milestone._id}`
+                    : location.pathname;
+                  navigate(newUrl, { replace: true });
+                }}
+              >
                 <AccordionSummary 
                   expandIcon={<ExpandMoreIcon />}
                   sx={{

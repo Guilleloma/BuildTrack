@@ -4,11 +4,19 @@ Este documento mantiene un registro de las instrucciones y preferencias importan
 
 ## Procedimientos de Desarrollo
 
-### Gestión de Cambios
+### Infraestructura
+- Frontend: Firebase Hosting (buildtrack-c3e8a.web.app)
+- Backend: Render.com (buildtrack.onrender.com)
+- Base de datos: MongoDB Atlas
+
+### Gestión de Cambios y Deploy
 1. Para cualquier cambio en el código:
    - Realizar el cambio
-   - Hacer push al repositorio
-   - Realizar el deploy
+   - Hacer commit y push al repositorio: `git add . && git commit -m "descripción" && git push origin trunk` (Recuerda comprobar en que carpeta te encuentras)
+   - Hacer build y deploy del frontend: `cd frontend && npm run build && cd .. && firebase deploy`
+   - Verificar el despliegue en buildtrack-c3e8a.web.app
+   - El backend en Render.com (buildtrack.onrender.com) se actualiza automáticamente con cada push a trunk
+   - La base de datos MongoDB Atlas está conectada automáticamente con el backend
 
 ### Logging y Debugging
 1. Implementar logs detallados para todos los procesos:
@@ -16,6 +24,8 @@ Este documento mantiene un registro de las instrucciones y preferencias importan
    - Incluir información relevante para debugging
    - Mantener diferentes niveles de log (info, warning, error)
    - Asegurar que los errores incluyan suficiente contexto para su análisis
+   - Los logs del backend se pueden consultar en el dashboard de Render.com
+   - Los logs de la base de datos se pueden consultar en MongoDB Atlas
 
 ### Principios de UX/UI
 1. Seguir mejores prácticas de experiencia de usuario:
@@ -33,4 +43,6 @@ Este documento mantiene un registro de las instrucciones y preferencias importan
 
 ## Historial de Actualizaciones
 - [FECHA] Instrucción inicial sobre procedimiento de cambios y deploy
-- [FECHA] Agregadas instrucciones sobre logging y mejores prácticas de UX/UI 
+- [FECHA] Agregadas instrucciones sobre logging y mejores prácticas de UX/UI
+- [FECHA] Actualizado el proceso de build y deploy con pasos específicos para Firebase y Render
+- [FECHA] Agregada información sobre MongoDB Atlas y actualizada la sección de logging 

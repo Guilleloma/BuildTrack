@@ -480,7 +480,7 @@ const PaymentsPage = () => {
                   {payment.milestonesInfo?.map((info, index) => (
                     <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                       <Typography variant="body2">
-                        {info.name}: {formatCurrency(info.amount)}
+                        {info.name}
                       </Typography>
                     </Box>
                   ))}
@@ -497,12 +497,27 @@ const PaymentsPage = () => {
                 </TableCell>
                 <TableCell align="center">
                   <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleEditClick(payment)}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
+                    <Tooltip title="Ir al proyecto">
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          const milestone = payment.milestonesInfo?.[0];
+                          if (milestone) {
+                            navigate(`/projects/${payment.milestone.project._id}?milestone=${milestone._id}`);
+                          }
+                        }}
+                      >
+                        <LaunchIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title={payment.type === 'DISTRIBUTED' ? 'Editar pago distribuido' : 'Editar pago'}>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEditClick(payment)}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                     <IconButton
                       size="small"
                       onClick={() => handleDeleteClick(payment)}
