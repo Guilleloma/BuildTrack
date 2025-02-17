@@ -19,6 +19,18 @@ const Home = () => {
         }}
       >
         <Paper elevation={3} sx={{ p: 4, width: '100%', textAlign: 'center' }}>
+          <Box sx={{ mb: 3 }}>
+            <img 
+              src="/logo.svg" 
+              alt="BuildTrack Logo" 
+              style={{ 
+                width: '80px',
+                height: '80px',
+                marginBottom: '16px'
+              }} 
+            />
+          </Box>
+          
           <Typography component="h1" variant="h4" gutterBottom>
             Bienvenido a BuildTrack
           </Typography>
@@ -65,7 +77,11 @@ const Home = () => {
             sx={{ 
               mt: 2,
               width: '80%',
-              py: 1.5
+              py: 1.5,
+              backgroundColor: '#9c27b0',
+              '&:hover': {
+                backgroundColor: '#7b1fa2',
+              },
             }}
           >
             Acceder al Sandbox

@@ -6,7 +6,9 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  useTheme
+  useTheme,
+  Box,
+  Typography
 } from '@mui/material';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -71,6 +73,36 @@ const Sidebar = ({ drawerWidth }) => {
         },
       }}
     >
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          py: 2,
+          borderBottom: `1px solid ${theme.palette.divider}`,
+        }}
+      >
+        <img 
+          src="/logo.svg" 
+          alt="BuildTrack Logo" 
+          style={{ 
+            width: '40px',
+            height: '40px',
+            marginBottom: '8px'
+          }} 
+        />
+        <Typography 
+          variant="subtitle2" 
+          color="primary"
+          sx={{ 
+            fontWeight: 600,
+            color: isSandbox ? '#9c27b0' : theme.palette.primary.main
+          }}
+        >
+          {isSandbox ? 'Sandbox Mode' : 'App Mode'}
+        </Typography>
+      </Box>
+
       <List>
         {menuItems.map((item) => (
           <ListItem

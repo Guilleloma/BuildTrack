@@ -56,16 +56,20 @@ const Navbar = ({ drawerWidth }) => {
         </Typography>
         {isSandbox ? (
           <Button
-            color="primary"
-            startIcon={<HomeIcon />}
-            variant="outlined"
-            onClick={() => navigate('/')}
             sx={{ 
               ml: 2,
               borderRadius: '20px',
               textTransform: 'none',
               px: 3,
+              backgroundColor: '#9c27b0',
+              color: '#fff',
+              '&:hover': {
+                backgroundColor: '#7b1fa2',
+              },
             }}
+            startIcon={<HomeIcon />}
+            variant="contained"
+            onClick={() => navigate('/')}
           >
             Volver al Inicio
           </Button>
