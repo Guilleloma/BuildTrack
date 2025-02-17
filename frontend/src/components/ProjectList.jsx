@@ -146,6 +146,19 @@ const ProjectList = () => {
           {isSandbox ? 'Proyectos (Sandbox)' : 'Mis Proyectos'}
         </Typography>
 
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              const basePath = location.pathname.startsWith('/app') ? '/app' : '';
+              navigate(`${basePath}/projects/new`);
+            }}
+          >
+            Nuevo Proyecto
+          </Button>
+        </Box>
+
         {isSandbox && (
           <Alert severity="info" sx={{ mb: 3 }}>
             Estás en modo Sandbox. Los proyectos creados aquí son públicos y pueden ser modificados por cualquier usuario.
