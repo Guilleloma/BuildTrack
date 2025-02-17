@@ -114,7 +114,12 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
       if (payment.type === 'DISTRIBUTED') {
         console.log('Payment is distributed, fetching full payment...');
         // Obtener el pago completo con todas sus distribuciones
-        const paymentResponse = await fetch(`/payments/${payment._id}`);
+        const token = localStorage.getItem('token');
+        const paymentResponse = await fetch(getApiUrl(`/payments/${payment._id}`), {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         if (!paymentResponse.ok) {
           throw new Error('Error al obtener el pago');
         }
@@ -147,7 +152,13 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
         setEditingPayment(paymentForForm);
       } else {
         console.log('Setting regular payment for editing');
-        setEditingPayment(payment);
+        setEditingPayment({
+          _id: payment._id,
+          amount: payment.amount.toString(),
+          description: payment.description || '',
+          paymentMethod: payment.paymentMethod,
+          type: 'SINGLE'
+        });
       }
     } catch (err) {
       console.error('Error in handleEditClick:', err);
@@ -157,11 +168,6 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
 
   const handleEditClose = () => {
     setEditingPayment(null);
-    setEditFormData({
-      amount: '',
-      description: '',
-      paymentMethod: ''
-    });
   };
 
   const handleEditSubmit = async (formData) => {
@@ -439,66 +445,13 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
         </Table>
       </TableContainer>
 
-      <Dialog open={!!editingPayment} onClose={handleEditClose} maxWidth="sm" fullWidth>
-        <DialogTitle>Editar Pago</DialogTitle>
-        <form onSubmit={handleEditSubmit}>
-          <DialogContent>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-              <TextField
-                label="Monto"
-                type="number"
-                value={editFormData.amount}
-                onChange={(e) => setEditFormData({ ...editFormData, amount: e.target.value })}
-                fullWidth
-                required
-                inputProps={{ min: 0, step: "0.01" }}
-              />
-
-              <FormControl fullWidth>
-                <InputLabel>Método de Pago</InputLabel>
-                <Select
-                  value={editFormData.paymentMethod}
-                  label="Método de Pago"
-                  onChange={(e) => setEditFormData({ ...editFormData, paymentMethod: e.target.value })}
-                >
-                  <MenuItem value="EFECTIVO">Efectivo</MenuItem>
-                  <MenuItem value="TRANSFERENCIA_BANCARIA">Transferencia Bancaria</MenuItem>
-                  <MenuItem value="BIZUM">Bizum</MenuItem>
-                  <MenuItem value="PAYPAL">PayPal</MenuItem>
-                </Select>
-              </FormControl>
-
-              <TextField
-                label="Descripción"
-                value={editFormData.description}
-                onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
-                fullWidth
-                multiline
-                rows={2}
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleEditClose}>Cancelar</Button>
-            <Button 
-              type="submit" 
-              variant="contained" 
-              color="primary"
-              disabled={loading || !editFormData.amount || parseFloat(editFormData.amount) <= 0}
-            >
-              {loading ? 'Guardando...' : 'Guardar Cambios'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-
-      {distributedPayment && (
+      {editingPayment && (
         <PaymentForm
-          open={!!distributedPayment}
-          onClose={() => setDistributedPayment(null)}
-          onSubmit={handleDistributedPaymentSubmit}
-          payment={distributedPayment}
-          project={distributedPayment.project}
+          open={!!editingPayment}
+          onClose={handleEditClose}
+          onSubmit={handleEditSubmit}
+          payment={editingPayment}
+          milestone={milestone}
         />
       )}
 
