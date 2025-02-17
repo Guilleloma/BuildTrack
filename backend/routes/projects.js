@@ -594,6 +594,33 @@ router.get('/:id/report/excel', async (req, res) => {
     }
 });
 
+// GET a single milestone
+router.get('/:projectId/milestones/:milestoneId', async (req, res) => {
+    console.log('=== GET MILESTONE ===');
+    console.log('Project ID:', req.params.projectId);
+    console.log('Milestone ID:', req.params.milestoneId);
+    
+    try {
+        const milestone = await Milestone.findOne({
+            _id: req.params.milestoneId,
+            project: req.params.projectId
+        });
+        
+        console.log('Milestone found:', milestone ? 'Yes' : 'No');
+        
+        if (!milestone) {
+            console.log('Milestone not found');
+            return res.status(404).json({ message: 'Milestone not found' });
+        }
+        
+        console.log('Sending milestone data');
+        res.json(milestone);
+    } catch (err) {
+        console.error('Error getting milestone:', err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // Helper function to calculate project data
 async function calculateProjectData(project, milestones, payments, tasks) {
     const milestonesWithData = await Promise.all(milestones.map(async (milestone) => {
