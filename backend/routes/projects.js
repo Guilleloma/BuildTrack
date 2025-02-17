@@ -601,23 +601,41 @@ router.get('/:projectId/milestones/:milestoneId', async (req, res) => {
     console.log('Milestone ID:', req.params.milestoneId);
     
     try {
+        console.log('Searching for milestone with query:', {
+            _id: req.params.milestoneId,
+            project: req.params.projectId
+        });
+        
         const milestone = await Milestone.findOne({
             _id: req.params.milestoneId,
             project: req.params.projectId
         });
         
+        console.log('Raw milestone from DB:', milestone);
         console.log('Milestone found:', milestone ? 'Yes' : 'No');
         
         if (!milestone) {
-            console.log('Milestone not found');
-            return res.status(404).json({ message: 'Milestone not found' });
+            console.log('Milestone not found, sending 404');
+            return res.status(404).json({ 
+                message: 'Milestone not found',
+                query: {
+                    _id: req.params.milestoneId,
+                    project: req.params.projectId
+                }
+            });
         }
         
-        console.log('Sending milestone data');
+        console.log('Sending milestone data:', milestone);
         res.json(milestone);
     } catch (err) {
         console.error('Error getting milestone:', err);
-        res.status(500).json({ message: err.message });
+        res.status(500).json({ 
+            message: err.message,
+            query: {
+                _id: req.params.milestoneId,
+                project: req.params.projectId
+            }
+        });
     }
 });
 
