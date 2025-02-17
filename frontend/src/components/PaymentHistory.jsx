@@ -152,6 +152,24 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
         setEditingPayment(paymentForForm);
       } else {
         console.log('Setting regular payment for editing');
+        if (!payment.milestone || !payment.milestone._id) {
+          throw new Error('No se encontró información del milestone en el pago');
+        }
+        
+        // Obtener la información completa del milestone
+        const token = localStorage.getItem('token');
+        const milestoneResponse = await fetch(getApiUrl(`/projects/${projectId}/milestones/${payment.milestone._id}`), {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!milestoneResponse.ok) {
+          throw new Error('Error al obtener la información del milestone');
+        }
+        
+        const milestoneData = await milestoneResponse.json();
+        
         setEditingPayment({
           _id: payment._id,
           amount: payment.amount.toString(),
@@ -161,10 +179,10 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
           milestone: {
             _id: payment.milestone._id,
             name: payment.milestone.name,
-            budget: payment.milestone.budget,
-            hasTax: payment.milestone.hasTax,
-            taxRate: payment.milestone.taxRate,
-            paidAmount: payment.milestone.paidAmount
+            budget: milestoneData.budget,
+            hasTax: milestoneData.hasTax,
+            taxRate: milestoneData.taxRate,
+            paidAmount: milestoneData.paidAmount
           }
         });
       }
