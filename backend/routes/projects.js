@@ -166,7 +166,8 @@ router.get('/:id/progress', async (req, res) => {
         const totalTaxPaid = milestonesWithProgress.reduce((sum, m) => {
             if (m.hasTax) {
                 const taxRate = m.taxRate || 21;
-                return sum + ((m.paidAmount || 0) * (taxRate / 100));
+                const basePaid = m.paidAmount || 0;
+                return sum + (basePaid * (taxRate / 100));
             }
             return sum;
         }, 0);
