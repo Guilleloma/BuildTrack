@@ -61,7 +61,12 @@ const ProjectDetail = () => {
 
   const fetchProjectProgress = useCallback(async () => {
     try {
-      const response = await fetch(getApiUrl(`/projects/${id}/progress`));
+      const token = localStorage.getItem('token');
+      const response = await fetch(getApiUrl(`/projects/${id}/progress`), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (!response.ok) throw new Error('Error fetching project progress');
       const data = await response.json();
       setProjectProgress(data);
@@ -72,12 +77,21 @@ const ProjectDetail = () => {
 
   const fetchProject = useCallback(async () => {
     try {
-      const response = await fetch(getApiUrl(`/projects/${id}`));
+      const token = localStorage.getItem('token');
+      const response = await fetch(getApiUrl(`/projects/${id}`), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (!response.ok) throw new Error('Project not found');
       const data = await response.json();
       
       // Obtener el progreso del proyecto
-      const progressResponse = await fetch(getApiUrl(`/projects/${id}/progress`));
+      const progressResponse = await fetch(getApiUrl(`/projects/${id}/progress`), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (!progressResponse.ok) throw new Error('Error fetching project progress');
       const progressData = await progressResponse.json();
       
@@ -96,45 +110,56 @@ const ProjectDetail = () => {
 
   const handleCreateMilestone = async (milestoneData) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(getApiUrl(`/projects/${id}/milestones`), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(milestoneData),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(milestoneData)
       });
       if (!response.ok) throw new Error('Error creating milestone');
       await fetchProject();
       setMilestoneFormOpen(false);
     } catch (err) {
-      setError(err.message);
+      console.error('Error creating milestone:', err);
     }
   };
 
-  const handleUpdateMilestone = async (milestoneData) => {
+  const handleUpdateMilestone = async (milestoneId, milestoneData) => {
     try {
-      const response = await fetch(getApiUrl(`/projects/${id}/milestones/${selectedMilestone._id}`), {
+      const token = localStorage.getItem('token');
+      const response = await fetch(getApiUrl(`/projects/${id}/milestones/${milestoneId}`), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(milestoneData),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(milestoneData)
       });
       if (!response.ok) throw new Error('Error updating milestone');
       await fetchProject();
       setMilestoneFormOpen(false);
-      setSelectedMilestone(null);
     } catch (err) {
-      setError(err.message);
+      console.error('Error updating milestone:', err);
     }
   };
 
-  const handleDeleteMilestone = async (milestone_id) => {
+  const handleDeleteMilestone = async (milestoneId) => {
     if (!window.confirm('Are you sure you want to delete this milestone?')) return;
     try {
-      const response = await fetch(getApiUrl(`/projects/${id}/milestones/${milestone_id}`), {
+      const token = localStorage.getItem('token');
+      const response = await fetch(getApiUrl(`/projects/${id}/milestones/${milestoneId}`), {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       if (!response.ok) throw new Error('Error deleting milestone');
       await fetchProject();
     } catch (err) {
-      setError(err.message);
+      console.error('Error deleting milestone:', err);
     }
   };
 
