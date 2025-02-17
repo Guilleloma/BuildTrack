@@ -11,32 +11,45 @@ const XLSX = require('xlsx');
 // GET all projects
 router.get('/', async (req, res) => {
     try {
-        console.log('[GET /projects] Request received:', {
+        console.log('=== GET /projects ===');
+        console.log('Request details:', {
             mode: req.query.mode,
             userId: req.query.userId,
-            auth: req.headers.authorization ? 'Present' : 'Not present'
+            auth: req.headers.authorization ? 'Present' : 'Not present',
+            headers: req.headers,
+            query: req.query
         });
 
         let query = {};
         
         if (req.query.mode === 'sandbox') {
             query.userId = 'sandbox';
-            console.log('[GET /projects] Sandbox mode - fetching sandbox projects');
+            console.log('Using sandbox mode, query:', query);
         } else if (req.query.userId) {
             query.userId = req.query.userId;
-            console.log('[GET /projects] Authenticated mode - fetching projects for user:', req.query.userId);
+            console.log('Using authenticated mode, query:', query);
         }
 
+        console.log('Executing MongoDB query:', query);
         const projects = await Project.find(query);
-        console.log('[GET /projects] Projects found:', {
+        console.log('Query results:', {
             count: projects.length,
-            userIds: [...new Set(projects.map(p => p.userId))]
+            projects: projects.map(p => ({
+                id: p._id,
+                name: p.name,
+                userId: p.userId,
+                createdAt: p.createdAt
+            }))
         });
+
+        // Log the raw projects for debugging
+        console.log('Raw projects:', JSON.stringify(projects, null, 2));
 
         res.json(projects);
     } catch (error) {
-        console.error('[GET /projects] Error:', error);
-        res.status(500).json({ error: 'Error fetching projects' });
+        console.error('Error in GET /projects:', error);
+        console.error('Stack trace:', error.stack);
+        res.status(500).json({ error: 'Error fetching projects', details: error.message });
     }
 });
 
@@ -360,10 +373,20 @@ router.get('/:id', async (req, res) => {
 // POST create a new project
 router.post('/', async (req, res) => {
     try {
-        console.log('[POST /projects] Creating new project:', {
+        console.log('=== POST /projects ===');
+        console.log('Request details:', {
+            body: req.body,
+            headers: req.headers,
+            auth: req.headers.authorization ? 'Present' : 'Not present'
+        });
+
+        console.log('Creating project with data:', {
             name: req.body.name,
             description: req.body.description,
-            userId: req.body.userId
+            userId: req.body.userId,
+            totalBudget: req.body.totalBudget || 0,
+            startDate: req.body.startDate,
+            endDate: req.body.endDate
         });
 
         const project = new Project({
@@ -375,12 +398,23 @@ router.post('/', async (req, res) => {
             userId: req.body.userId
         });
 
+        console.log('Project model instance created:', project);
         const newProject = await project.save();
-        console.log('[POST /projects] Project created:', newProject);
+        console.log('Project saved successfully:', {
+            id: newProject._id,
+            name: newProject.name,
+            userId: newProject.userId,
+            createdAt: newProject.createdAt
+        });
+
+        // Log the raw project for debugging
+        console.log('Raw project:', JSON.stringify(newProject, null, 2));
+
         res.status(201).json(newProject);
     } catch (error) {
-        console.error('[POST /projects] Error:', error);
-        res.status(400).json({ message: error.message });
+        console.error('Error in POST /projects:', error);
+        console.error('Stack trace:', error.stack);
+        res.status(400).json({ message: error.message, details: error });
     }
 });
 
