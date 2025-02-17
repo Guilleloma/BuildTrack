@@ -583,12 +583,54 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 
 **Estado: COMPLETADO**
 
-## Sprint 17: Identificacio de usuarios
+## Sprint 17: Preparar despliegue en produccion
+- Configuración del entorno de producción en Firebase Hosting y Render.com
+- Implementación de variables de entorno para diferentes entornos (desarrollo/producción)
+- Optimización del flujo de trabajo para mantener la consistencia entre entornos
+- Mejora de la experiencia de usuario manteniendo el contexto de navegación
+
+**Criterios de Aceptación:**
+- El frontend debe desplegarse correctamente en Firebase Hosting
+- El backend debe funcionar correctamente en Render.com
+- Las variables de entorno deben configurarse adecuadamente según el entorno
+- La aplicación debe mantener la misma funcionalidad en producción que en desarrollo
+- Los usuarios deben permanecer en su contexto actual al realizar acciones (edición, eliminación)
+- La navegación debe ser fluida y mantener el estado de la aplicación
+
+**Validación y Resultados:**
+- Despliegue Frontend:
+  * Se verificó el correcto despliegue en Firebase Hosting (buildtrack-c3e8a.web.app)
+  * Se comprobó la carga correcta de assets y recursos
+  * Se validó el enrutamiento y navegación
+  * Se confirmó la correcta integración con el backend
+
+- Despliegue Backend:
+  * Se verificó el funcionamiento en Render.com (buildtrack.onrender.com)
+  * Se comprobó la conexión con la base de datos MongoDB
+  * Se validó la correcta respuesta de todos los endpoints
+  * Se confirmó el manejo adecuado de CORS y seguridad
+
+- Experiencia de Usuario:
+  * Se mejoró el flujo de edición de pagos manteniendo al usuario en su contexto
+  * Se optimizó la navegación evitando redirecciones innecesarias
+  * Se verificó la consistencia de datos en tiempo real
+  * Se validó la experiencia de usuario en diferentes navegadores
+
+- Pruebas de Integración:
+  * Se realizaron pruebas end-to-end del flujo completo
+  * Se verificó la comunicación correcta entre frontend y backend
+  * Se comprobó el manejo de errores y casos límite
+  * Se validó la persistencia de datos en la base de datos
+
+**Estado: COMPLETADO**
+
+## Sprint 18: Identificacio de usuarios
 - el usuario debe identificarse con un email y una contraseña
 - Cada usuario tendra su propio espacio de trabajo con sus propios proyectos, hitos, tareas, pagos, etc.
+**Estado: TODO**
 
 
-## Sprint 18: Hacer una applicacion para produccion que pueda ser usada por los usuarios (MVP)
+## Sprint 19: Hacer una applicacion para produccion que pueda ser usada por los usuarios (MVP)
 - La aplicacion se debe poder instalar en un servidor de produccion
 - La aplicacion debe ser accesible desde cualquier navegador
 
