@@ -179,7 +179,7 @@ const ProjectList = () => {
               navigate(`${basePath}/projects/new`);
             }}
           >
-            Nuevo Proyecto
+            Crear Proyecto
           </Button>
         </Box>
 
@@ -203,17 +203,6 @@ const ProjectList = () => {
             <Typography variant="subtitle1" gutterBottom>
               No se encontraron proyectos.
             </Typography>
-            <Button 
-              variant="contained" 
-              color="primary" 
-              onClick={() => {
-                const basePath = location.pathname.startsWith('/app') ? '/app' : '';
-                navigate(`${basePath}/projects/new`);
-              }}
-              style={{ marginTop: '20px' }}
-            >
-              Crear Proyecto
-            </Button>
           </div>
         ) : (
           <Grid container spacing={3} style={{ marginTop: '20px' }}>
