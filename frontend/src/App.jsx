@@ -34,83 +34,35 @@ function App() {
         <Routes>
           <Route 
             path="/"
-            element={
-              <>
-                {console.log('Home route matched')}
-                <Home />
-              </>
-            } 
+            element={<Home />}
           />
           <Route 
             path="/login" 
-            element={
-              <>
-                {console.log('Login route matched')}
-                <Login />
-              </>
-            } 
+            element={<Login />}
           />
           <Route 
             path="/register" 
-            element={
-              <>
-                {console.log('Register route matched')}
-                <Register />
-              </>
-            } 
+            element={<Register />}
           />
           <Route
-            path="/projects"
-            element={
-              <>
-                {console.log('Projects route matched')}
-                <Layout>
-                  <ProjectList />
-                </Layout>
-              </>
-            }
-          />
-          <Route
-            path="projects/new"
+            path="/sandbox/*"
             element={
               <Layout>
-                <ProjectForm />
+                <ProjectList />
               </Layout>
             }
           />
           <Route
-            path="projects/:id"
-            element={
-              <Layout>
-                <ProjectDetail />
-              </Layout>
-            }
-          />
-          <Route
-            path="payments"
-            element={
-              <Layout>
-                <PaymentsPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="settings"
-            element={
-              <Layout>
-                <SettingsPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="sandbox"
-            element={
-              <Layout>
-                <Sandbox />
-              </Layout>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
+            path="/app/*"
+            element={<Layout />}
+          >
+            <Route index element={<ProjectList />} />
+            <Route path="projects/new" element={<ProjectForm />} />
+            <Route path="projects/:id" element={<ProjectDetail />} />
+            <Route path="payments" element={<PaymentsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>
     </ErrorBoundary>

@@ -1,14 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Button, Typography, Box, Paper } from '@mui/material';
 
 const Home = () => {
-  console.log('Home component rendering');
   const navigate = useNavigate();
-
-  useEffect(() => {
-    console.log('Home component mounted');
-  }, []);
 
   return (
     <Container component="main" maxWidth="sm">
