@@ -98,10 +98,16 @@ const ProjectList = () => {
   };
 
   const handleProjectClick = (projectId) => {
-    console.log('Project clicked:', projectId);
-    const basePath = location.pathname.startsWith('/app') ? '/app' : '';
+    console.log('[ProjectList] Project clicked:', {
+      projectId,
+      currentPath: location.pathname,
+      isSandbox
+    });
+
+    const basePath = isSandbox ? '/sandbox' : '/app';
     const projectPath = `${basePath}/projects/${projectId}`;
-    console.log('Navigating to:', projectPath);
+    
+    console.log('[ProjectList] Navigating to:', projectPath);
     navigate(projectPath);
   };
 

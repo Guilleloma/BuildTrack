@@ -9,7 +9,6 @@ import {
   Button,
   useTheme,
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
 import LogoutIcon from '@mui/icons-material/Logout';
 import HomeIcon from '@mui/icons-material/Home';
 
@@ -19,8 +18,10 @@ const Navbar = ({ drawerWidth }) => {
   const location = useLocation();
   const isSandbox = location.pathname.startsWith('/sandbox');
 
-  // Show New Project button in the projects list view or sandbox
-  const showNewProjectButton = location.pathname === '/projects' || isSandbox;
+  console.log('[Navbar] Current location:', {
+    pathname: location.pathname,
+    isSandbox
+  });
 
   const handleLogout = async () => {
     try {
@@ -53,21 +54,6 @@ const Navbar = ({ drawerWidth }) => {
         >
           BuildTrack {isSandbox && '(Sandbox)'}
         </Typography>
-        {showNewProjectButton && (
-          <Button
-            color="primary"
-            startIcon={<AddIcon />}
-            variant="contained"
-            onClick={() => navigate(isSandbox ? '/sandbox/projects/new' : '/app/projects/new')}
-            sx={{ 
-              borderRadius: '20px',
-              textTransform: 'none',
-              px: 3,
-            }}
-          >
-            Nuevo Proyecto
-          </Button>
-        )}
         {isSandbox ? (
           <Button
             color="primary"

@@ -57,10 +57,9 @@ function App() {
               <Layout>
                 <Routes>
                   <Route index element={<ProjectList />} />
-                  <Route path="projects">
-                    <Route path="new" element={<ProjectForm />} />
-                    <Route path=":id" element={<ProjectDetail />} />
-                  </Route>
+                  <Route path="projects" element={<ProjectList />} />
+                  <Route path="projects/new" element={<ProjectForm />} />
+                  <Route path="projects/:id" element={<ProjectDetail />} />
                   <Route path="payments" element={<PaymentsPage />} />
                   <Route path="settings" element={<SettingsPage />} />
                 </Routes>
@@ -73,10 +72,9 @@ function App() {
                 <Layout>
                   <Routes>
                     <Route index element={<ProjectList />} />
-                    <Route path="projects">
-                      <Route path="new" element={<ProjectForm />} />
-                      <Route path=":id" element={<ProjectDetail />} />
-                    </Route>
+                    <Route path="projects" element={<ProjectList />} />
+                    <Route path="projects/new" element={<ProjectForm />} />
+                    <Route path="projects/:id" element={<ProjectDetail />} />
                     <Route path="payments" element={<PaymentsPage />} />
                     <Route path="settings" element={<SettingsPage />} />
                   </Routes>
