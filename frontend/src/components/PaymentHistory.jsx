@@ -31,6 +31,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LaunchIcon from '@mui/icons-material/Launch';
 import { formatCurrency } from '../utils/formatters';
+import { getApiUrl } from '../config';
 import PaymentForm from './PaymentForm';
 
 const getPaymentMethodLabel = (method) => {
@@ -80,7 +81,12 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
     
     setLoading(true);
     try {
-      const response = await fetch(`/payments/milestone/${milestoneId}`);
+      const token = localStorage.getItem('token');
+      const response = await fetch(getApiUrl(`/payments/milestone/${milestoneId}`), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (!response.ok) {
         throw new Error('Error al cargar los pagos');
       }
@@ -160,130 +166,55 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
 
   const handleEditSubmit = async (formData) => {
     try {
-      setLoading(true);
-      
-      // Preparar los datos según el tipo de pago
-      const dataToSend = editingPayment.type === 'DISTRIBUTED' ? 
-        {
-          amount: parseFloat(formData.amount),
-          description: formData.description,
-          paymentMethod: formData.paymentMethod,
-          type: 'DISTRIBUTED',
-          distributions: formData.distributions.map(dist => ({
-            milestoneId: dist.milestoneId,
-            amount: parseFloat(dist.amount)
-          }))
-        } : 
-        {
-          amount: parseFloat(formData.amount),
-          description: formData.description,
-          paymentMethod: formData.paymentMethod,
-          type: 'SINGLE',
-          milestoneId: editingPayment.milestone._id
-        };
-
-      console.log('Sending payment update:', dataToSend);
-
-      const response = await fetch(`/payments/${editingPayment._id}`, {
+      const token = localStorage.getItem('token');
+      const response = await fetch(getApiUrl(`/payments/${editingPayment._id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(dataToSend),
+        body: JSON.stringify(formData)
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || errorData.message || 'Error updating payment');
+        throw new Error('Error al actualizar el pago');
       }
 
       await fetchPayments();
-      if (onPaymentDeleted) {
-        await onPaymentDeleted();
-      }
-      handleEditClose();
+      setEditingPayment(null);
       showMessage('Pago actualizado correctamente');
     } catch (err) {
       console.error('Error updating payment:', err);
-      showMessage(err.message, 'error');
-    } finally {
-      setLoading(false);
+      showMessage('Error al actualizar el pago', 'error');
     }
   };
 
   const handleDeleteClick = async (payment) => {
-    if (!window.confirm('¿Estás seguro de que deseas eliminar este pago?')) {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar este pago?')) {
       return;
     }
 
-    setLoading(true);
     try {
-      if (payment.type === 'DISTRIBUTED') {
-        // 1. Obtener el pago distribuido completo
-        const response = await fetch(`/payments/${payment._id}`);
-        if (!response.ok) {
-          throw new Error('Error al obtener el pago distribuido');
+      const token = localStorage.getItem('token');
+      const response = await fetch(getApiUrl(`/payments/${payment._id}`), {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
-        const fullPayment = await response.json();
+      });
 
-        // 2. Eliminar la distribución del milestone actual y recalcular el total
-        const newDistributions = fullPayment.distributions
-          .filter(dist => dist.milestone.toString() !== milestoneId.toString())
-          .map(dist => ({
-            milestone: dist.milestone,
-            amount: dist.amount
-          }));
-        const newAmount = newDistributions.reduce((sum, dist) => sum + dist.amount, 0);
-
-        if (newDistributions.length > 0) {
-          // 3. Actualizar el pago con las nuevas distribuciones
-          const updateResponse = await fetch(`/payments/${payment._id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              amount: newAmount,
-              description: fullPayment.description,
-              paymentMethod: fullPayment.paymentMethod,
-              type: 'DISTRIBUTED',
-              distributions: newDistributions
-            }),
-          });
-
-          if (!updateResponse.ok) {
-            const errorData = await updateResponse.json();
-            throw new Error(errorData.error || 'Error al actualizar el pago distribuido');
-          }
-        } else {
-          // Si no quedan distribuciones, eliminar el pago completo
-          const deleteResponse = await fetch(`/payments/${payment._id}`, {
-            method: 'DELETE',
-          });
-
-          if (!deleteResponse.ok) {
-            throw new Error('Error al eliminar el pago');
-          }
-        }
-      } else {
-        // Para pagos normales, eliminar directamente
-        const response = await fetch(`/payments/${payment._id}`, {
-          method: 'DELETE',
-        });
-
-        if (!response.ok) {
-          throw new Error('Error al eliminar el pago');
-        }
+      if (!response.ok) {
+        throw new Error('Error al eliminar el pago');
       }
 
       await fetchPayments();
       if (onPaymentDeleted) {
-        await onPaymentDeleted();
+        onPaymentDeleted();
       }
       showMessage('Pago eliminado correctamente');
     } catch (err) {
       console.error('Error deleting payment:', err);
-      showMessage(err.message, 'error');
-    } finally {
-      setLoading(false);
+      showMessage('Error al eliminar el pago', 'error');
     }
   };
 
