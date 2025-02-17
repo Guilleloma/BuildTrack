@@ -32,6 +32,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { formatCurrency } from '../utils/formatters';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { getApiUrl } from '../config';
 import PaymentForm from './PaymentForm';
 
 const PaymentsPage = () => {
@@ -52,9 +53,14 @@ const PaymentsPage = () => {
         const params = new URLSearchParams(location.search);
         const paymentId = params.get('id');
 
+        const token = localStorage.getItem('token');
+        const headers = {
+          'Authorization': `Bearer ${token}`
+        };
+
         const [paymentsRes, projectsRes] = await Promise.all([
-          fetch('/payments'),
-          fetch('/projects')
+          fetch(getApiUrl('/payments'), { headers }),
+          fetch(getApiUrl('/projects'), { headers })
         ]);
 
         if (!paymentsRes.ok || !projectsRes.ok) {
@@ -87,6 +93,7 @@ const PaymentsPage = () => {
           }
         }
       } catch (err) {
+        console.error('Error fetching data:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -244,113 +251,70 @@ const PaymentsPage = () => {
 
   const handleEditSubmit = async (formData) => {
     try {
-      setLoading(true);
-      
-      // Preparar los datos según el tipo de pago
-      const dataToSend = editingPayment.type === 'DISTRIBUTED' ? 
-        {
-          amount: parseFloat(formData.amount),
-          description: formData.description,
-          paymentMethod: formData.paymentMethod,
-          type: 'DISTRIBUTED',
-          distributions: formData.distributions.map(dist => ({
-            milestoneId: dist.milestoneId,
-            amount: parseFloat(dist.amount)
-          }))
-        } : 
-        {
-          amount: parseFloat(formData.amount),
-          description: formData.description,
-          paymentMethod: formData.paymentMethod,
-          type: 'SINGLE',
-          milestoneId: editingPayment.milestone._id
-        };
-
-      console.log('Sending payment update:', dataToSend);
-
-      const response = await fetch(`/payments/${editingPayment._id}`, {
+      const token = localStorage.getItem('token');
+      const response = await fetch(getApiUrl(`/payments/${editingPayment._id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(dataToSend),
+        body: JSON.stringify(formData)
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || errorData.message || 'Error updating payment');
+        throw new Error('Error al actualizar el pago');
       }
 
-      // Refresh both payments and projects data
-      const [paymentsRes, projectsRes] = await Promise.all([
-        fetch('/payments'),
-        fetch('/projects')
-      ]);
-
-      if (!paymentsRes.ok || !projectsRes.ok) {
-        throw new Error('Error refreshing data');
-      }
-
-      const [paymentsData, projectsData] = await Promise.all([
-        paymentsRes.json(),
-        projectsRes.json()
-      ]);
-
+      // Refetch payments to update the list
+      const paymentsRes = await fetch(getApiUrl('/payments'), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!paymentsRes.ok) throw new Error('Error al recargar los pagos');
+      const paymentsData = await paymentsRes.json();
       setPayments(paymentsData);
-      setProjects(projectsData);
-      
+
       setEditingPayment(null);
       showMessage('Pago actualizado correctamente');
-      
-      // Clear the payment ID from the URL
-      navigate('/payments', { replace: true });
     } catch (err) {
       console.error('Error updating payment:', err);
-      showMessage(err.message, 'error');
-    } finally {
-      setLoading(false);
+      showMessage('Error al actualizar el pago', 'error');
     }
   };
 
   const handleDeleteClick = async (payment) => {
-    if (!window.confirm('¿Estás seguro de que deseas eliminar este pago?')) {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar este pago?')) {
       return;
     }
 
-    setLoading(true);
     try {
-      const response = await fetch(`/payments/${payment._id}`, {
+      const token = localStorage.getItem('token');
+      const response = await fetch(getApiUrl(`/payments/${payment._id}`), {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error deleting payment');
+        throw new Error('Error al eliminar el pago');
       }
 
-      // Refresh data
-      const [paymentsRes, projectsRes] = await Promise.all([
-        fetch('/payments'),
-        fetch('/projects')
-      ]);
-
-      if (!paymentsRes.ok || !projectsRes.ok) {
-        throw new Error('Error refreshing data');
-      }
-
-      const [paymentsData, projectsData] = await Promise.all([
-        paymentsRes.json(),
-        projectsRes.json()
-      ]);
-
+      // Refetch payments to update the list
+      const paymentsRes = await fetch(getApiUrl('/payments'), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!paymentsRes.ok) throw new Error('Error al recargar los pagos');
+      const paymentsData = await paymentsRes.json();
       setPayments(paymentsData);
-      setProjects(projectsData);
+
       showMessage('Pago eliminado correctamente');
     } catch (err) {
       console.error('Error deleting payment:', err);
-      showMessage(err.message, 'error');
-    } finally {
-      setLoading(false);
+      showMessage('Error al eliminar el pago', 'error');
     }
   };
 
