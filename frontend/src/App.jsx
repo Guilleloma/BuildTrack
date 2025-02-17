@@ -26,21 +26,40 @@ function App() {
     <ErrorBoundary>
       <Router>
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
+          <Route 
+            path="/" 
+            element={
+              <>
+                {console.log('Rendering Home route')}
+                <Home />
+              </>
+            } 
+          />
+          <Route 
+            path="/login" 
+            element={
+              <>
+                {console.log('Rendering Login route')}
+                <Login />
+              </>
+            } 
+          />
           <Route
             path="/*"
             element={
-              <Layout>
-                <Routes>
-                  <Route path="/projects" element={<ProjectList />} />
-                  <Route path="/projects/new" element={<ProjectForm />} />
-                  <Route path="/projects/:id" element={<ProjectDetail />} />
-                  <Route path="/payments" element={<PaymentsPage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
-                  <Route path="/sandbox" element={<Sandbox />} />
-                </Routes>
-              </Layout>
+              <>
+                {console.log('Rendering Layout route')}
+                <Layout>
+                  <Routes>
+                    <Route path="/projects" element={<ProjectList />} />
+                    <Route path="/projects/new" element={<ProjectForm />} />
+                    <Route path="/projects/:id" element={<ProjectDetail />} />
+                    <Route path="/payments" element={<PaymentsPage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/sandbox" element={<Sandbox />} />
+                  </Routes>
+                </Layout>
+              </>
             }
           />
         </Routes>

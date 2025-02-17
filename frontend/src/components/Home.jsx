@@ -1,8 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Home = () => {
+  console.log('Home component rendering');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    console.log('Home component mounted');
+  }, []);
 
   return (
     <div>
