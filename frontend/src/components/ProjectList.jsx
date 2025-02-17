@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Button, 
   Card, 
@@ -28,12 +28,13 @@ const ProjectList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const fetchProjects = async () => {
       console.log('Fetching projects...');
       try {
-        const response = await fetch(getApiUrl('/projects'));
+        const response = await fetch('https://buildtrack.onrender.com/projects');
         console.log('Response:', response);
         if (!response.ok) throw new Error('Error fetching projects');
         const data = await response.json();
@@ -41,7 +42,7 @@ const ProjectList = () => {
         setProjects(data);
       } catch (error) {
         console.error('Error fetching projects:', error);
-        setError(error.message);
+        setError('Error al cargar los proyectos');
       }
       setLoading(false);
     };
@@ -55,7 +56,10 @@ const ProjectList = () => {
 
   const handleProjectClick = (projectId) => {
     console.log('Project clicked:', projectId);
-    navigate(`/projects/${projectId}`);
+    const basePath = location.pathname.startsWith('/app') ? '/app' : '';
+    const projectPath = `${basePath}/projects/${projectId}`;
+    console.log('Navigating to:', projectPath);
+    navigate(projectPath);
   };
 
   const handleDeleteProject = async (e, projectId) => {
