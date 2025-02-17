@@ -26,13 +26,12 @@ function App() {
       <Router>
         <Layout>
           <Routes>
-            <Route path="/" element={<Navigate to="/projects" />} />
+            <Route path="/" element={<Home />} />
             <Route path="/projects" element={<ProjectList />} />
             <Route path="/projects/new" element={<ProjectForm />} />
             <Route path="/projects/:id" element={<ProjectDetail />} />
             <Route path="/payments" element={<PaymentsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/home" element={<Home />} />
             <Route path="/sandbox" element={<Sandbox />} />
           </Routes>
         </Layout>
