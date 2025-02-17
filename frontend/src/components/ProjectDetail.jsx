@@ -618,7 +618,7 @@ const ProjectDetail = () => {
                           : "Sin IVA"
                       }>
                         <Typography variant="body2">
-                          {formatCurrency(milestoneData.paidAmount || 0)}/{formatCurrency(totalWithTax)} ({Math.round(milestone.paymentPercentage)}%)
+                          {formatCurrency(milestoneData.paidAmount * (milestoneData.hasTax ? (1 + (milestoneData.taxRate || 21) / 100) : 1))}/{formatCurrency(totalWithTax)} ({Math.round(milestone.paymentPercentage)}%)
                         </Typography>
                       </Tooltip>
                     </Box>
