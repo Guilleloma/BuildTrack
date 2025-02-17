@@ -586,24 +586,54 @@ router.put('/:id', async (req, res) => {
 // DELETE /payments/:id - delete a payment
 router.delete('/:id', async (req, res) => {
   try {
+    console.log('=== START DELETE PAYMENT ===');
+    console.log('Payment ID:', req.params.id);
+
     const payment = await Payment.findById(req.params.id);
     if (!payment) {
+      console.log('Payment not found');
       return res.status(404).json({ message: 'Payment not found' });
     }
 
+    console.log('Payment found:', {
+      id: payment._id,
+      type: payment.type,
+      amount: payment.amount,
+      milestone: payment.milestone,
+      distributions: payment.distributions
+    });
+
     // Delete the payment first to ensure it's removed
-    await Payment.findByIdAndDelete(payment._id);
+    console.log('Attempting to delete payment...');
+    const deleteResult = await Payment.findByIdAndDelete(payment._id);
+    console.log('Delete result:', deleteResult ? 'Success' : 'Failed');
 
     // Then try to update milestones if possible
     if (payment.type === 'SINGLE') {
+      console.log('Processing SINGLE payment deletion');
       if (payment.milestone) {
         try {
+          console.log('Looking for milestone:', payment.milestone);
           const milestone = await Milestone.findById(payment.milestone);
+          
           if (milestone) {
+            console.log('Milestone found:', {
+              id: milestone._id,
+              name: milestone.name,
+              currentPaidAmount: milestone.paidAmount,
+              paymentAmount: payment.amount
+            });
+
             // Update milestone with precise decimal handling
             const currentPaidAmount = parseFloat(milestone.paidAmount || 0);
             const paymentAmount = parseFloat(payment.amount || 0);
             let newPaidAmount = parseFloat((currentPaidAmount - paymentAmount).toFixed(2));
+
+            console.log('Calculated new paid amount:', {
+              currentPaidAmount,
+              paymentAmount,
+              newPaidAmount
+            });
 
             // Ensure we don't get negative values
             if (newPaidAmount <= 0) {
@@ -614,12 +644,18 @@ router.delete('/:id', async (req, res) => {
             }
 
             milestone.paidAmount = newPaidAmount;
+            console.log('Saving milestone with new status:', {
+              paidAmount: newPaidAmount,
+              status: milestone.status
+            });
+            
             await milestone.save();
 
             // Calculate remaining amounts with precision
             const totalCost = parseFloat(milestone.budget || 0);
             const pendingAmount = parseFloat((totalCost - newPaidAmount).toFixed(2));
 
+            console.log('Deletion completed successfully with milestone update');
             return res.json({
               message: 'Payment deleted successfully',
               milestone: milestone,
@@ -630,29 +666,55 @@ router.delete('/:id', async (req, res) => {
                 status: milestone.status
               }
             });
+          } else {
+            console.log('Milestone not found in database');
           }
         } catch (err) {
           console.error('Error updating milestone:', err);
         }
+      } else {
+        console.log('No milestone associated with this payment');
       }
+      console.log('Deletion completed successfully without milestone update');
       return res.json({
         message: 'Payment deleted successfully'
       });
     } else if (payment.type === 'DISTRIBUTED') {
-      // For distributed payments, we need to update all affected milestones
+      console.log('Processing DISTRIBUTED payment deletion');
       const updates = [];
       
       // Only process distributions with valid milestones
       if (payment.distributions && Array.isArray(payment.distributions)) {
+        console.log('Number of distributions:', payment.distributions.length);
+        
         for (const dist of payment.distributions) {
           try {
+            console.log('Processing distribution:', {
+              milestone: dist.milestone,
+              amount: dist.amount
+            });
+
             if (dist.milestone) {
+              console.log('Looking for milestone:', dist.milestone);
               const milestone = await Milestone.findById(dist.milestone);
+              
               if (milestone) {
+                console.log('Milestone found:', {
+                  id: milestone._id,
+                  name: milestone.name,
+                  currentPaidAmount: milestone.paidAmount
+                });
+
                 // Update milestone paid amount
                 const currentPaidAmount = parseFloat(milestone.paidAmount || 0);
                 const distributionAmount = parseFloat(dist.amount || 0);
                 let newPaidAmount = parseFloat((currentPaidAmount - distributionAmount).toFixed(2));
+
+                console.log('Calculated new paid amount:', {
+                  currentPaidAmount,
+                  distributionAmount,
+                  newPaidAmount
+                });
 
                 // Ensure we don't get negative values
                 if (newPaidAmount <= 0) {
@@ -663,6 +725,11 @@ router.delete('/:id', async (req, res) => {
                 }
 
                 milestone.paidAmount = newPaidAmount;
+                console.log('Saving milestone with new status:', {
+                  paidAmount: newPaidAmount,
+                  status: milestone.status
+                });
+
                 await milestone.save();
 
                 updates.push({
@@ -670,22 +737,31 @@ router.delete('/:id', async (req, res) => {
                   paidAmount: newPaidAmount,
                   status: milestone.status
                 });
+              } else {
+                console.log('Milestone not found in database');
               }
+            } else {
+              console.log('No milestone reference in this distribution');
             }
           } catch (err) {
             console.error('Error processing distribution:', err);
             // Continue with next distribution
           }
         }
+      } else {
+        console.log('No valid distributions found');
       }
 
+      console.log('Deletion completed successfully. Updated milestones:', updates.length);
       return res.json({
         message: 'Distributed payment deleted successfully',
         updatedMilestones: updates
       });
     }
   } catch (error) {
-    console.error('Error deleting payment:', error);
+    console.error('=== ERROR DELETING PAYMENT ===');
+    console.error('Error details:', error);
+    console.error('Stack trace:', error.stack);
     res.status(500).json({ message: error.message || 'Error deleting payment' });
   }
 });
