@@ -29,34 +29,37 @@ function App() {
       <AuthProvider>
         <Router>
           <Routes>
+            {/* Rutas públicas */}
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route
-              path="/sandbox/*"
-              element={
+            
+            {/* Ruta de sandbox (sin autenticación) */}
+            <Route path="/sandbox" element={
+              <Layout>
+                <ProjectList />
+              </Layout>
+            } />
+            
+            {/* Rutas protegidas */}
+            <Route path="/app" element={
+              <PrivateRoute>
                 <Layout>
-                  <ProjectList />
+                  <Routes>
+                    <Route index element={<ProjectList />} />
+                    <Route path="projects">
+                      <Route path="new" element={<ProjectForm />} />
+                      <Route path=":id" element={<ProjectDetail />} />
+                    </Route>
+                    <Route path="payments" element={<PaymentsPage />} />
+                    <Route path="settings" element={<SettingsPage />} />
+                  </Routes>
                 </Layout>
-              }
-            />
-            <Route
-              path="/app/*"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Routes>
-                      <Route index element={<ProjectList />} />
-                      <Route path="projects/new" element={<ProjectForm />} />
-                      <Route path="projects/:id" element={<ProjectDetail />} />
-                      <Route path="payments" element={<PaymentsPage />} />
-                      <Route path="settings" element={<SettingsPage />} />
-                    </Routes>
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
-            <Route path="*" element={<Navigate to="/" />} />
+              </PrivateRoute>
+            } />
+            
+            {/* Ruta por defecto */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
       </AuthProvider>
