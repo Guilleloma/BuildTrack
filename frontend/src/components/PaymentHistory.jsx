@@ -154,44 +154,45 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
         console.log('Payment prepared for form:', paymentForForm);
 
         setEditingPayment(paymentForForm);
-      } else {
-        console.log('Editando pago normal (no distribuido)');
-        if (!payment.milestone || !payment.milestone._id) {
-          console.error('Milestone faltante o inválido:', payment.milestone);
-          throw new Error('No se encontró información del milestone en el pago');
-        }
-        
-        console.log('Obteniendo información del milestone:', payment.milestone._id);
-        console.log('Project ID:', projectId);
-        
-        // Obtener la información completa del milestone
-        const token = localStorage.getItem('token');
-        const milestoneResponse = await fetch(getApiUrl(`/projects/${projectId}/milestones/${payment.milestone._id}`), {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!milestoneResponse.ok) {
-          console.error('Error en la respuesta del milestone:', await milestoneResponse.text());
-          throw new Error('Error al obtener la información del milestone');
-        }
-        
-        const milestoneData = await milestoneResponse.json();
-        console.log('Datos del milestone obtenidos:', milestoneData);
-        
-        const editingPaymentData = {
-          _id: payment._id,
-          amount: payment.amount.toString(),
-          description: payment.description || '',
-          paymentMethod: payment.paymentMethod,
-          type: 'SINGLE',
-          milestone: milestoneData
-        };
-        
-        console.log('Datos preparados para el formulario:', editingPaymentData);
-        setEditingPayment(editingPaymentData);
+        return;
       }
+      
+      console.log('Editando pago normal (no distribuido)');
+      if (!payment.milestone || !payment.milestone._id) {
+        console.error('Milestone faltante o inválido:', payment.milestone);
+        throw new Error('No se encontró información del milestone en el pago');
+      }
+      
+      console.log('Obteniendo información del milestone:', payment.milestone._id);
+      console.log('Project ID:', projectId);
+      
+      // Obtener la información completa del milestone
+      const token = localStorage.getItem('token');
+      const milestoneResponse = await fetch(getApiUrl(`/projects/${projectId}/milestones/${payment.milestone._id}`), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!milestoneResponse.ok) {
+        console.error('Error en la respuesta del milestone:', await milestoneResponse.text());
+        throw new Error('Error al obtener la información del milestone');
+      }
+      
+      const milestoneData = await milestoneResponse.json();
+      console.log('Datos del milestone obtenidos:', milestoneData);
+      
+      const editingPaymentData = {
+        _id: payment._id,
+        amount: payment.amount.toString(),
+        description: payment.description || '',
+        paymentMethod: payment.paymentMethod,
+        type: 'SINGLE',
+        milestone: milestoneData
+      };
+      
+      console.log('Datos preparados para el formulario:', editingPaymentData);
+      setEditingPayment(editingPaymentData);
     } catch (err) {
       console.error('Error detallado en handleEditClick:', err);
       console.error('Stack trace:', err.stack);
