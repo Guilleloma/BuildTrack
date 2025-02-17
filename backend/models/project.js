@@ -8,7 +8,6 @@ const projectSchema = new mongoose.Schema({
   description: String,
   totalBudget: {
     type: Number,
-    required: true,
     default: 0
   },
   startDate: Date,
@@ -20,10 +19,14 @@ const projectSchema = new mongoose.Schema({
   },
   userId: {
     type: String,
-    required: true
+    required: true,
+    index: true
   }
 }, {
   timestamps: true
 });
+
+// Ensure userId is indexed for faster queries
+projectSchema.index({ userId: 1 });
 
 module.exports = mongoose.model('Project', projectSchema); 
