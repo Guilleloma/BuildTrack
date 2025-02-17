@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   Button, 
   Card, 
@@ -13,7 +14,8 @@ import {
   Box, 
   LinearProgress,
   IconButton,
-  Tooltip
+  Tooltip,
+  Alert
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import WarningIcon from '@mui/icons-material/Warning';
@@ -29,26 +31,43 @@ const ProjectList = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const isSandbox = location.pathname.startsWith('/sandbox');
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      console.log('Fetching projects...');
-      try {
-        const response = await fetch('https://buildtrack.onrender.com/projects');
-        console.log('Response:', response);
-        if (!response.ok) throw new Error('Error fetching projects');
-        const data = await response.json();
-        console.log('Projects data:', data);
-        setProjects(data);
-      } catch (error) {
-        console.error('Error fetching projects:', error);
-        setError('Error al cargar los proyectos');
-      }
-      setLoading(false);
-    };
-
     fetchProjects();
-  }, []);
+  }, [user, isSandbox]);
+
+  const fetchProjects = async () => {
+    try {
+      console.log('Fetching projects...', { isSandbox, userId: user?.uid });
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      // Si estamos en modo autenticado, añadimos el token
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch('https://buildtrack.onrender.com/projects', {
+        headers
+      });
+
+      console.log('Response:', response);
+      if (!response.ok) throw new Error('Error fetching projects');
+      
+      const data = await response.json();
+      console.log('Projects data:', data);
+      setProjects(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      setError('Error al cargar los proyectos');
+      setLoading(false);
+    }
+  };
 
   const handleSearch = (e) => {
     setFilter(e.target.value);
@@ -63,20 +82,29 @@ const ProjectList = () => {
   };
 
   const handleDeleteProject = async (e, projectId) => {
-    e.stopPropagation(); // Prevent card click event
-    if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) return;
+    e.stopPropagation();
+    if (!window.confirm('¿Estás seguro de que quieres eliminar este proyecto? Esta acción no se puede deshacer.')) return;
     
     try {
-      const response = await fetch(getApiUrl(`/projects/${projectId}`), {
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`https://buildtrack.onrender.com/projects/${projectId}`, {
         method: 'DELETE',
+        headers
       });
+
       if (!response.ok) throw new Error('Error deleting project');
-      
-      // Remove project from local state
       setProjects(projects.filter(p => p._id !== projectId));
     } catch (error) {
       console.error('Error deleting project:', error);
-      setError(error.message);
+      setError('Error al eliminar el proyecto');
     }
   };
 
@@ -115,8 +143,14 @@ const ProjectList = () => {
     <Container maxWidth="lg">
       <Paper style={{ padding: '20px', marginTop: '20px' }}>
         <Typography variant="h4" gutterBottom align="center" style={{ marginBottom: '30px' }}>
-          Lista de Proyectos
+          {isSandbox ? 'Proyectos (Sandbox)' : 'Mis Proyectos'}
         </Typography>
+
+        {isSandbox && (
+          <Alert severity="info" sx={{ mb: 3 }}>
+            Estás en modo Sandbox. Los proyectos creados aquí son públicos y pueden ser modificados por cualquier usuario.
+          </Alert>
+        )}
         
         <TextField
           label="Buscar proyectos"

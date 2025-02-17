@@ -1,87 +1,139 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Container, TextField, Button, Typography, Paper } from '@mui/material';
-import { getApiUrl } from '../config';
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import {
+  Container,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Box,
+  Alert
+} from '@mui/material';
 
 const ProjectForm = () => {
-  const [name, setName] = React.useState('');
-  const [description, setDescription] = React.useState('');
-  const [submitting, setSubmitting] = React.useState(false);
-  const [error, setError] = React.useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  const isSandbox = location.pathname.startsWith('/sandbox');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
+    setLoading(true);
     setError(null);
+
     try {
-      const response = await fetch(getApiUrl('/projects'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, description })
-      });
-      if (!response.ok) {
-        throw new Error('Error creating project');
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      // Si estamos en modo autenticado, añadimos el token
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
       }
-      await response.json();
-      navigate('/projects');
-    } catch (err) {
-      setError(err.message);
+
+      const response = await fetch('https://buildtrack.onrender.com/projects', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          ...formData,
+          userId: isSandbox ? 'sandbox' : user.uid
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al crear el proyecto');
+      }
+
+      // Redirigir a la lista de proyectos
+      const basePath = isSandbox ? '/sandbox' : '/app';
+      navigate(basePath);
+    } catch (error) {
+      console.error('Error creating project:', error);
+      setError('Error al crear el proyecto. Por favor, inténtalo de nuevo.');
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
+  };
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
   };
 
   return (
     <Container maxWidth="sm">
-      <Paper style={{ padding: '20px', marginTop: '20px' }}>
-        <Typography variant="h4" gutterBottom align="center">
-          Create New Project
+      <Paper sx={{ p: 4, mt: 4 }}>
+        <Typography variant="h5" component="h1" gutterBottom align="center">
+          {isSandbox ? 'Nuevo Proyecto (Sandbox)' : 'Nuevo Proyecto'}
         </Typography>
-        <form onSubmit={handleSubmit}>
+
+        {isSandbox && (
+          <Alert severity="info" sx={{ mb: 3 }}>
+            Estás creando un proyecto en modo Sandbox. Será visible y modificable por todos los usuarios.
+          </Alert>
+        )}
+
+        <Box component="form" onSubmit={handleSubmit}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
           <TextField
-            label="Project Name"
-            variant="outlined"
-            fullWidth
-            margin="normal"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
             required
-          />
-          <TextField
-            label="Description"
-            variant="outlined"
             fullWidth
+            label="Nombre del Proyecto"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
             margin="normal"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            disabled={loading}
+          />
+
+          <TextField
+            fullWidth
+            label="Descripción"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            margin="normal"
             multiline
             rows={4}
+            disabled={loading}
           />
-          {error && (
-            <Typography color="error" style={{ marginTop: '10px' }}>
-              {error}
-            </Typography>
-          )}
-          <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+
+          <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
             <Button
               type="submit"
               variant="contained"
               color="primary"
-              disabled={submitting}
               fullWidth
+              disabled={loading}
             >
-              {submitting ? 'Creating...' : 'Create Project'}
+              {loading ? 'Creando...' : 'Crear Proyecto'}
             </Button>
             <Button
               variant="outlined"
-              onClick={() => navigate('/projects')}
+              color="secondary"
               fullWidth
+              onClick={() => navigate(isSandbox ? '/sandbox' : '/app')}
+              disabled={loading}
             >
-              Cancel
+              Cancelar
             </Button>
-          </div>
-        </form>
+          </Box>
+        </Box>
       </Paper>
     </Container>
   );
