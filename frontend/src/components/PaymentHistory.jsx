@@ -112,48 +112,66 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
   const handleEditClick = async (payment) => {
     console.log('=== INICIO handleEditClick en PaymentHistory ===');
     console.log('Payment completo:', JSON.stringify(payment, null, 2));
-    console.log('Milestone en el payment:', JSON.stringify(payment.milestone, null, 2));
-    console.log('Project en el milestone:', JSON.stringify(payment.milestone?.project, null, 2));
+    console.log('Tipo de pago:', payment.type);
+    console.log('Milestone en el pago:', payment.milestone);
+    console.log('Project en el milestone:', payment.milestone?.project);
     
     try {
         if (payment.type === 'DISTRIBUTED') {
-            console.log('Payment is distributed, fetching full payment...');
+            console.log('=== Procesando pago distribuido ===');
             // Obtener el pago completo con todas sus distribuciones
             const token = localStorage.getItem('token');
+            console.log('Token obtenido:', token ? 'Sí' : 'No');
+            
+            console.log('Obteniendo pago completo desde:', getApiUrl(`/payments/${payment._id}`));
             const paymentResponse = await fetch(getApiUrl(`/payments/${payment._id}`), {
               headers: {
                 'Authorization': `Bearer ${token}`
               }
             });
+
+            console.log('Respuesta del pago:', {
+                ok: paymentResponse.ok,
+                status: paymentResponse.status
+            });
+
             if (!paymentResponse.ok) {
-              throw new Error('Error al obtener el pago');
+                const errorText = await paymentResponse.text();
+                console.error('Error en la respuesta del pago:', errorText);
+                throw new Error('Error al obtener el pago');
             }
+
             const fullPaymentData = await paymentResponse.json();
-            console.log('Full payment received:', JSON.stringify(fullPaymentData, null, 2));
+            console.log('Datos completos del pago:', JSON.stringify(fullPaymentData, null, 2));
 
             const fullPayment = fullPaymentData.payment;
             const project = fullPaymentData.project;
 
             if (!fullPayment?.distributions?.[0]?.milestone) {
-              throw new Error('No se encontró información del milestone en el pago');
+                console.error('No se encontró información del milestone en las distribuciones');
+                console.log('Distribuciones recibidas:', fullPayment?.distributions);
+                throw new Error('No se encontró información del milestone en el pago');
             }
 
             // Preparar el pago con el formato correcto para el PaymentForm
             const paymentForForm = {
-              _id: fullPayment._id,
-              amount: fullPayment.amount.toString(),
-              description: fullPayment.description || '',
-              paymentMethod: fullPayment.paymentMethod,
-              type: 'DISTRIBUTED',
-              project,
-              distributions: fullPayment.distributions.map(dist => ({
-                milestoneId: dist.milestone._id,
-                amount: dist.amount.toString(),
-                name: dist.milestone.name
-              }))
+                _id: fullPayment._id,
+                amount: fullPayment.amount.toString(),
+                description: fullPayment.description || '',
+                paymentMethod: fullPayment.paymentMethod,
+                type: 'DISTRIBUTED',
+                project,
+                distributions: fullPayment.distributions.map(dist => {
+                    console.log('Procesando distribución:', dist);
+                    return {
+                        milestoneId: dist.milestone._id,
+                        amount: dist.amount.toString(),
+                        name: dist.milestone.name
+                    };
+                })
             };
-            console.log('Payment prepared for form:', JSON.stringify(paymentForForm, null, 2));
 
+            console.log('Pago preparado para el formulario:', JSON.stringify(paymentForForm, null, 2));
             setEditingPayment(paymentForForm);
         } else {
             console.log('=== Procesando pago normal ===');
@@ -218,7 +236,7 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
         console.error('Stack trace:', err.stack);
         showMessage(err.message, 'error');
     }
-    console.log('=== FIN handleEditClick ===');
+    console.log('=== FIN handleEditClick en PaymentHistory ===');
   };
 
   const handleEditClose = () => {
@@ -457,41 +475,24 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
                 </TableCell>
                 <TableCell align="center">
                   <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-                    {payment.type === 'DISTRIBUTED' ? (
-                      <>
-                        <Tooltip title="Ver/Editar pago distribuido">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleDistributedPaymentClick(payment)}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleDeleteClick(payment)}
-                          color="error"
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </>
-                    ) : (
-                      <>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleEditClick(payment)}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleDeleteClick(payment)}
-                          color="error"
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </>
-                    )}
+                    <Tooltip title={payment.type === 'DISTRIBUTED' ? 'Editar pago distribuido en Pagos' : 'Editar pago'}>
+                      <IconButton
+                        size="small"
+                        onClick={() => payment.type === 'DISTRIBUTED' ? 
+                          navigate(`/payments?id=${payment._id}`) : 
+                          handleEditClick(payment)
+                        }
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDeleteClick(payment)}
+                      color="error"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
                   </Box>
                 </TableCell>
               </TableRow>
