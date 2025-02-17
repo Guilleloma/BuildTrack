@@ -412,16 +412,8 @@ const ProjectDetail = () => {
             variant="outlined"
             onClick={handleBackClick}
             startIcon={<ArrowBackIcon />}
-            sx={{ mr: 2 }}
           >
             Back to Projects
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleDeleteProject}
-          >
-            Delete Project
           </Button>
         </Box>
 
@@ -429,6 +421,13 @@ const ProjectDetail = () => {
           <Typography variant="h4" component="h1">
             {project.name}
           </Typography>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteProject}
+          >
+            Delete Project
+          </Button>
         </Box>
 
         <Card sx={{ mb: 4 }}>
