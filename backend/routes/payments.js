@@ -591,47 +591,50 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Payment not found' });
     }
 
+    // Delete the payment first to ensure it's removed
+    await Payment.findByIdAndDelete(payment._id);
+
+    // Then try to update milestones if possible
     if (payment.type === 'SINGLE') {
-      // Only try to update milestone if it exists
       if (payment.milestone) {
-        const milestone = await Milestone.findById(payment.milestone);
-        if (milestone) {
-          // Update milestone with precise decimal handling
-          const currentPaidAmount = parseFloat(milestone.paidAmount || 0);
-          const paymentAmount = parseFloat(payment.amount || 0);
-          let newPaidAmount = parseFloat((currentPaidAmount - paymentAmount).toFixed(2));
+        try {
+          const milestone = await Milestone.findById(payment.milestone);
+          if (milestone) {
+            // Update milestone with precise decimal handling
+            const currentPaidAmount = parseFloat(milestone.paidAmount || 0);
+            const paymentAmount = parseFloat(payment.amount || 0);
+            let newPaidAmount = parseFloat((currentPaidAmount - paymentAmount).toFixed(2));
 
-          // Ensure we don't get negative values
-          if (newPaidAmount <= 0) {
-            milestone.status = 'UNPAID';
-            newPaidAmount = 0;
-          } else if (newPaidAmount < milestone.budget) {
-            milestone.status = 'PARTIALLY_PAID';
-          }
-
-          milestone.paidAmount = newPaidAmount;
-          await milestone.save();
-
-          // Calculate remaining amounts with precision
-          const totalCost = parseFloat(milestone.budget || 0);
-          const pendingAmount = parseFloat((totalCost - newPaidAmount).toFixed(2));
-
-          await Payment.findByIdAndDelete(payment._id);
-
-          return res.json({
-            message: 'Payment deleted successfully',
-            milestone: milestone,
-            milestoneStatus: {
-              totalCost: totalCost,
-              paidAmount: newPaidAmount,
-              pendingAmount: pendingAmount,
-              status: milestone.status
+            // Ensure we don't get negative values
+            if (newPaidAmount <= 0) {
+              milestone.status = 'UNPAID';
+              newPaidAmount = 0;
+            } else if (newPaidAmount < milestone.budget) {
+              milestone.status = 'PARTIALLY_PAID';
             }
-          });
+
+            milestone.paidAmount = newPaidAmount;
+            await milestone.save();
+
+            // Calculate remaining amounts with precision
+            const totalCost = parseFloat(milestone.budget || 0);
+            const pendingAmount = parseFloat((totalCost - newPaidAmount).toFixed(2));
+
+            return res.json({
+              message: 'Payment deleted successfully',
+              milestone: milestone,
+              milestoneStatus: {
+                totalCost: totalCost,
+                paidAmount: newPaidAmount,
+                pendingAmount: pendingAmount,
+                status: milestone.status
+              }
+            });
+          }
+        } catch (err) {
+          console.error('Error updating milestone:', err);
         }
       }
-      // If we get here, either there was no milestone or it wasn't found
-      await Payment.findByIdAndDelete(payment._id);
       return res.json({
         message: 'Payment deleted successfully'
       });
@@ -675,9 +678,6 @@ router.delete('/:id', async (req, res) => {
           }
         }
       }
-
-      // Delete the distributed payment regardless of milestone updates
-      await Payment.findByIdAndDelete(payment._id);
 
       return res.json({
         message: 'Distributed payment deleted successfully',
