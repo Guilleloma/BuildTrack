@@ -110,6 +110,10 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
   }, [projectId, milestoneId, refreshTrigger]);
 
   const handleEditClick = async (payment) => {
+    console.log('handleEditClick iniciado con payment:', payment);
+    console.log('Tipo de pago:', payment.type);
+    console.log('Datos del milestone en el pago:', payment.milestone);
+    
     try {
       if (payment.type === 'DISTRIBUTED') {
         console.log('Payment is distributed, fetching full payment...');
@@ -151,10 +155,14 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
 
         setEditingPayment(paymentForForm);
       } else {
-        console.log('Setting regular payment for editing');
+        console.log('Editando pago normal (no distribuido)');
         if (!payment.milestone || !payment.milestone._id) {
+          console.error('Milestone faltante o inválido:', payment.milestone);
           throw new Error('No se encontró información del milestone en el pago');
         }
+        
+        console.log('Obteniendo información del milestone:', payment.milestone._id);
+        console.log('Project ID:', projectId);
         
         // Obtener la información completa del milestone
         const token = localStorage.getItem('token');
@@ -165,12 +173,14 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
         });
         
         if (!milestoneResponse.ok) {
+          console.error('Error en la respuesta del milestone:', await milestoneResponse.text());
           throw new Error('Error al obtener la información del milestone');
         }
         
         const milestoneData = await milestoneResponse.json();
+        console.log('Datos del milestone obtenidos:', milestoneData);
         
-        setEditingPayment({
+        const editingPaymentData = {
           _id: payment._id,
           amount: payment.amount.toString(),
           description: payment.description || '',
@@ -184,10 +194,14 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
             taxRate: milestoneData.taxRate,
             paidAmount: milestoneData.paidAmount
           }
-        });
+        };
+        
+        console.log('Datos preparados para el formulario:', editingPaymentData);
+        setEditingPayment(editingPaymentData);
       }
     } catch (err) {
-      console.error('Error in handleEditClick:', err);
+      console.error('Error detallado en handleEditClick:', err);
+      console.error('Stack trace:', err.stack);
       showMessage(err.message, 'error');
     }
   };
@@ -472,13 +486,20 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
       </TableContainer>
 
       {editingPayment && (
-        <PaymentForm
-          open={!!editingPayment}
-          onClose={handleEditClose}
-          onSubmit={handleEditSubmit}
-          payment={editingPayment}
-          milestone={editingPayment.milestone}
-        />
+        <>
+          {console.log('Renderizando PaymentForm con:', {
+            open: !!editingPayment,
+            payment: editingPayment,
+            milestone: editingPayment.milestone
+          })}
+          <PaymentForm
+            open={!!editingPayment}
+            onClose={handleEditClose}
+            onSubmit={handleEditSubmit}
+            payment={editingPayment}
+            milestone={editingPayment.milestone}
+          />
+        </>
       )}
 
       <Snackbar
