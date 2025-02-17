@@ -217,8 +217,9 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
+    console.log('handleSubmit iniciado');
     setError(null);
 
     const validationError = validateAmount(formData.amount, formData.distributions);
@@ -234,29 +235,29 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
     }
 
     try {
-      if (formData.isDistributed) {
-        await onSubmit({
-          amount: parseFloat(formData.amount),
-          description: formData.description,
-          paymentMethod: formData.paymentMethod,
-          type: 'DISTRIBUTED',
-          distributions: formData.distributions.map(dist => ({
-            milestoneId: dist.milestoneId,
-            amount: parseFloat(dist.amount)
-          }))
-        });
-      } else {
-        await onSubmit({
-          amount: parseFloat(formData.amount),
-          description: formData.description,
-          paymentMethod: formData.paymentMethod,
-          type: 'SINGLE',
-          milestoneId: milestone._id
-        });
-      }
+      console.log('Preparando datos para enviar');
+      const dataToSubmit = formData.isDistributed ? {
+        amount: parseFloat(formData.amount),
+        description: formData.description,
+        paymentMethod: formData.paymentMethod,
+        type: 'DISTRIBUTED',
+        distributions: formData.distributions.map(dist => ({
+          milestoneId: dist.milestoneId,
+          amount: parseFloat(dist.amount)
+        }))
+      } : {
+        amount: parseFloat(formData.amount),
+        description: formData.description,
+        paymentMethod: formData.paymentMethod,
+        type: 'SINGLE',
+        milestoneId: milestone._id
+      };
+
+      console.log('Datos a enviar:', dataToSubmit);
+      onSubmit(dataToSubmit);
       onClose();
     } catch (err) {
-      // Extraer información detallada del error si está disponible
+      console.error('Error en handleSubmit:', err);
       let errorMessage = err.message;
       if (err.message.includes('exceed')) {
         const match = err.message.match(/\d+(\.\d{1,2})?/);
