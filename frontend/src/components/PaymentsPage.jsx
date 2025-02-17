@@ -501,9 +501,9 @@ const PaymentsPage = () => {
                       <IconButton
                         size="small"
                         onClick={() => {
-                          const milestone = payment.milestonesInfo?.[0];
+                          const milestone = payment.milestone;
                           if (milestone) {
-                            navigate(`/projects/${payment.milestone.project._id}?milestone=${milestone._id}`);
+                            navigate(`/projects/${milestone.project._id}?milestone=${milestone._id}`);
                           }
                         }}
                       >
