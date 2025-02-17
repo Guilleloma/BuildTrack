@@ -528,6 +528,7 @@ const PaymentsPage = () => {
           }}
           onSubmit={handleEditSubmit}
           payment={editingPayment}
+          milestone={editingPayment.milestone}
           project={editingPayment.project}
         />
       )}
