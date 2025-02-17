@@ -512,7 +512,8 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
             onClose={handleEditClose}
             onSubmit={handleEditSubmit}
             payment={editingPayment}
-            milestone={editingPayment.milestone}
+            milestone={editingPayment.type === 'SINGLE' ? editingPayment.milestone : null}
+            project={editingPayment.type === 'DISTRIBUTED' ? editingPayment.project : editingPayment.milestone?.project}
           />
         </>
       )}
