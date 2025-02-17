@@ -192,14 +192,22 @@ router.post('/', async (req, res) => {
           ? milestone.budget * (1 + (milestone.taxRate || 21) / 100)
           : milestone.budget;
 
-        if ((milestone.paidAmount || 0) + dist.amount > totalWithTax) {
+        // Calculate how this payment should be split between base and tax
+        const paymentBase = milestone.hasTax 
+          ? parseFloat((dist.amount / (1 + (milestone.taxRate || 21) / 100)).toFixed(2))
+          : parseFloat(dist.amount);
+        const paymentTax = milestone.hasTax 
+          ? parseFloat((dist.amount - paymentBase).toFixed(2))
+          : 0;
+
+        if ((milestone.paidAmount || 0) + paymentBase > milestone.budget) {
           return res.status(400).json({ 
-            error: `Payment would exceed milestone ${milestone.name} total cost (including tax)`,
+            error: `Payment would exceed milestone ${milestone.name} base cost`,
             milestoneId: dist.milestoneId,
             currentlyPaid: milestone.paidAmount || 0,
-            totalCost: milestone.budget,
+            totalBase: milestone.budget,
             totalWithTax: totalWithTax,
-            remaining: totalWithTax - (milestone.paidAmount || 0)
+            remaining: milestone.budget - (milestone.paidAmount || 0)
           });
         }
       }
@@ -221,13 +229,15 @@ router.post('/', async (req, res) => {
       // Update each milestone
       const updatedMilestones = await Promise.all(distributions.map(async dist => {
         const milestone = await Milestone.findById(dist.milestoneId);
-        milestone.paidAmount = (milestone.paidAmount || 0) + parseFloat(dist.amount);
         
-        const totalWithTax = milestone.hasTax 
-          ? milestone.budget * (1 + (milestone.taxRate || 21) / 100)
-          : milestone.budget;
+        // Calculate base amount of this payment
+        const paymentBase = milestone.hasTax 
+          ? parseFloat((dist.amount / (1 + (milestone.taxRate || 21) / 100)).toFixed(2))
+          : parseFloat(dist.amount);
 
-        if (milestone.paidAmount >= totalWithTax) {
+        milestone.paidAmount = parseFloat((milestone.paidAmount || 0) + paymentBase).toFixed(2);
+        
+        if (milestone.paidAmount >= milestone.budget) {
           milestone.status = 'PAID';
         } else if (milestone.paidAmount > 0) {
           milestone.status = 'PARTIALLY_PAID';
@@ -248,21 +258,23 @@ router.post('/', async (req, res) => {
 
       res.status(201).json({
         payment,
-        milestones: updatedMilestones.map(milestone => ({
-          _id: milestone._id,
-          name: milestone.name,
-          totalCost: milestone.budget,
-          totalWithTax: milestone.hasTax 
+        milestones: updatedMilestones.map(milestone => {
+          const totalWithTax = milestone.hasTax 
             ? milestone.budget * (1 + (milestone.taxRate || 21) / 100)
-            : milestone.budget,
-          paidAmount: milestone.paidAmount,
-          pendingAmount: (milestone.hasTax 
-            ? milestone.budget * (1 + (milestone.taxRate || 21) / 100)
-            : milestone.budget) - milestone.paidAmount,
-          status: milestone.status,
-          hasTax: milestone.hasTax,
-          taxRate: milestone.taxRate || 21
-        }))
+            : milestone.budget;
+          
+          return {
+            _id: milestone._id,
+            name: milestone.name,
+            totalCost: milestone.budget,
+            totalWithTax: totalWithTax,
+            paidAmount: milestone.paidAmount,
+            pendingAmount: milestone.budget - milestone.paidAmount,
+            status: milestone.status,
+            hasTax: milestone.hasTax,
+            taxRate: milestone.taxRate || 21
+          };
+        })
       });
     } else {
       // Handle single milestone payment
@@ -279,13 +291,26 @@ router.post('/', async (req, res) => {
         ? milestone.budget * (1 + (milestone.taxRate || 21) / 100)
         : milestone.budget;
 
-      if ((milestone.paidAmount || 0) + paymentAmount > totalWithTax) {
+      // Calculate base amount of this payment
+      const paymentBase = milestone.hasTax 
+        ? parseFloat((paymentAmount / (1 + (milestone.taxRate || 21) / 100)).toFixed(2))
+        : paymentAmount;
+      const paymentTax = milestone.hasTax 
+        ? parseFloat((paymentAmount - paymentBase).toFixed(2))
+        : 0;
+
+      if ((milestone.paidAmount || 0) + paymentBase > milestone.budget) {
         return res.status(400).json({ 
-          error: 'Payment would exceed milestone total cost (including tax)',
+          error: 'Payment would exceed milestone base cost',
           currentlyPaid: milestone.paidAmount || 0,
-          totalCost: milestone.budget,
+          totalBase: milestone.budget,
           totalWithTax: totalWithTax,
-          remaining: totalWithTax - (milestone.paidAmount || 0)
+          paymentDetails: {
+            total: paymentAmount,
+            base: paymentBase,
+            tax: paymentTax
+          },
+          remaining: milestone.budget - (milestone.paidAmount || 0)
         });
       }
 
@@ -299,9 +324,9 @@ router.post('/', async (req, res) => {
 
       await payment.save();
 
-      milestone.paidAmount = (milestone.paidAmount || 0) + paymentAmount;
+      milestone.paidAmount = parseFloat((milestone.paidAmount || 0) + paymentBase).toFixed(2);
       
-      if (milestone.paidAmount >= totalWithTax) {
+      if (milestone.paidAmount >= milestone.budget) {
         milestone.status = 'PAID';
       } else if (milestone.paidAmount > 0) {
         milestone.status = 'PARTIALLY_PAID';
@@ -326,7 +351,7 @@ router.post('/', async (req, res) => {
           totalCost: milestone.budget,
           totalWithTax,
           paidAmount: milestone.paidAmount,
-          pendingAmount: totalWithTax - milestone.paidAmount,
+          pendingAmount: milestone.budget - milestone.paidAmount,
           status: milestone.status,
           hasTax: milestone.hasTax,
           taxRate: milestone.taxRate || 21
