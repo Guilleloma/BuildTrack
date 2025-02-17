@@ -348,14 +348,18 @@ const PaymentsPage = () => {
     }
   };
 
-  const handleDeleteClick = async (payment) => {
+  const handleDeleteClick = async (payment, milestoneId = null) => {
     if (!window.confirm('¿Estás seguro de que quieres eliminar este pago?')) {
       return;
     }
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl(`/payments/${payment._id}`), {
+      const url = payment.type === 'DISTRIBUTED' && milestoneId
+        ? `${getApiUrl(`/payments/${payment._id}`)}?milestoneId=${milestoneId}`
+        : getApiUrl(`/payments/${payment._id}`);
+
+      const response = await fetch(url, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

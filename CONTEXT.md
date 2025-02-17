@@ -12,10 +12,10 @@ Este documento mantiene un registro de las instrucciones y preferencias importan
 ### Gestión de Cambios y Deploy
 1. Para cualquier cambio en el código:
    - Realizar el cambio
-   - Hacer commit y push al repositorio: `git add . && git commit -m "descripción" && git push origin trunk` (Recuerda comprobar en que carpeta te encuentras)
+   - Hacer commit y push al repositorio: `git add . && git commit -m "descripción" && git push origin development` (Recuerda comprobar en que carpeta te encuentras)
    - Hacer build y deploy del frontend: `cd frontend && npm run build && cd .. && firebase deploy`
    - Verificar el despliegue en buildtrack-c3e8a.web.app
-   - El backend en Render.com (buildtrack.onrender.com) se actualiza automáticamente con cada push a trunk
+   - El backend en Render.com (buildtrack.onrender.com) se actualiza automáticamente con cada push a development
    - La base de datos MongoDB Atlas está conectada automáticamente con el backend
 
 ### Logging y Debugging
@@ -45,4 +45,5 @@ Este documento mantiene un registro de las instrucciones y preferencias importan
 - [FECHA] Instrucción inicial sobre procedimiento de cambios y deploy
 - [FECHA] Agregadas instrucciones sobre logging y mejores prácticas de UX/UI
 - [FECHA] Actualizado el proceso de build y deploy con pasos específicos para Firebase y Render
-- [FECHA] Agregada información sobre MongoDB Atlas y actualizada la sección de logging 
+- [FECHA] Agregada información sobre MongoDB Atlas y actualizada la sección de logging
+- [FECHA] Actualizado el flujo de trabajo para usar la rama development 
