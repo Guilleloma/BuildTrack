@@ -16,31 +16,37 @@ const Sidebar = ({ drawerWidth }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
+  const isSandbox = location.pathname.startsWith('/sandbox');
 
   const isPathActive = (path) => {
-    if (path === '/app') {
-      // Para la ruta /app, solo debe estar activa cuando estamos exactamente en /app
-      return location.pathname === '/app' || location.pathname === '/app/';
+    if (isSandbox) {
+      if (path === '/sandbox') {
+        return location.pathname === '/sandbox' || location.pathname === '/sandbox/';
+      }
+      return location.pathname.startsWith(path);
+    } else {
+      if (path === '/app') {
+        return location.pathname === '/app' || location.pathname === '/app/';
+      }
+      return location.pathname.startsWith(path);
     }
-    // Para las demás rutas, usamos startsWith
-    return location.pathname.startsWith(path);
   };
 
   const menuItems = [
     {
       text: 'Proyectos',
       icon: <FolderIcon />,
-      path: '/app'
+      path: isSandbox ? '/sandbox' : '/app'
     },
     {
       text: 'Pagos',
       icon: <AccountBalanceIcon />,
-      path: '/app/payments'
+      path: isSandbox ? '/sandbox/payments' : '/app/payments'
     },
     {
       text: 'Configuración',
       icon: <SettingsIcon />,
-      path: '/app/settings'
+      path: isSandbox ? '/sandbox/settings' : '/app/settings'
     }
   ];
 

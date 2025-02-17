@@ -9,7 +9,6 @@ import SettingsPage from './components/SettingsPage';
 import { Typography, Container } from '@mui/material';
 import ErrorBoundary from './ErrorBoundary';
 import Home from './components/Home';
-import Sandbox from './components/Sandbox';
 import Login from './components/Login';
 import Register from './components/Register';
 import { AuthProvider } from './contexts/AuthContext';
@@ -54,9 +53,17 @@ function App() {
             <Route path="/register" element={<Register />} />
             
             {/* Ruta de sandbox (sin autenticación) */}
-            <Route path="/sandbox" element={
+            <Route path="/sandbox/*" element={
               <Layout>
-                <ProjectList />
+                <Routes>
+                  <Route index element={<ProjectList />} />
+                  <Route path="projects">
+                    <Route path="new" element={<ProjectForm />} />
+                    <Route path=":id" element={<ProjectDetail />} />
+                  </Route>
+                  <Route path="payments" element={<PaymentsPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                </Routes>
               </Layout>
             } />
             

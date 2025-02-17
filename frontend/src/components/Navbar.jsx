@@ -11,14 +11,16 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import LogoutIcon from '@mui/icons-material/Logout';
+import HomeIcon from '@mui/icons-material/Home';
 
 const Navbar = ({ drawerWidth }) => {
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const isSandbox = location.pathname.startsWith('/sandbox');
 
-  // Show New Project button only in the projects list view
-  const showNewProjectButton = location.pathname === '/projects';
+  // Show New Project button in the projects list view or sandbox
+  const showNewProjectButton = location.pathname === '/projects' || isSandbox;
 
   const handleLogout = async () => {
     try {
@@ -49,24 +51,39 @@ const Navbar = ({ drawerWidth }) => {
             fontWeight: 600,
           }}
         >
-          BuildTrack
+          BuildTrack {isSandbox && '(Sandbox)'}
         </Typography>
         {showNewProjectButton && (
           <Button
             color="primary"
             startIcon={<AddIcon />}
             variant="contained"
-            onClick={() => navigate('/projects/new')}
+            onClick={() => navigate(isSandbox ? '/sandbox/projects/new' : '/app/projects/new')}
             sx={{ 
               borderRadius: '20px',
               textTransform: 'none',
               px: 3,
             }}
           >
-            New Project
+            Nuevo Proyecto
           </Button>
         )}
-        {!location.pathname.startsWith('/sandbox') && (
+        {isSandbox ? (
+          <Button
+            color="primary"
+            startIcon={<HomeIcon />}
+            variant="outlined"
+            onClick={() => navigate('/')}
+            sx={{ 
+              ml: 2,
+              borderRadius: '20px',
+              textTransform: 'none',
+              px: 3,
+            }}
+          >
+            Volver al Inicio
+          </Button>
+        ) : (
           <Button
             color="primary"
             startIcon={<LogoutIcon />}
