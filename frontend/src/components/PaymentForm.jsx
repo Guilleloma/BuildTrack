@@ -37,17 +37,22 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
 
   useEffect(() => {
     if (open) {
-      console.log('=== INICIO useEffect PaymentForm ===');
-      console.log('Payment recibido:', JSON.stringify(payment, null, 2));
-      console.log('Milestone recibido:', JSON.stringify(milestone, null, 2));
-      console.log('Project recibido:', JSON.stringify(project, null, 2));
+      console.log('=== INICIO useEffect PaymentForm con LOGS DETALLADOS ===');
+      console.log('Estado inicial del formulario:', formData);
+      console.log('Payment prop:', payment);
+      console.log('Milestone prop:', milestone);
+      console.log('Project prop:', project);
 
       if (payment) {
-        console.log('Setting form data from payment:', JSON.stringify(payment, null, 2));
-        // Si estamos editando un pago existente
+        console.log('=== Procesando pago existente ===');
+        console.log('Tipo de pago:', payment.type);
+        console.log('ID del pago:', payment._id);
+        console.log('Milestone en el pago:', payment.milestone);
+        
         const distributions = payment.type === 'DISTRIBUTED' ? 
           payment.distributions.map(dist => {
-            console.log('Processing distribution:', JSON.stringify(dist, null, 2));
+            console.log('Procesando distribución:', dist);
+            console.log('ID del milestone en distribución:', dist.milestoneId || dist.milestone?._id);
             return {
               milestoneId: dist.milestoneId || dist.milestone?._id,
               amount: (dist.amount || '0').toString(),
@@ -55,7 +60,7 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
             };
           }) : [];
 
-        console.log('Processed distributions:', JSON.stringify(distributions, null, 2));
+        console.log('Distribuciones procesadas:', distributions);
 
         setFormData({
           amount: payment.amount.toString(),
@@ -65,8 +70,8 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
           distributions: distributions
         });
       } else if (milestone?.editingPayment) {
-        // Compatibilidad con el modo anterior de edición
-        console.log('Setting form data from milestone.editingPayment:', JSON.stringify(milestone.editingPayment, null, 2));
+        console.log('=== Procesando milestone.editingPayment ===');
+        console.log('Datos de editingPayment:', milestone.editingPayment);
         setFormData({
           amount: milestone.editingPayment.amount.toString(),
           description: milestone.editingPayment.description || '',
@@ -75,8 +80,8 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
           distributions: []
         });
       } else {
-        // Si es un nuevo pago
-        console.log('Setting default form data');
+        console.log('=== Configurando formulario nuevo ===');
+        console.log('Es pago distribuido:', !milestone);
         setFormData({
           amount: '',
           description: '',
@@ -87,8 +92,13 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
       }
       
       if (milestone) {
-        console.log('Calculating milestone amounts for:', JSON.stringify(milestone, null, 2));
-        // Calculate milestone amounts
+        console.log('=== Calculando estado del milestone ===');
+        console.log('Budget:', milestone.budget);
+        console.log('Has Tax:', milestone.hasTax);
+        console.log('Tax Rate:', milestone.taxRate);
+        console.log('Paid Amount:', milestone.paidAmount);
+        console.log('Tasks:', milestone.tasks);
+
         const baseAmount = parseFloat(milestone.budget || 0);
         const taxAmount = milestone.hasTax 
           ? baseAmount * (parseFloat(milestone.taxRate || 21) / 100)
@@ -97,7 +107,6 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
         const paidAmount = parseFloat(milestone.paidAmount || 0);
         const remainingAmount = parseFloat((totalWithTax - paidAmount).toFixed(2));
 
-        // Calculate percentages for warning
         const totalTasks = milestone.tasks?.length || 0;
         const completedTasks = milestone.tasks?.filter(t => t.status === 'COMPLETED').length || 0;
         const taskCompletionPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
@@ -114,12 +123,10 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
           totalTasks,
           completedTasks
         };
-        console.log('Setting milestone status:', JSON.stringify(milestoneStatusData, null, 2));
+        console.log('Estado del milestone calculado:', milestoneStatusData);
         setMilestoneStatus(milestoneStatusData);
       }
       
-      setError(null);
-      setWarning(null);
       console.log('=== FIN useEffect PaymentForm ===');
     }
   }, [open, milestone, payment]);
@@ -230,10 +237,10 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('=== INICIO handleSubmit PaymentForm ===');
-    console.log('FormData actual:', JSON.stringify(formData, null, 2));
-    console.log('Milestone actual:', JSON.stringify(milestone, null, 2));
-    console.log('MilestoneStatus actual:', JSON.stringify(milestoneStatus, null, 2));
+    console.log('=== INICIO handleSubmit PaymentForm con LOGS DETALLADOS ===');
+    console.log('FormData actual:', formData);
+    console.log('Milestone actual:', milestone);
+    console.log('MilestoneStatus actual:', milestoneStatus);
     setError(null);
 
     const validationError = validateAmount(formData.amount, formData.distributions);
@@ -251,7 +258,7 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
     }
 
     try {
-      console.log('Preparando datos para enviar');
+      console.log('=== Preparando datos para enviar ===');
       const dataToSubmit = formData.isDistributed ? {
         amount: parseFloat(formData.amount),
         description: formData.description,
@@ -270,26 +277,18 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
       };
 
       if (!formData.isDistributed && !milestone?._id) {
-        console.error('Error: No se encontró el ID del milestone');
-        console.log('Milestone completo:', JSON.stringify(milestone, null, 2));
+        console.error('Error crítico: No se encontró el ID del milestone');
+        console.log('Milestone completo:', milestone);
         throw new Error('No se pudo obtener el ID del milestone');
       }
 
-      console.log('Datos a enviar:', JSON.stringify(dataToSubmit, null, 2));
+      console.log('Datos preparados para enviar:', dataToSubmit);
       onSubmit(dataToSubmit);
       onClose();
     } catch (err) {
       console.error('Error en handleSubmit:', err);
       console.error('Stack trace:', err.stack);
-      let errorMessage = err.message;
-      if (err.message.includes('exceed')) {
-        const match = err.message.match(/\d+(\.\d{1,2})?/);
-        if (match) {
-          const remaining = parseFloat(match[0]);
-          errorMessage = `El pago excedería el costo total del hito. Monto máximo permitido: ${formatCurrency(remaining)}`;
-        }
-      }
-      setError(errorMessage);
+      setError(err.message);
     }
     console.log('=== FIN handleSubmit PaymentForm ===');
   };
