@@ -45,7 +45,7 @@ function App() {
             } 
           />
           <Route
-            path="/*"
+            path="/app/*"
             element={
               <>
                 {console.log('Rendering Layout route')}
