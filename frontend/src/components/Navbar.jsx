@@ -1,5 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { signOut } from "firebase/auth";
+import { auth } from '../firebaseConfig';
 import {
   AppBar,
   Toolbar,
@@ -8,6 +10,7 @@ import {
   useTheme,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 const Navbar = ({ drawerWidth }) => {
   const theme = useTheme();
@@ -16,6 +19,15 @@ const Navbar = ({ drawerWidth }) => {
 
   // Show New Project button only in the projects list view
   const showNewProjectButton = location.pathname === '/projects';
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/');
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+  };
 
   return (
     <AppBar 
@@ -52,6 +64,22 @@ const Navbar = ({ drawerWidth }) => {
             }}
           >
             New Project
+          </Button>
+        )}
+        {!location.pathname.startsWith('/sandbox') && (
+          <Button
+            color="primary"
+            startIcon={<LogoutIcon />}
+            variant="outlined"
+            onClick={handleLogout}
+            sx={{ 
+              ml: 2,
+              borderRadius: '20px',
+              textTransform: 'none',
+              px: 3,
+            }}
+          >
+            Cerrar Sesión
           </Button>
         )}
       </Toolbar>
