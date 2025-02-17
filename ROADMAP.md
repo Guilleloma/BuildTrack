@@ -624,11 +624,68 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 
 **Estado: COMPLETADO**
 
-## Sprint 18: Identificacio de usuarios
-- el usuario debe identificarse con un email y una contraseña
-- Cada usuario tendra su propio espacio de trabajo con sus propios proyectos, hitos, tareas, pagos, etc.
-**Estado: TODO**
+## Sprint 18: Identificación de usuarios
+- Implementación de autenticación de usuarios usando Firebase Auth
+- Desarrollo de flujos de registro y login
+- Separación de espacios de trabajo entre usuarios autenticados y sandbox
+- Integración con Firebase para gestión de sesiones
+- Implementación de rutas protegidas y públicas
+- Diseño de interfaz de usuario para autenticación
 
+**Criterios de Aceptación:**
+- Sistema de autenticación:
+  * Registro de usuarios con email y contraseña
+  * Login de usuarios existentes
+  * Validaciones de seguridad en formularios
+  * Gestión de errores de autenticación
+  * Cierre de sesión funcional
+- Rutas y navegación:
+  * Rutas públicas: /, /login, /register, /sandbox/*
+  * Rutas protegidas: /app/* (requieren autenticación)
+  * Redirección a login cuando se intenta acceder a rutas protegidas
+- Interfaz de usuario:
+  * Formularios de registro y login con validación
+  * Mensajes de error claros y específicos
+  * Indicadores de carga durante procesos de autenticación
+  * Navegación intuitiva entre registro y login
+- Separación de datos:
+  * Cada usuario tiene acceso solo a sus propios proyectos
+  * Modo sandbox accesible sin autenticación
+  * Datos de sandbox separados de datos de usuarios autenticados
+- Seguridad:
+  * Tokens JWT para autenticación
+  * Protección de rutas en backend
+  * Validación de tokens en cada petición
+  * Manejo seguro de contraseñas
+
+**Validación y Resultados:**
+- Sistema de autenticación:
+  * Se implementó Firebase Auth para gestión de usuarios
+  * Se verificó el registro exitoso de nuevos usuarios
+  * Se comprobó el login con credenciales válidas e inválidas
+  * Se validó el cierre de sesión y limpieza de estado
+- Rutas y navegación:
+  * Se verificó la protección de rutas privadas
+  * Se comprobó la redirección al login cuando es necesario
+  * Se validó el acceso a rutas públicas sin autenticación
+  * Se confirmó la persistencia de la sesión al recargar
+- Interfaz de usuario:
+  * Se implementaron formularios con Material-UI
+  * Se añadieron validaciones en tiempo real
+  * Se verificaron los mensajes de error específicos
+  * Se comprobó la experiencia de usuario en diferentes dispositivos
+- Separación de datos:
+  * Se verificó que cada usuario solo ve sus proyectos
+  * Se comprobó que el modo sandbox es independiente
+  * Se validó la separación de datos entre usuarios
+  * Se confirmó que los cambios en sandbox no afectan a usuarios autenticados
+- Seguridad:
+  * Se implementó autenticación con tokens JWT
+  * Se verificó la validación de tokens en el backend
+  * Se comprobó la expiración y renovación de tokens
+  * Se validó el manejo seguro de datos sensibles
+
+**Estado: COMPLETADO**
 
 ## Sprint 19: Hacer una applicacion para produccion que pueda ser usada por los usuarios (MVP)
 - La aplicacion se debe poder instalar en un servidor de produccion
