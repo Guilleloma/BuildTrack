@@ -324,15 +324,11 @@ router.post('/', async (req, res) => {
             const paymentBase = milestone.hasTax 
                 ? parseFloat((paymentAmount / (1 + (milestone.taxRate || 21) / 100)).toFixed(2))
                 : paymentAmount;
-            const paymentTax = milestone.hasTax 
-                ? parseFloat((paymentAmount - paymentBase).toFixed(2))
-                : 0;
 
             console.log('Payment calculations:', {
                 totalWithTax,
                 paymentAmount,
                 paymentBase,
-                paymentTax,
                 taxRate: milestone.hasTax ? (milestone.taxRate || 21) : 0
             });
 
@@ -351,8 +347,7 @@ router.post('/', async (req, res) => {
                     totalWithTax: totalWithTax,
                     paymentDetails: {
                         total: paymentAmount,
-                        base: paymentBase,
-                        tax: paymentTax
+                        base: paymentBase
                     },
                     remaining: milestone.budget - (milestone.paidAmount || 0)
                 });
