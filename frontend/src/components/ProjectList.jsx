@@ -181,8 +181,14 @@ const ProjectList = () => {
             variant="contained"
             color="primary"
             onClick={() => {
-              const basePath = location.pathname.startsWith('/app') ? '/app' : '';
-              navigate(`${basePath}/projects/new`);
+              console.log('[ProjectList] Create Project clicked:', {
+                isSandbox,
+                currentPath: location.pathname
+              });
+              const basePath = isSandbox ? '/sandbox' : '/app';
+              const newProjectPath = `${basePath}/projects/new`;
+              console.log('[ProjectList] Navigating to:', newProjectPath);
+              navigate(newProjectPath);
             }}
           >
             Crear Proyecto
