@@ -115,7 +115,7 @@ const ProjectList = () => {
     <Container maxWidth="lg">
       <Paper style={{ padding: '20px', marginTop: '20px' }}>
         <Typography variant="h4" gutterBottom align="center" style={{ marginBottom: '30px' }}>
-          Project List
+          Lista de Proyectos
         </Typography>
         
         <TextField

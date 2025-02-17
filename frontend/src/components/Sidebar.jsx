@@ -6,19 +6,16 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  IconButton,
-  Divider,
-  Box
+  useTheme
 } from '@mui/material';
-import DashboardIcon from '@mui/icons-material/Dashboard';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import SettingsIcon from '@mui/icons-material/Settings';
 import FolderIcon from '@mui/icons-material/Folder';
-import MenuIcon from '@mui/icons-material/Menu';
 
-const Sidebar = ({ open, onClose }) => {
+const Sidebar = ({ drawerWidth }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const theme = useTheme();
 
   const menuItems = [
     {
@@ -41,39 +38,59 @@ const Sidebar = ({ open, onClose }) => {
   const handleNavigate = (path) => {
     console.log('Sidebar - Navigating to:', path);
     navigate(path);
-    if (onClose) onClose();
   };
 
   return (
     <Drawer
-      variant="temporary"
-      anchor="left"
-      open={open}
-      onClose={onClose}
+      variant="permanent"
       sx={{
-        width: 240,
+        width: drawerWidth,
         flexShrink: 0,
         '& .MuiDrawer-paper': {
-          width: 240,
+          width: drawerWidth,
           boxSizing: 'border-box',
+          top: '64px',
+          height: 'calc(100% - 64px)',
+          backgroundColor: theme.palette.background.default,
+          borderRight: `1px solid ${theme.palette.divider}`,
         },
       }}
     >
-      <Box sx={{ overflow: 'auto' }}>
-        <List>
-          {menuItems.map((item) => (
-            <ListItem
-              button
-              key={item.text}
-              onClick={() => handleNavigate(item.path)}
-              selected={location.pathname === item.path}
+      <List>
+        {menuItems.map((item) => (
+          <ListItem
+            button
+            key={item.text}
+            onClick={() => handleNavigate(item.path)}
+            selected={location.pathname.startsWith(item.path)}
+            sx={{
+              '&.Mui-selected': {
+                backgroundColor: theme.palette.action.selected,
+                '&:hover': {
+                  backgroundColor: theme.palette.action.hover,
+                },
+              },
+            }}
+          >
+            <ListItemIcon 
+              sx={{ 
+                color: location.pathname.startsWith(item.path) ? theme.palette.primary.main : 'inherit' 
+              }}
             >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItem>
-          ))}
-        </List>
-      </Box>
+              {item.icon}
+            </ListItemIcon>
+            <ListItemText 
+              primary={item.text}
+              sx={{ 
+                color: location.pathname.startsWith(item.path) ? theme.palette.primary.main : 'inherit',
+                '& .MuiTypography-root': {
+                  fontWeight: location.pathname.startsWith(item.path) ? 600 : 400,
+                }
+              }}
+            />
+          </ListItem>
+        ))}
+      </List>
     </Drawer>
   );
 };
