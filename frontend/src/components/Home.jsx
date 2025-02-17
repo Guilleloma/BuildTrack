@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Button, Typography, Box, Paper } from '@mui/material';
+import { Container, Button, Typography, Box, Paper, Divider } from '@mui/material';
 import ScienceIcon from '@mui/icons-material/Science';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import LoginIcon from '@mui/icons-material/Login';
@@ -27,7 +27,12 @@ const Home = () => {
             Gestiona tus proyectos de construcción de manera eficiente
           </Typography>
 
-          <Box sx={{ '& > button': { m: 1 } }}>
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 2,
+            justifyContent: 'center',
+            mb: 4
+          }}>
             <Button 
               variant="contained" 
               color="primary"
@@ -47,24 +52,24 @@ const Home = () => {
             >
               Iniciar Sesión
             </Button>
-
-            <Button
-              variant="text"
-              color="secondary"
-              size="large"
-              onClick={() => navigate('/sandbox')}
-              startIcon={<ScienceIcon />}
-              sx={{ 
-                mt: 3,
-                display: 'flex',
-                mx: 'auto',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              Acceder al Sandbox
-            </Button>
           </Box>
+
+          <Divider sx={{ my: 2 }}>o</Divider>
+
+          <Button
+            variant="contained"
+            color="secondary"
+            size="large"
+            onClick={() => navigate('/sandbox')}
+            startIcon={<ScienceIcon />}
+            sx={{ 
+              mt: 2,
+              width: '80%',
+              py: 1.5
+            }}
+          >
+            Acceder al Sandbox
+          </Button>
         </Paper>
       </Box>
     </Container>
