@@ -186,14 +186,7 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
           description: payment.description || '',
           paymentMethod: payment.paymentMethod,
           type: 'SINGLE',
-          milestone: {
-            _id: payment.milestone._id,
-            name: payment.milestone.name,
-            budget: milestoneData.budget,
-            hasTax: milestoneData.hasTax,
-            taxRate: milestoneData.taxRate,
-            paidAmount: milestoneData.paidAmount
-          }
+          milestone: milestoneData
         };
         
         console.log('Datos preparados para el formulario:', editingPaymentData);
