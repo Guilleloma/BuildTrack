@@ -40,7 +40,12 @@ const ProjectList = () => {
 
   const fetchProjects = async () => {
     try {
-      console.log('Fetching projects...', { isSandbox, userId: user?.uid });
+      console.log('[ProjectList] Iniciando fetchProjects:', { 
+        isSandbox, 
+        userId: user?.uid,
+        currentPath: location.pathname 
+      });
+
       let headers = {
         'Content-Type': 'application/json'
       };
@@ -49,21 +54,40 @@ const ProjectList = () => {
       if (!isSandbox && user) {
         const token = await user.getIdToken();
         headers['Authorization'] = `Bearer ${token}`;
+        console.log('[ProjectList] Token añadido a la petición para usuario:', user.email);
       }
 
-      const response = await fetch('https://buildtrack.onrender.com/projects', {
+      const url = `https://buildtrack.onrender.com/projects${isSandbox ? '?mode=sandbox' : `?userId=${user?.uid}`}`;
+      console.log('[ProjectList] Fetching projects from URL:', url);
+
+      const response = await fetch(url, {
         headers
       });
 
-      console.log('Response:', response);
+      console.log('[ProjectList] Response status:', response.status);
       if (!response.ok) throw new Error('Error fetching projects');
       
       const data = await response.json();
-      console.log('Projects data:', data);
-      setProjects(data);
+      console.log('[ProjectList] Projects received:', {
+        count: data.length,
+        projects: data.map(p => ({ id: p._id, name: p.name, userId: p.userId }))
+      });
+
+      // En modo autenticado, filtramos los proyectos del usuario
+      const filteredData = isSandbox 
+        ? data.filter(p => p.userId === 'sandbox')
+        : data.filter(p => p.userId === user?.uid);
+
+      console.log('[ProjectList] Filtered projects:', {
+        mode: isSandbox ? 'sandbox' : 'authenticated',
+        originalCount: data.length,
+        filteredCount: filteredData.length
+      });
+
+      setProjects(filteredData);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching projects:', error);
+      console.error('[ProjectList] Error in fetchProjects:', error);
       setError('Error al cargar los proyectos');
       setLoading(false);
     }

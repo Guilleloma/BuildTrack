@@ -10,76 +10,33 @@ const XLSX = require('xlsx');
 
 // GET all projects
 router.get('/', async (req, res) => {
-    console.log('GET /projects - Fetching all projects');
     try {
-        const projects = await Project.find();
-        console.log(`Found ${projects.length} projects`);
+        console.log('[GET /projects] Request received:', {
+            mode: req.query.mode,
+            userId: req.query.userId,
+            auth: req.headers.authorization ? 'Present' : 'Not present'
+        });
+
+        let query = {};
         
-        const projectsWithProgress = await Promise.all(projects.map(async (project) => {
-            console.log(`Processing project ${project._id}`);
-            const milestones = await Milestone.find({ project: project._id });
-            console.log(`Found ${milestones.length} milestones for project ${project._id}`);
-            
-            const tasks = await Task.find({ 
-                milestone: { $in: milestones.map(m => m._id) }
-            });
-            console.log(`Found ${tasks.length} tasks for project ${project._id}`);
+        if (req.query.mode === 'sandbox') {
+            query.userId = 'sandbox';
+            console.log('[GET /projects] Sandbox mode - fetching sandbox projects');
+        } else if (req.query.userId) {
+            query.userId = req.query.userId;
+            console.log('[GET /projects] Authenticated mode - fetching projects for user:', req.query.userId);
+        }
 
-            const totalProjectTasks = tasks.length;
-            const totalCompletedTasks = tasks.filter(task => task.status === 'COMPLETED').length;
-            
-            // Calculate base amounts
-            const totalBase = milestones.reduce((sum, m) => sum + m.budget, 0);
-            const totalBasePaid = milestones.reduce((sum, m) => sum + (m.paidAmount || 0), 0);
-            
-            // Calculate tax amounts
-            const totalTax = milestones.reduce((sum, m) => {
-                if (m.hasTax) {
-                    const taxRate = m.taxRate || 21;
-                    return sum + (m.budget * (taxRate / 100));
-                }
-                return sum;
-            }, 0);
-            const totalTaxPaid = milestones.reduce((sum, m) => {
-                if (m.hasTax) {
-                    const taxRate = m.taxRate || 21;
-                    const basePaid = m.paidAmount || 0;
-                    return sum + (basePaid * (taxRate / 100));
-                }
-                return sum;
-            }, 0);
+        const projects = await Project.find(query);
+        console.log('[GET /projects] Projects found:', {
+            count: projects.length,
+            userIds: [...new Set(projects.map(p => p.userId))]
+        });
 
-            const totalWithTax = totalBase + totalTax;
-            const totalPaid = totalBasePaid + totalTaxPaid;
-
-            const taskCompletionPercentage = totalProjectTasks > 0 
-                ? (totalCompletedTasks / totalProjectTasks) * 100 
-                : 0;
-            const paymentPercentage = totalWithTax > 0 
-                ? (totalPaid / totalWithTax) * 100 
-                : 0;
-
-            return {
-                ...project.toObject(),
-                progress: {
-                    taskCompletionPercentage: Math.round(taskCompletionPercentage * 100) / 100,
-                    paymentPercentage: Math.round(paymentPercentage * 100) / 100,
-                    totalTasks: totalProjectTasks,
-                    completedTasks: totalCompletedTasks,
-                    totalCost: totalBase,
-                    totalCostWithTax: totalWithTax,
-                    paidAmount: totalPaid,
-                    base: totalBase,
-                    base_paid: totalBasePaid,
-                    tax: totalTax,
-                    tax_paid: totalTaxPaid
-                }
-            };
-        }));
-
-        res.json(projectsWithProgress);
+        res.json(projects);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('[GET /projects] Error:', error);
+        res.status(500).json({ error: 'Error fetching projects' });
     }
 });
 
