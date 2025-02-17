@@ -85,14 +85,20 @@ router.get('/', async (req, res) => {
 
 // GET project progress
 router.get('/:id/progress', async (req, res) => {
+    console.log('=== GET PROJECT PROGRESS ===');
+    console.log('Project ID:', req.params.id);
+    
     try {
         const project = await Project.findById(req.params.id);
         if (!project) {
+            console.log('Project not found');
             return res.status(404).json({ error: 'Project not found' });
         }
+        console.log('Project found:', project);
 
         // Get all milestones for this project
         const milestones = await Milestone.find({ project: req.params.id });
+        console.log('Milestones found:', milestones.length);
         const milestoneIds = milestones.map(m => m._id);
         
         // Get all payments related to these milestones
@@ -102,14 +108,26 @@ router.get('/:id/progress', async (req, res) => {
                 { 'distributions.milestone': { $in: milestoneIds } }
             ]
         }).populate('milestone distributions.milestone');
+        console.log('Payments found:', payments.length);
 
         // Get all tasks for these milestones
         const tasks = await Task.find({ 
             milestone: { $in: milestoneIds }
         });
+        console.log('Tasks found:', tasks.length);
 
         // Calculate milestone progress
+        console.log('=== Calculating Milestone Progress ===');
         const milestonesWithProgress = await Promise.all(milestones.map(async (milestone) => {
+            console.log(`\nProcessing milestone: ${milestone.name}`);
+            console.log('Milestone data:', {
+                id: milestone._id,
+                budget: milestone.budget,
+                hasTax: milestone.hasTax,
+                taxRate: milestone.taxRate,
+                currentPaidAmount: milestone.paidAmount
+            });
+
             // Calculate payments for this milestone
             const singlePayments = payments
                 .filter(p => p.type === 'SINGLE' && p.milestone?._id.toString() === milestone._id.toString())
@@ -125,6 +143,11 @@ router.get('/:id/progress', async (req, res) => {
                 }, 0);
 
             const totalPaid = singlePayments + distributedPayments;
+            console.log('Payment calculations:', {
+                singlePayments,
+                distributedPayments,
+                totalPaid
+            });
             
             // Calculate task progress
             const milestoneTasks = tasks.filter(task => 
@@ -140,6 +163,13 @@ router.get('/:id/progress', async (req, res) => {
                 ? baseAmount * (milestone.taxRate || 21) / 100 
                 : 0;
             const totalWithTax = baseAmount + taxAmount;
+
+            console.log('Amount calculations:', {
+                baseAmount,
+                taxAmount,
+                totalWithTax,
+                totalPaid
+            });
 
             // Update milestone with correct paid amount
             milestone.paidAmount = totalPaid;
@@ -168,6 +198,7 @@ router.get('/:id/progress', async (req, res) => {
         }));
 
         // Calculate overall progress
+        console.log('\n=== Calculating Overall Progress ===');
         const totalTasks = tasks.length;
         const completedTasks = tasks.filter(task => task.status === 'COMPLETED').length;
         const taskCompletionPercentage = totalTasks > 0 
@@ -196,7 +227,16 @@ router.get('/:id/progress', async (req, res) => {
         const totalWithTax = totalBase + totalTax;
         const totalPaid = totalBasePaid + totalTaxPaid;
 
-        res.json({
+        console.log('Final calculations:', {
+            totalBase,
+            totalBasePaid,
+            totalTax,
+            totalTaxPaid,
+            totalWithTax,
+            totalPaid
+        });
+
+        const response = {
             projectId: project._id,
             milestones: milestonesWithProgress,
             overallProgress: {
@@ -214,7 +254,12 @@ router.get('/:id/progress', async (req, res) => {
                 paymentPercentage: totalWithTax > 0 ? Math.round((totalPaid / totalWithTax) * 100 * 100) / 100 : 0
             },
             defaultTaxRate: project.defaultTaxRate || 21
-        });
+        };
+
+        console.log('=== Response ===');
+        console.log('Totals:', response.totals);
+
+        res.json(response);
     } catch (error) {
         console.error('Error getting project progress:', error);
         res.status(500).json({ error: 'Error getting project progress' });
