@@ -164,15 +164,21 @@ router.get('/:id/progress', async (req, res) => {
                 : 0;
             const totalWithTax = baseAmount + taxAmount;
 
+            // Calculate base amount paid
+            const basePaid = milestone.hasTax 
+                ? parseFloat((totalPaid / (1 + (milestone.taxRate || 21) / 100)).toFixed(2))
+                : totalPaid;
+
             console.log('Amount calculations:', {
                 baseAmount,
                 taxAmount,
                 totalWithTax,
-                totalPaid
+                totalPaid,
+                basePaid
             });
 
             // Update milestone with correct paid amount
-            milestone.paidAmount = totalPaid;
+            milestone.paidAmount = basePaid;
             await milestone.save();
 
             return {
@@ -183,7 +189,7 @@ router.get('/:id/progress', async (req, res) => {
                 hasTax: milestone.hasTax,
                 taxRate: milestone.taxRate || 21,
                 totalWithTax,
-                paidAmount: totalPaid,
+                paidAmount: basePaid,
                 pendingAmount: totalWithTax - totalPaid,
                 status: milestone.status,
                 taskCompletionPercentage: totalTasks > 0 
@@ -207,7 +213,7 @@ router.get('/:id/progress', async (req, res) => {
 
         // Calculate total amounts
         const totalBase = milestones.reduce((sum, m) => sum + m.budget, 0);
-        const totalBasePaid = milestonesWithProgress.reduce((sum, m) => sum + (m.paidAmount || 0), 0);
+        const totalBasePaid = milestonesWithProgress.reduce((sum, m) => sum + m.paidAmount, 0);
         const totalTax = milestones.reduce((sum, m) => {
             if (m.hasTax) {
                 const taxRate = m.taxRate || 21;
@@ -218,7 +224,7 @@ router.get('/:id/progress', async (req, res) => {
         const totalTaxPaid = milestonesWithProgress.reduce((sum, m) => {
             if (m.hasTax) {
                 const taxRate = m.taxRate || 21;
-                const basePaid = m.paidAmount || 0;
+                const basePaid = m.paidAmount;
                 return sum + (basePaid * (taxRate / 100));
             }
             return sum;
