@@ -9,8 +9,9 @@
 4. [Key Features](#key-features)  
 5. [Budget Deviations Tracking](#budget-deviations-tracking)  
 6. [Getting Started](#getting-started)  
-7. [Contributing](#contributing)  
-8. [License](#license)
+7. [Development Workflow](#development-workflow)  
+8. [Contributing](#contributing)  
+9. [License](#license)
 
 ---
 
@@ -194,12 +195,53 @@ These technologies have been implemented and tested in production.
 
 ---
 
+## Development Workflow
+The project follows a structured branching strategy to ensure code quality and stability:
+
+### Branches
+- **trunk**: Production branch, contains the stable version of the application
+- **uat**: User Acceptance Testing branch, for testing before production
+- **development**: Active development branch, where new features are integrated
+
+### Workflow
+1. All new development happens in the `development` branch
+2. When features are ready for testing:
+   - Create a Pull Request from `development` to `uat`
+   - Test thoroughly in the UAT environment
+3. When testing is successful:
+   - Create a Pull Request from `uat` to `trunk`
+   - Deploy to production after approval
+
+### Deployment Environments
+- **Development**: For active development and initial testing
+- **UAT**: https://buildtrack-uat.web.app
+- **Production**: https://buildtrack-c3e8a.web.app
+
+### Best Practices
+- Never commit directly to `trunk`
+- Always create Pull Requests for code reviews
+- Ensure all tests pass before merging to `uat`
+- Document all changes in commit messages and Pull Requests
+
+---
+
 ## Contributing
-We welcome all contributions!  
-1. **Fork** this repository.  
-2. Create a new branch (`git checkout -b new-feature`).  
-3. Make your changes and add detailed **commits**.  
-4. Open a **Pull Request**, describing your changes clearly.
+We welcome all contributions! Please follow these steps:  
+1. **Fork** this repository
+2. **Clone** your fork locally
+3. Create a new branch from `development` (`git checkout -b feature/your-feature-name development`)
+4. Make your changes and add detailed **commits**
+5. Push to your fork (`git push origin feature/your-feature-name`)
+6. Open a **Pull Request** to our `development` branch, describing your changes clearly
+7. Wait for review and address any feedback
+
+### Pull Request Guidelines
+- Create PRs against the `development` branch
+- Include a clear description of the changes
+- Add tests if applicable
+- Ensure all tests pass
+- Follow the existing code style
+- Keep changes focused and atomic
 
 ---
 
