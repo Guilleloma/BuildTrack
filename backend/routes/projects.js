@@ -164,22 +164,21 @@ router.get('/:id/progress', async (req, res) => {
                 : 0;
             const totalWithTax = baseAmount + taxAmount;
 
-            // Calculate base amount paid
-            const basePaid = milestone.hasTax 
-                ? parseFloat((totalPaid / (1 + (milestone.taxRate || 21) / 100)).toFixed(2))
-                : totalPaid;
+            // Use the stored paidAmount which is already the base amount
+            const basePaid = milestone.paidAmount || 0;
+            const taxPaid = milestone.hasTax 
+                ? basePaid * (milestone.taxRate || 21) / 100 
+                : 0;
+            const totalPaidWithTax = basePaid + taxPaid;
 
             console.log('Amount calculations:', {
                 baseAmount,
                 taxAmount,
                 totalWithTax,
-                totalPaid,
-                basePaid
+                basePaid,
+                taxPaid,
+                totalPaidWithTax
             });
-
-            // Update milestone with correct paid amount
-            milestone.paidAmount = basePaid;
-            await milestone.save();
 
             return {
                 _id: milestone._id,
@@ -190,13 +189,13 @@ router.get('/:id/progress', async (req, res) => {
                 taxRate: milestone.taxRate || 21,
                 totalWithTax,
                 paidAmount: basePaid,
-                pendingAmount: totalWithTax - totalPaid,
+                pendingAmount: totalWithTax - totalPaidWithTax,
                 status: milestone.status,
                 taskCompletionPercentage: totalTasks > 0 
                     ? Math.round((completedTasks / totalTasks) * 100 * 100) / 100 
                     : 0,
                 paymentPercentage: totalWithTax > 0 
-                    ? Math.round((totalPaid / totalWithTax) * 100 * 100) / 100 
+                    ? Math.round((totalPaidWithTax / totalWithTax) * 100 * 100) / 100 
                     : 0,
                 totalTasks,
                 completedTasks
