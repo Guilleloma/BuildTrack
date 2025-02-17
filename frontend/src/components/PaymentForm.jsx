@@ -220,6 +220,7 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('handleSubmit iniciado');
+    console.log('Milestone:', milestone);
     setError(null);
 
     const validationError = validateAmount(formData.amount, formData.distributions);
@@ -250,8 +251,12 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
         description: formData.description,
         paymentMethod: formData.paymentMethod,
         type: 'SINGLE',
-        milestoneId: milestone._id
+        milestoneId: milestone?._id
       };
+
+      if (!formData.isDistributed && !milestone?._id) {
+        throw new Error('No se pudo obtener el ID del milestone');
+      }
 
       console.log('Datos a enviar:', dataToSubmit);
       onSubmit(dataToSubmit);
