@@ -17,6 +17,15 @@ const Sidebar = ({ drawerWidth }) => {
   const location = useLocation();
   const theme = useTheme();
 
+  const isPathActive = (path) => {
+    if (path === '/app') {
+      // Para la ruta /app, solo debe estar activa cuando estamos exactamente en /app
+      return location.pathname === '/app' || location.pathname === '/app/';
+    }
+    // Para las demás rutas, usamos startsWith
+    return location.pathname.startsWith(path);
+  };
+
   const menuItems = [
     {
       text: 'Proyectos',
@@ -62,7 +71,7 @@ const Sidebar = ({ drawerWidth }) => {
             button
             key={item.text}
             onClick={() => handleNavigate(item.path)}
-            selected={location.pathname.startsWith(item.path)}
+            selected={isPathActive(item.path)}
             sx={{
               '&.Mui-selected': {
                 backgroundColor: theme.palette.action.selected,
@@ -74,7 +83,7 @@ const Sidebar = ({ drawerWidth }) => {
           >
             <ListItemIcon 
               sx={{ 
-                color: location.pathname.startsWith(item.path) ? theme.palette.primary.main : 'inherit' 
+                color: isPathActive(item.path) ? theme.palette.primary.main : 'inherit' 
               }}
             >
               {item.icon}
@@ -82,9 +91,9 @@ const Sidebar = ({ drawerWidth }) => {
             <ListItemText 
               primary={item.text}
               sx={{ 
-                color: location.pathname.startsWith(item.path) ? theme.palette.primary.main : 'inherit',
+                color: isPathActive(item.path) ? theme.palette.primary.main : 'inherit',
                 '& .MuiTypography-root': {
-                  fontWeight: location.pathname.startsWith(item.path) ? 600 : 400,
+                  fontWeight: isPathActive(item.path) ? 600 : 400,
                 }
               }}
             />
