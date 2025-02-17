@@ -8,6 +8,8 @@ import PaymentsPage from './components/PaymentsPage';
 import SettingsPage from './components/SettingsPage';
 import { Typography, Container } from '@mui/material';
 import ErrorBoundary from './ErrorBoundary';
+import Home from './components/Home';
+import Sandbox from './components/Sandbox';
 
 // Placeholder components for other routes
 const Dashboard = () => (
@@ -30,6 +32,8 @@ function App() {
             <Route path="/projects/:id" element={<ProjectDetail />} />
             <Route path="/payments" element={<PaymentsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/sandbox" element={<Sandbox />} />
           </Routes>
         </Layout>
       </Router>
