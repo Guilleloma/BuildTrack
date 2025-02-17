@@ -282,14 +282,33 @@ router.post('/', async (req, res) => {
         return res.status(400).json({ error: 'Milestone ID is required for single payments' });
       }
 
+      console.log('=== Processing Single Payment ===');
+      console.log('Payment details:', { milestoneId, amount: paymentAmount, description, paymentMethod });
+
       const milestone = await Milestone.findById(milestoneId).populate('project');
       if (!milestone) {
+        console.log('Milestone not found');
         return res.status(404).json({ error: 'Milestone not found' });
       }
+
+      console.log('Milestone found:', {
+        id: milestone._id,
+        name: milestone.name,
+        budget: milestone.budget,
+        hasTax: milestone.hasTax,
+        taxRate: milestone.taxRate,
+        currentPaidAmount: milestone.paidAmount
+      });
 
       const totalWithTax = milestone.hasTax 
         ? milestone.budget * (1 + (milestone.taxRate || 21) / 100)
         : milestone.budget;
+
+      console.log('Total amounts:', {
+        budget: milestone.budget,
+        totalWithTax,
+        currentPaidAmount: milestone.paidAmount
+      });
 
       // Calculate base amount of this payment
       const paymentBase = milestone.hasTax 
@@ -299,7 +318,21 @@ router.post('/', async (req, res) => {
         ? parseFloat((paymentAmount - paymentBase).toFixed(2))
         : 0;
 
+      console.log('Payment split:', {
+        total: paymentAmount,
+        base: paymentBase,
+        tax: paymentTax,
+        taxRate: milestone.hasTax ? (milestone.taxRate || 21) : 0
+      });
+
       if ((milestone.paidAmount || 0) + paymentBase > milestone.budget) {
+        console.log('Payment validation failed:', {
+          currentPaid: milestone.paidAmount || 0,
+          attemptingToAdd: paymentBase,
+          wouldBe: (milestone.paidAmount || 0) + paymentBase,
+          maxAllowed: milestone.budget
+        });
+
         return res.status(400).json({ 
           error: 'Payment would exceed milestone base cost',
           currentlyPaid: milestone.paidAmount || 0,
@@ -322,15 +355,34 @@ router.post('/', async (req, res) => {
         paymentMethod: paymentMethod || 'TRANSFERENCIA_BANCARIA'
       });
 
+      console.log('Saving payment:', {
+        type: 'SINGLE',
+        milestone: milestoneId,
+        amount: paymentAmount
+      });
+
       await payment.save();
 
-      milestone.paidAmount = parseFloat((milestone.paidAmount || 0) + paymentBase).toFixed(2);
+      const previousPaidAmount = milestone.paidAmount || 0;
+      milestone.paidAmount = parseFloat((previousPaidAmount + paymentBase).toFixed(2));
       
+      console.log('Updating milestone:', {
+        previousPaidAmount,
+        addingBase: paymentBase,
+        newPaidAmount: milestone.paidAmount
+      });
+
       if (milestone.paidAmount >= milestone.budget) {
         milestone.status = 'PAID';
       } else if (milestone.paidAmount > 0) {
         milestone.status = 'PARTIALLY_PAID';
       }
+
+      console.log('New milestone status:', {
+        paidAmount: milestone.paidAmount,
+        budget: milestone.budget,
+        status: milestone.status
+      });
 
       await milestone.save();
 
@@ -343,6 +395,8 @@ router.post('/', async (req, res) => {
         }
       });
 
+      console.log('=== Payment Processing Complete ===');
+      
       res.status(201).json({
         payment,
         milestones: [{
