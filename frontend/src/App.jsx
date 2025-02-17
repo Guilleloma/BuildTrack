@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import ProjectList from './components/ProjectList';
@@ -11,6 +11,7 @@ import ErrorBoundary from './ErrorBoundary';
 import Home from './components/Home';
 import Sandbox from './components/Sandbox';
 import Login from './components/Login';
+import Register from './components/Register';
 
 // Placeholder components for other routes
 const Dashboard = () => (
@@ -21,34 +22,48 @@ const Dashboard = () => (
 );
 
 function App() {
-  console.log('App component rendering');
+  useEffect(() => {
+    console.log('App component mounted');
+    console.log('Current path:', window.location.hash);
+  }, []);
+
   return (
     <ErrorBoundary>
       <Router>
+        {console.log('Router rendering, current hash:', window.location.hash)}
         <Routes>
           <Route 
             path="/"
             element={
               <>
-                {console.log('Rendering Home route')}
+                {console.log('Home route matched')}
                 <Home />
               </>
             } 
           />
           <Route 
-            path="login" 
+            path="/login" 
             element={
               <>
-                {console.log('Rendering Login route')}
+                {console.log('Login route matched')}
                 <Login />
               </>
             } 
           />
-          <Route
-            path="projects"
+          <Route 
+            path="/register" 
             element={
               <>
-                {console.log('Rendering Layout with ProjectList')}
+                {console.log('Register route matched')}
+                <Register />
+              </>
+            } 
+          />
+          <Route
+            path="/projects"
+            element={
+              <>
+                {console.log('Projects route matched')}
                 <Layout>
                   <ProjectList />
                 </Layout>
@@ -95,6 +110,7 @@ function App() {
               </Layout>
             }
           />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
     </ErrorBoundary>
