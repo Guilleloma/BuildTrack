@@ -12,8 +12,8 @@ const Home = () => {
   return (
     <div>
       <h1>Bienvenido a BuildTrack</h1>
-      <button onClick={() => navigate('/login')}>Iniciar Sesión</button>
-      <button onClick={() => navigate('/app/sandbox')}>Acceder al Sandbox</button>
+      <button onClick={() => navigate('login')}>Iniciar Sesión</button>
+      <button onClick={() => navigate('sandbox')}>Acceder al Sandbox</button>
     </div>
   );
 };

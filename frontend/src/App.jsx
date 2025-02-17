@@ -27,7 +27,7 @@ function App() {
       <Router>
         <Routes>
           <Route 
-            path="/" 
+            index
             element={
               <>
                 {console.log('Rendering Home route')}
@@ -36,7 +36,7 @@ function App() {
             } 
           />
           <Route 
-            path="/login" 
+            path="login" 
             element={
               <>
                 {console.log('Rendering Login route')}
@@ -45,21 +45,54 @@ function App() {
             } 
           />
           <Route
-            path="/app/*"
+            path="projects"
             element={
               <>
-                {console.log('Rendering Layout route')}
+                {console.log('Rendering Layout with ProjectList')}
                 <Layout>
-                  <Routes>
-                    <Route path="/projects" element={<ProjectList />} />
-                    <Route path="/projects/new" element={<ProjectForm />} />
-                    <Route path="/projects/:id" element={<ProjectDetail />} />
-                    <Route path="/payments" element={<PaymentsPage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
-                    <Route path="/sandbox" element={<Sandbox />} />
-                  </Routes>
+                  <ProjectList />
                 </Layout>
               </>
+            }
+          />
+          <Route
+            path="projects/new"
+            element={
+              <Layout>
+                <ProjectForm />
+              </Layout>
+            }
+          />
+          <Route
+            path="projects/:id"
+            element={
+              <Layout>
+                <ProjectDetail />
+              </Layout>
+            }
+          />
+          <Route
+            path="payments"
+            element={
+              <Layout>
+                <PaymentsPage />
+              </Layout>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <Layout>
+                <SettingsPage />
+              </Layout>
+            }
+          />
+          <Route
+            path="sandbox"
+            element={
+              <Layout>
+                <Sandbox />
+              </Layout>
             }
           />
         </Routes>
