@@ -15,8 +15,12 @@ const projectSchema = new mongoose.Schema({
   endDate: Date,
   status: {
     type: String,
-    enum: ['ACTIVE', 'COMPLETED', 'ON_HOLD'],
+    enum: ['ACTIVE', 'COMPLETED', 'CANCELLED'],
     default: 'ACTIVE'
+  },
+  userId: {
+    type: String,
+    required: true
   }
 }, {
   timestamps: true

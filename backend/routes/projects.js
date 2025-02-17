@@ -360,17 +360,26 @@ router.get('/:id', async (req, res) => {
 // POST create a new project
 router.post('/', async (req, res) => {
     try {
+        console.log('[POST /projects] Creating new project:', {
+            name: req.body.name,
+            description: req.body.description,
+            userId: req.body.userId
+        });
+
         const project = new Project({
             name: req.body.name,
             description: req.body.description,
             totalBudget: req.body.totalBudget || 0,
             startDate: req.body.startDate,
-            endDate: req.body.endDate
+            endDate: req.body.endDate,
+            userId: req.body.userId
         });
 
         const newProject = await project.save();
+        console.log('[POST /projects] Project created:', newProject);
         res.status(201).json(newProject);
     } catch (error) {
+        console.error('[POST /projects] Error:', error);
         res.status(400).json({ message: error.message });
     }
 });
