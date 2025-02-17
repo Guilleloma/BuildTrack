@@ -1,5 +1,5 @@
-import React from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import ProjectList from './components/ProjectList';
 import ProjectDetail from './components/ProjectDetail';
@@ -23,11 +23,30 @@ const Dashboard = () => (
   </Container>
 );
 
+// Componente para loggear cambios de ruta
+const RouteLogger = () => {
+  const location = useLocation();
+  
+  useEffect(() => {
+    console.log('App - Route changed:', {
+      pathname: location.pathname,
+      hash: location.hash,
+      search: location.search,
+      state: location.state
+    });
+  }, [location]);
+
+  return null;
+};
+
 function App() {
+  console.log('App - Rendering');
+
   return (
     <ErrorBoundary>
       <AuthProvider>
         <Router>
+          <RouteLogger />
           <Routes>
             {/* Rutas públicas */}
             <Route path="/" element={<Home />} />
@@ -42,7 +61,7 @@ function App() {
             } />
             
             {/* Rutas protegidas */}
-            <Route path="/app" element={
+            <Route path="/app/*" element={
               <PrivateRoute>
                 <Layout>
                   <Routes>
