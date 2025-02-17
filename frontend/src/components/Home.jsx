@@ -1,6 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Button, Typography, Box, Paper } from '@mui/material';
+import ScienceIcon from '@mui/icons-material/Science';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import LoginIcon from '@mui/icons-material/Login';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -30,6 +33,7 @@ const Home = () => {
               color="primary"
               size="large"
               onClick={() => navigate('/register')}
+              startIcon={<PersonAddIcon />}
             >
               Registrarse
             </Button>
@@ -39,16 +43,24 @@ const Home = () => {
               color="primary"
               size="large"
               onClick={() => navigate('/login')}
+              startIcon={<LoginIcon />}
             >
               Iniciar Sesión
             </Button>
 
             <Button
               variant="text"
-              color="primary"
+              color="secondary"
               size="large"
               onClick={() => navigate('/sandbox')}
-              sx={{ mt: 2, display: 'block', mx: 'auto' }}
+              startIcon={<ScienceIcon />}
+              sx={{ 
+                mt: 3,
+                display: 'flex',
+                mx: 'auto',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
             >
               Acceder al Sandbox
             </Button>
