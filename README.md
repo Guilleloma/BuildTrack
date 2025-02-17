@@ -40,40 +40,51 @@ BuildTrack is a platform designed to manage remodeling projects in a structured 
 - **Frontend:** React with Material UI
 - **Backend:** Node.js with Express
 - **Database:** MongoDB with Mongoose
-- **Authentication:** JWT-based authentication
+- **Authentication:** Firebase Authentication
 - **State Management:** React Hooks and Context
 - **UI Components:** Material-UI v5
 - **API Integration:** RESTful endpoints
 - **Real-time Updates:** Auto-refresh mechanisms
+- **Hosting:** Firebase (Frontend) & Render.com (Backend)
 
 These technologies have been implemented and tested in production.
 
 ---
 
 ## Key Features
-1. **Registration & Authentication**: ✓ Implemented - JWT-based authentication with registration and login functionality.
+1. **Authentication & User Management**: ✓ Implemented
+   - Firebase Authentication integration
+   - Email and password registration/login
+   - Protected routes and user sessions
+   - Sandbox mode for testing without authentication
+   - Clear separation between user and sandbox data
+
 2. **Project Management**: ✓ Implemented
    - Full CRUD operations for projects
    - Real-time progress tracking
    - Automatic calculations of completion percentages
    - Project deletion with cascade effect
+   - User-specific project isolation
 
 3. **Milestone & Task System**: ✓ Implemented
    - Hierarchical structure (projects > milestones > tasks)
    - Progress tracking for both tasks and payments
    - Visual progress bars with distinct colors
    - Automatic status updates
+   - Tax handling with configurable rates
 
 4. **Payment Processing**: ✓ Implemented
    - Milestone-based payment tracking
    - Payment history with detailed records
-   - Multiple payment methods support
+   - Multiple payment methods support (Cash, Bank Transfer, Bizum, PayPal)
    - Amount validation and status updates
    - Real-time financial progress tracking
+   - Tax calculations and tracking
 
 5. **Progress Visualization**: ✓ Implemented
    - Dual progress tracking (tasks vs payments)
    - Color-coded progress bars
+   - Warning indicators for payment/task mismatches
    - Real-time updates
    - Responsive design for all screen sizes
 
@@ -82,6 +93,7 @@ These technologies have been implemented and tested in production.
    - Mongoose models with relationships
    - Efficient data querying and updates
    - Cascade deletions for related entities
+   - User data isolation
 
 7. **User Interface**: ✓ Implemented
    - Material-UI components
@@ -89,14 +101,22 @@ These technologies have been implemented and tested in production.
    - Intuitive navigation
    - Form validations and keyboard navigation
    - Real-time updates without page refresh
+   - Context-aware action buttons
+   - Sandbox mode visual indicators
 
-8. **Dashboard & Reports**: 🚧 In Progress
-   - Basic statistics implemented
+8. **Reports & Exports**: ✓ Implemented
+   - PDF report generation
+   - Excel report generation
+   - Detailed project statistics
    - Payment tracking and history
    - Project overview with progress indicators
-   - Advanced reporting features planned
 
-9. **Budget Deviation Tracking**: 🚧 Planned
+9. **Sandbox Environment**: ✓ Implemented
+   - Public testing environment
+   - No authentication required
+   - Full feature access
+   - Isolated data from authenticated users
+   - Clear visual indicators for sandbox mode
 
 ---
 
@@ -136,11 +156,12 @@ These technologies have been implemented and tested in production.
 
 3. **Set up environment variables**  
    Create a `.env` file in the backend directory with:
-   - Database connection details
+   - MongoDB connection URI
    - JWT secret key
    - Server port (default: 3000)
    
    Create a `.env` file in the frontend directory with:
+   - Firebase configuration
    - Backend API URL
    - Frontend port (default: 3001)
 
@@ -216,6 +237,7 @@ The project follows a structured branching strategy to ensure code quality and s
 - **Development**: For active development and initial testing
 - **UAT**: https://buildtrack-uat.web.app
 - **Production**: https://buildtrack-c3e8a.web.app
+- **Backend API**: https://buildtrack.onrender.com
 
 ### Best Practices
 - Never commit directly to `trunk`
