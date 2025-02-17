@@ -11,7 +11,7 @@ import {
   Paper,
   CircularProgress
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import LoginIcon from '@mui/icons-material/Login';
 
 const Login = () => {
@@ -20,6 +20,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -34,7 +35,11 @@ const Login = () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log("Usuario conectado:", userCredential.user);
-      navigate('/app');
+      console.log("Redirigiendo a /app/");
+      
+      // Redirigir al usuario a la página que intentaba acceder o a /app/ por defecto
+      const from = location.state?.from?.pathname || '/app/';
+      navigate(from, { replace: true });
     } catch (error) {
       console.error("Error al iniciar sesión:", error);
       switch (error.code) {
