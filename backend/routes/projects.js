@@ -316,15 +316,36 @@ router.get('/:id', async (req, res) => {
                 }, 0);
 
             const totalPaid = singlePayments + distributedPayments;
+            console.log('Payment calculations for milestone:', {
+                id: milestone._id,
+                name: milestone.name,
+                singlePayments,
+                distributedPayments,
+                totalPaid
+            });
             
             // Calculate amounts with tax
             const baseAmount = parseFloat(milestone.budget);
             const taxAmount = milestone.hasTax ? baseAmount * (milestone.taxRate || 21) / 100 : 0;
             const totalWithTax = baseAmount + taxAmount;
 
-            // Update milestone with correct paid amount
-            milestone.paidAmount = parseFloat(totalPaid.toFixed(2));
-            await milestone.save();
+            // Use the stored paidAmount which is already the base amount
+            const basePaid = milestone.paidAmount || 0;
+            const taxPaid = milestone.hasTax 
+                ? basePaid * (milestone.taxRate || 21) / 100 
+                : 0;
+            const totalPaidWithTax = basePaid + taxPaid;
+
+            console.log('Amount calculations for milestone:', {
+                id: milestone._id,
+                name: milestone.name,
+                baseAmount,
+                taxAmount,
+                totalWithTax,
+                basePaid,
+                taxPaid,
+                totalPaidWithTax
+            });
 
             const milestoneObj = milestone.toObject();
             milestoneObj.tasks = tasks;
@@ -335,8 +356,9 @@ router.get('/:id', async (req, res) => {
             milestoneObj.totalWithTax = totalWithTax;
             milestoneObj.taxAmount = taxAmount;
             milestoneObj.baseAmount = baseAmount;
-            milestoneObj.pendingAmount = totalWithTax - totalPaid;
-            milestoneObj.paymentPercentage = (totalPaid / totalWithTax) * 100;
+            milestoneObj.paidAmount = basePaid;
+            milestoneObj.pendingAmount = totalWithTax - totalPaidWithTax;
+            milestoneObj.paymentPercentage = (totalPaidWithTax / totalWithTax) * 100;
 
             return milestoneObj;
         }));
@@ -346,8 +368,16 @@ router.get('/:id', async (req, res) => {
             totalBase: totals.totalBase + m.baseAmount,
             totalTax: totals.totalTax + m.taxAmount,
             totalWithTax: totals.totalWithTax + m.totalWithTax,
-            totalPaid: totals.totalPaid + m.paidAmount
-        }), { totalBase: 0, totalTax: 0, totalWithTax: 0, totalPaid: 0 });
+            totalBasePaid: totals.totalBasePaid + m.paidAmount,
+            totalTaxPaid: totals.totalTaxPaid + (m.hasTax ? m.paidAmount * (m.taxRate || 21) / 100 : 0)
+        }), { totalBase: 0, totalTax: 0, totalWithTax: 0, totalBasePaid: 0, totalTaxPaid: 0 });
+
+        const totalPaid = projectTotals.totalBasePaid + projectTotals.totalTaxPaid;
+
+        console.log('Project totals:', {
+            ...projectTotals,
+            totalPaid
+        });
 
         const projectData = project.toObject();
         projectData.milestones = milestonesWithTasksAndPayments;
@@ -355,12 +385,14 @@ router.get('/:id', async (req, res) => {
             base: parseFloat(projectTotals.totalBase.toFixed(2)),
             tax: parseFloat(projectTotals.totalTax.toFixed(2)),
             totalWithTax: parseFloat(projectTotals.totalWithTax.toFixed(2)),
-            paid: parseFloat(projectTotals.totalPaid.toFixed(2)),
-            paymentPercentage: (projectTotals.totalPaid / projectTotals.totalWithTax) * 100
+            base_paid: parseFloat(projectTotals.totalBasePaid.toFixed(2)),
+            tax_paid: parseFloat(projectTotals.totalTaxPaid.toFixed(2)),
+            paid: parseFloat(totalPaid.toFixed(2)),
+            paymentPercentage: (totalPaid / projectTotals.totalWithTax) * 100
         };
 
         // Send the response
-        console.log('Sending response');
+        console.log('Sending response with totals:', projectData.totals);
         res.json(projectData);
     } catch (error) {
         console.error('Error in GET /:id:', error);
