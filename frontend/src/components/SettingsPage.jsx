@@ -10,7 +10,7 @@ import {
   CircularProgress,
   Divider,
 } from '@mui/material';
-import { getApiUrl } from '../utils/apiUtils';
+import { getApiUrl } from '../config';
 
 const SettingsPage = () => {
   const [settings, setSettings] = useState(null);
