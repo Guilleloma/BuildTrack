@@ -110,94 +110,115 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
   }, [projectId, milestoneId, refreshTrigger]);
 
   const handleEditClick = async (payment) => {
-    console.log('handleEditClick iniciado con payment:', payment);
-    console.log('Tipo de pago:', payment.type);
-    console.log('Datos del milestone en el pago:', payment.milestone);
+    console.log('=== INICIO handleEditClick en PaymentHistory ===');
+    console.log('Payment completo:', JSON.stringify(payment, null, 2));
+    console.log('Milestone en el payment:', JSON.stringify(payment.milestone, null, 2));
+    console.log('Project en el milestone:', JSON.stringify(payment.milestone?.project, null, 2));
     
     try {
-      if (payment.type === 'DISTRIBUTED') {
-        console.log('Payment is distributed, fetching full payment...');
-        // Obtener el pago completo con todas sus distribuciones
-        const token = localStorage.getItem('token');
-        const paymentResponse = await fetch(getApiUrl(`/payments/${payment._id}`), {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!paymentResponse.ok) {
-          throw new Error('Error al obtener el pago');
+        if (payment.type === 'DISTRIBUTED') {
+            console.log('Payment is distributed, fetching full payment...');
+            // Obtener el pago completo con todas sus distribuciones
+            const token = localStorage.getItem('token');
+            const paymentResponse = await fetch(getApiUrl(`/payments/${payment._id}`), {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            if (!paymentResponse.ok) {
+              throw new Error('Error al obtener el pago');
+            }
+            const fullPaymentData = await paymentResponse.json();
+            console.log('Full payment received:', JSON.stringify(fullPaymentData, null, 2));
+
+            const fullPayment = fullPaymentData.payment;
+            const project = fullPaymentData.project;
+
+            if (!fullPayment?.distributions?.[0]?.milestone) {
+              throw new Error('No se encontró información del milestone en el pago');
+            }
+
+            // Preparar el pago con el formato correcto para el PaymentForm
+            const paymentForForm = {
+              _id: fullPayment._id,
+              amount: fullPayment.amount.toString(),
+              description: fullPayment.description || '',
+              paymentMethod: fullPayment.paymentMethod,
+              type: 'DISTRIBUTED',
+              project,
+              distributions: fullPayment.distributions.map(dist => ({
+                milestoneId: dist.milestone._id,
+                amount: dist.amount.toString(),
+                name: dist.milestone.name
+              }))
+            };
+            console.log('Payment prepared for form:', JSON.stringify(paymentForForm, null, 2));
+
+            setEditingPayment(paymentForForm);
+        } else {
+            console.log('=== Procesando pago normal ===');
+            if (!payment.milestone) {
+                console.error('Error: No hay milestone en el pago');
+                throw new Error('No se encontró información del milestone en el pago');
+            }
+            if (!payment.milestone.project || !payment.milestone.project._id) {
+                console.error('Error: No hay project._id en el milestone');
+                throw new Error('No se encontró información del proyecto en el milestone');
+            }
+            if (!payment.milestone._id) {
+                console.error('Error: No hay _id en el milestone');
+                throw new Error('No se encontró ID del milestone');
+            }
+
+            console.log('Project ID:', payment.milestone.project._id);
+            console.log('Milestone ID:', payment.milestone._id);
+            
+            // Obtener la información completa del milestone
+            const token = localStorage.getItem('token');
+            console.log('Token obtenido:', token ? 'Sí' : 'No');
+            
+            const milestoneUrl = getApiUrl(`/projects/${payment.milestone.project._id}/milestones/${payment.milestone._id}`);
+            console.log('URL del milestone:', milestoneUrl);
+            
+            const milestoneResponse = await fetch(milestoneUrl, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            console.log('Respuesta del milestone:', {
+                ok: milestoneResponse.ok,
+                status: milestoneResponse.status
+            });
+            
+            if (!milestoneResponse.ok) {
+                const errorText = await milestoneResponse.text();
+                console.error('Error en la respuesta del milestone:', errorText);
+                throw new Error('Error al obtener la información del milestone');
+            }
+            
+            const milestoneData = await milestoneResponse.json();
+            console.log('Datos del milestone obtenidos:', JSON.stringify(milestoneData, null, 2));
+            
+            const paymentForForm = {
+                _id: payment._id,
+                amount: payment.amount.toString(),
+                description: payment.description || '',
+                paymentMethod: payment.paymentMethod,
+                type: 'SINGLE',
+                milestone: milestoneData
+            };
+            
+            console.log('Datos preparados para el formulario:', JSON.stringify(paymentForForm, null, 2));
+            setEditingPayment(paymentForForm);
+            console.log('EditingPayment establecido');
         }
-        const fullPaymentData = await paymentResponse.json();
-        console.log('Full payment received:', JSON.stringify(fullPaymentData, null, 2));
-
-        const fullPayment = fullPaymentData.payment;
-        const project = fullPaymentData.project;
-
-        if (!fullPayment?.distributions?.[0]?.milestone) {
-          throw new Error('No se encontró información del milestone en el pago');
-        }
-
-        // Preparar el pago con el formato correcto para el PaymentForm
-        const paymentForForm = {
-          _id: fullPayment._id,
-          amount: fullPayment.amount.toString(),
-          description: fullPayment.description || '',
-          paymentMethod: fullPayment.paymentMethod,
-          type: 'DISTRIBUTED',
-          project,
-          distributions: fullPayment.distributions.map(dist => ({
-            milestoneId: dist.milestone._id,
-            amount: dist.amount.toString(),
-            name: dist.milestone.name
-          }))
-        };
-        console.log('Payment prepared for form:', paymentForForm);
-
-        setEditingPayment(paymentForForm);
-        return;
-      }
-      
-      console.log('Editando pago normal (no distribuido)');
-      if (!payment.milestone || !payment.milestone._id) {
-        console.error('Milestone faltante o inválido:', payment.milestone);
-        throw new Error('No se encontró información del milestone en el pago');
-      }
-      
-      console.log('Obteniendo información del milestone:', payment.milestone._id);
-      console.log('Project ID:', projectId);
-      
-      // Obtener la información completa del milestone
-      const token = localStorage.getItem('token');
-      const milestoneResponse = await fetch(getApiUrl(`/projects/${projectId}/milestones/${payment.milestone._id}`), {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!milestoneResponse.ok) {
-        console.error('Error en la respuesta del milestone:', await milestoneResponse.text());
-        throw new Error('Error al obtener la información del milestone');
-      }
-      
-      const milestoneData = await milestoneResponse.json();
-      console.log('Datos del milestone obtenidos:', milestoneData);
-      
-      const editingPaymentData = {
-        _id: payment._id,
-        amount: payment.amount.toString(),
-        description: payment.description || '',
-        paymentMethod: payment.paymentMethod,
-        type: 'SINGLE',
-        milestone: milestoneData
-      };
-      
-      console.log('Datos preparados para el formulario:', editingPaymentData);
-      setEditingPayment(editingPaymentData);
     } catch (err) {
-      console.error('Error detallado en handleEditClick:', err);
-      console.error('Stack trace:', err.stack);
-      showMessage(err.message, 'error');
+        console.error('Error detallado en handleEditClick:', err);
+        console.error('Stack trace:', err.stack);
+        showMessage(err.message, 'error');
     }
+    console.log('=== FIN handleEditClick ===');
   };
 
   const handleEditClose = () => {

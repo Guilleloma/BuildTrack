@@ -37,12 +37,17 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
 
   useEffect(() => {
     if (open) {
+      console.log('=== INICIO useEffect PaymentForm ===');
+      console.log('Payment recibido:', JSON.stringify(payment, null, 2));
+      console.log('Milestone recibido:', JSON.stringify(milestone, null, 2));
+      console.log('Project recibido:', JSON.stringify(project, null, 2));
+
       if (payment) {
-        console.log('Setting form data from payment:', payment);
+        console.log('Setting form data from payment:', JSON.stringify(payment, null, 2));
         // Si estamos editando un pago existente
         const distributions = payment.type === 'DISTRIBUTED' ? 
           payment.distributions.map(dist => {
-            console.log('Processing distribution:', dist);
+            console.log('Processing distribution:', JSON.stringify(dist, null, 2));
             return {
               milestoneId: dist.milestoneId || dist.milestone?._id,
               amount: (dist.amount || '0').toString(),
@@ -50,7 +55,7 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
             };
           }) : [];
 
-        console.log('Processed distributions:', distributions);
+        console.log('Processed distributions:', JSON.stringify(distributions, null, 2));
 
         setFormData({
           amount: payment.amount.toString(),
@@ -61,6 +66,7 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
         });
       } else if (milestone?.editingPayment) {
         // Compatibilidad con el modo anterior de edición
+        console.log('Setting form data from milestone.editingPayment:', JSON.stringify(milestone.editingPayment, null, 2));
         setFormData({
           amount: milestone.editingPayment.amount.toString(),
           description: milestone.editingPayment.description || '',
@@ -70,6 +76,7 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
         });
       } else {
         // Si es un nuevo pago
+        console.log('Setting default form data');
         setFormData({
           amount: '',
           description: '',
@@ -80,6 +87,7 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
       }
       
       if (milestone) {
+        console.log('Calculating milestone amounts for:', JSON.stringify(milestone, null, 2));
         // Calculate milestone amounts
         const baseAmount = parseFloat(milestone.budget || 0);
         const taxAmount = milestone.hasTax 
@@ -95,7 +103,7 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
         const taskCompletionPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
         const currentPaymentPercentage = totalWithTax > 0 ? (paidAmount / totalWithTax) * 100 : 0;
 
-        setMilestoneStatus({
+        const milestoneStatusData = {
           baseAmount,
           taxAmount,
           totalWithTax,
@@ -105,11 +113,14 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
           currentPaymentPercentage,
           totalTasks,
           completedTasks
-        });
+        };
+        console.log('Setting milestone status:', JSON.stringify(milestoneStatusData, null, 2));
+        setMilestoneStatus(milestoneStatusData);
       }
       
       setError(null);
       setWarning(null);
+      console.log('=== FIN useEffect PaymentForm ===');
     }
   }, [open, milestone, payment]);
 
@@ -219,18 +230,22 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('handleSubmit iniciado');
-    console.log('Milestone:', milestone);
+    console.log('=== INICIO handleSubmit PaymentForm ===');
+    console.log('FormData actual:', JSON.stringify(formData, null, 2));
+    console.log('Milestone actual:', JSON.stringify(milestone, null, 2));
+    console.log('MilestoneStatus actual:', JSON.stringify(milestoneStatus, null, 2));
     setError(null);
 
     const validationError = validateAmount(formData.amount, formData.distributions);
     if (validationError) {
+      console.log('Error de validación:', validationError);
       setError(validationError);
       return;
     }
 
     // Validación adicional para pagos distribuidos
     if (formData.isDistributed && (!formData.distributions || formData.distributions.length === 0)) {
+      console.log('Error: No hay distribuciones para pago distribuido');
       setError('Debe seleccionar al menos un hito para distribuir el pago');
       return;
     }
@@ -255,14 +270,17 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
       };
 
       if (!formData.isDistributed && !milestone?._id) {
+        console.error('Error: No se encontró el ID del milestone');
+        console.log('Milestone completo:', JSON.stringify(milestone, null, 2));
         throw new Error('No se pudo obtener el ID del milestone');
       }
 
-      console.log('Datos a enviar:', dataToSubmit);
+      console.log('Datos a enviar:', JSON.stringify(dataToSubmit, null, 2));
       onSubmit(dataToSubmit);
       onClose();
     } catch (err) {
       console.error('Error en handleSubmit:', err);
+      console.error('Stack trace:', err.stack);
       let errorMessage = err.message;
       if (err.message.includes('exceed')) {
         const match = err.message.match(/\d+(\.\d{1,2})?/);
@@ -273,6 +291,7 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
       }
       setError(errorMessage);
     }
+    console.log('=== FIN handleSubmit PaymentForm ===');
   };
 
   return (
