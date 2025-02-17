@@ -475,13 +475,10 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
                 </TableCell>
                 <TableCell align="center">
                   <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-                    <Tooltip title={payment.type === 'DISTRIBUTED' ? 'Editar pago distribuido en Pagos' : 'Editar pago'}>
+                    <Tooltip title={payment.type === 'DISTRIBUTED' ? 'Editar pago distribuido' : 'Editar pago'}>
                       <IconButton
                         size="small"
-                        onClick={() => payment.type === 'DISTRIBUTED' ? 
-                          navigate(`/payments?id=${payment._id}`) : 
-                          handleEditClick(payment)
-                        }
+                        onClick={() => handleEditClick(payment)}
                       >
                         <EditIcon fontSize="small" />
                       </IconButton>
