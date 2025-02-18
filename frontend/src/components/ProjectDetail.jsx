@@ -648,6 +648,20 @@ const ProjectDetail = () => {
                     </IconButton>
                     <IconButton
                       size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedMilestone(milestoneData);
+                        setPaymentFormOpen(true);
+                      }}
+                      disabled={milestone.paymentPercentage >= 100}
+                      sx={{
+                        color: milestone.paymentPercentage >= 100 ? 'success.main' : 'inherit'
+                      }}
+                    >
+                      <PaymentIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      size="small"
                       color="error"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -660,20 +674,6 @@ const ProjectDetail = () => {
                       }}
                     >
                       <DeleteIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedMilestone(milestoneData);
-                        setPaymentFormOpen(true);
-                      }}
-                      disabled={milestone.paymentPercentage >= 100}
-                      sx={{
-                        color: milestone.paymentPercentage >= 100 ? 'success.main' : 'inherit'
-                      }}
-                    >
-                      <PaymentIcon fontSize="small" />
                     </IconButton>
                   </Box>
                 </Box>
@@ -707,8 +707,8 @@ const ProjectDetail = () => {
 
                 <Box sx={{ mb: 2 }}>
                   <Button
-                    variant="outlined"
-                    size="small"
+                    variant="contained"
+                    size="medium"
                     startIcon={<AddIcon />}
                     onClick={() => {
                       setSelectedMilestone(milestoneData);
@@ -778,9 +778,21 @@ const ProjectDetail = () => {
                 {milestoneData.tasks?.length > 0 && <Divider sx={{ my: 2 }} />}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                   <PaymentIcon sx={{ color: 'text.secondary' }} />
-                  <Typography variant="h6">
+                  <Typography variant="h6" sx={{ flexGrow: 1 }}>
                     Pagos Realizados
                   </Typography>
+                  <Button
+                    variant="contained"
+                    size="medium"
+                    startIcon={<AddIcon />}
+                    onClick={() => {
+                      setSelectedMilestone(milestoneData);
+                      setPaymentFormOpen(true);
+                    }}
+                    disabled={milestone.paymentPercentage >= 100}
+                  >
+                    Añadir Pago
+                  </Button>
                 </Box>
                 <PaymentHistory
                   projectId={id}
