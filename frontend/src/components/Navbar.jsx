@@ -61,14 +61,16 @@ const Navbar = ({ drawerWidth }) => {
               borderRadius: '20px',
               textTransform: 'none',
               px: 3,
-              backgroundColor: '#9c27b0',
-              color: '#fff',
+              color: '#9c27b0',
+              backgroundColor: '#fff',
+              border: '1px solid #9c27b0',
               '&:hover': {
-                backgroundColor: '#7b1fa2',
+                backgroundColor: '#f3e5f5',
+                border: '1px solid #7b1fa2',
+                color: '#7b1fa2',
               },
             }}
             startIcon={<HomeIcon />}
-            variant="contained"
             onClick={() => navigate('/')}
           >
             Back to Home

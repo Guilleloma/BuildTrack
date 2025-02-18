@@ -41,12 +41,6 @@ router.get('/', async (req, res) => {
             const milestoneIds = milestones.map(m => m._id);
             
             const tasks = await Task.find({ milestone: { $in: milestoneIds } });
-            const payments = await Payment.find({
-                $or: [
-                    { milestone: { $in: milestoneIds } },
-                    { 'distributions.milestone': { $in: milestoneIds } }
-                ]
-            }).populate('milestone distributions.milestone');
 
             // Calculate total amounts
             const totalBase = milestones.reduce((sum, m) => sum + (m.budget || 0), 0);
@@ -58,18 +52,14 @@ router.get('/', async (req, res) => {
                 return sum;
             }, 0);
 
-            // Calculate paid amounts
-            const totalBasePaid = milestones.reduce((sum, m) => sum + (m.paidAmount || 0), 0);
-            const totalTaxPaid = milestones.reduce((sum, m) => {
-                if (m.hasTax) {
-                    const taxRate = m.taxRate || 21;
-                    return sum + ((m.paidAmount || 0) * (taxRate / 100));
-                }
-                return sum;
+            // Calculate paid amounts including tax
+            const totalPaid = milestones.reduce((sum, m) => {
+                const basePaid = m.paidAmount || 0;
+                const taxPaid = m.hasTax ? basePaid * ((m.taxRate || 21) / 100) : 0;
+                return sum + basePaid + taxPaid;
             }, 0);
 
             const totalWithTax = totalBase + totalTax;
-            const totalPaid = totalBasePaid + totalTaxPaid;
 
             // Calculate task completion
             const totalTasks = tasks.length;

@@ -178,12 +178,18 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
     if (!milestoneStatus) return null;
 
     const paymentAmount = parseFloat(amount);
-    if (paymentAmount > milestoneStatus.remainingAmount) {
+    const originalAmount = payment ? parseFloat(payment.amount) : 0;
+    const netChangeInAmount = paymentAmount - originalAmount;
+
+    // Si estamos editando un pago, solo consideramos la diferencia con respecto al monto original
+    if (payment && netChangeInAmount + milestoneStatus.paidAmount > milestoneStatus.totalWithTax) {
+      return `Payment exceeds remaining amount. Maximum allowed: ${formatCurrency(milestoneStatus.totalWithTax - (milestoneStatus.paidAmount - originalAmount))}`;
+    } else if (!payment && paymentAmount > milestoneStatus.remainingAmount) {
       return `Payment exceeds remaining amount. Maximum allowed: ${formatCurrency(milestoneStatus.remainingAmount)}`;
     }
 
     if (milestoneStatus.totalTasks > 0 && milestoneStatus.taskCompletionPercentage < 100) {
-      const newPaymentPercentage = ((milestoneStatus.paidAmount + paymentAmount) / milestoneStatus.totalWithTax) * 100;
+      const newPaymentPercentage = ((milestoneStatus.paidAmount + netChangeInAmount) / milestoneStatus.totalWithTax) * 100;
       if (newPaymentPercentage > milestoneStatus.taskCompletionPercentage) {
         setWarning({
           message: `Warning: You are going to pay ${Math.round(newPaymentPercentage)}% of the total when only ${Math.round(milestoneStatus.taskCompletionPercentage)}% of tasks are completed`,
