@@ -351,10 +351,11 @@ router.post('/', async (req, res) => {
             console.log('Current amounts:', {
                 basePaidAmount,
                 currentPaidWithTax,
-                remainingWithTax: totalWithTax - currentPaidWithTax
+                remainingWithTax: totalWithTax - currentPaidWithTax,
+                attemptingToAddWithTax: paymentAmount
             });
 
-            if (currentPaidWithTax + paymentAmount > totalWithTax) {
+            if (currentPaidWithTax + paymentAmount > totalWithTax + 0.01) { // Añadimos un pequeño margen para errores de redondeo
                 console.log('Payment validation failed:', {
                     currentPaidWithTax,
                     attemptingToAdd: paymentAmount,
