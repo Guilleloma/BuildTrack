@@ -45,6 +45,7 @@ import ProgressDisplay from './ProgressDisplay';
 import { formatCurrency } from '../utils/formatters';
 import { getApiUrl } from '../config';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
+import LoadingMessage from './LoadingMessage';
 
 const ProjectDetail = () => {
   const { id } = useParams();
@@ -384,11 +385,7 @@ const ProjectDetail = () => {
   };
 
   if (loading) {
-    return (
-      <Container style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
-        <CircularProgress />
-      </Container>
-    );
+    return <LoadingMessage message="Cargando detalles del proyecto..." />;
   }
 
   if (error) {

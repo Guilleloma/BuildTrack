@@ -34,6 +34,7 @@ import { formatCurrency } from '../utils/formatters';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getApiUrl } from '../config';
 import PaymentForm from './PaymentForm';
+import LoadingMessage from './LoadingMessage';
 
 const PaymentsPage = () => {
   const [payments, setPayments] = useState([]);
@@ -388,13 +389,7 @@ const PaymentsPage = () => {
   };
 
   if (loading) {
-    return (
-      <Container>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-          <CircularProgress />
-        </Box>
-      </Container>
-    );
+    return <LoadingMessage message="Cargando historial de pagos..." />;
   }
 
   if (error) {

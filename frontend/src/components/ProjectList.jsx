@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import LoadingMessage from './LoadingMessage';
 import { 
   Button, 
   Card, 
@@ -143,13 +144,7 @@ const ProjectList = () => {
   );
 
   if (loading) {
-    return (
-      <Container maxWidth="lg">
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}>
-          <CircularProgress />
-        </div>
-      </Container>
-    );
+    return <LoadingMessage message="Cargando proyectos..." />;
   }
 
   if (error) {
