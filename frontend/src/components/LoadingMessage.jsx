@@ -26,14 +26,13 @@ const LoadingMessage = ({ message = "¡Despertando al servidor! 🌅" }) => {
           {message}
         </Typography>
         <Typography variant="body1" align="center" color="primary">
-          ¡Hey! Este es un prototipo en desarrollo 🚀
+          ¡Hey! Es un prototipo en desarrollo en servidores freemium 🚀
         </Typography>
         <Typography variant="body2" color="text.secondary" align="center">
-          La primera vez el servidor necesita su café matutino ☕️ <br/>
-          (puede tardar hasta 50 segundos en despertar)
+          A veces se va a echar la siesta si no hay nadie y le cuesta como 50 segundos despertarse 😴
         </Typography>
         <Typography variant="caption" color="text.secondary" align="center" sx={{ fontStyle: 'italic' }}>
-          ¡Gracias por tu paciencia! Estamos trabajando para hacer esto más rápido 💪
+          Gracias por tu paciencia (No estoy trabajando por hacerlo más rápido) 🙈
         </Typography>
       </Paper>
     </Container>
