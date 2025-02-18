@@ -36,17 +36,17 @@ const Sidebar = ({ drawerWidth }) => {
 
   const menuItems = [
     {
-      text: 'Proyectos',
+      text: 'Projects',
       icon: <FolderIcon />,
       path: isSandbox ? '/sandbox' : '/app'
     },
     {
-      text: 'Pagos',
+      text: 'Payments',
       icon: <AccountBalanceIcon />,
       path: isSandbox ? '/sandbox/payments' : '/app/payments'
     },
     {
-      text: 'Configuración',
+      text: 'Settings',
       icon: <SettingsIcon />,
       path: isSandbox ? '/sandbox/settings' : '/app/settings'
     }
