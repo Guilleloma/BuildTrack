@@ -25,7 +25,7 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) {
-      setError('Por favor, rellena todos los campos');
+      setError('Please fill in all fields');
       return;
     }
 
@@ -44,19 +44,19 @@ const Login = () => {
       console.error("Error al iniciar sesión:", error);
       switch (error.code) {
         case 'auth/invalid-credential':
-          setError('Email o contraseña incorrectos');
+          setError('Incorrect email or password');
           break;
         case 'auth/invalid-email':
-          setError('Email inválido');
+          setError('Invalid email');
           break;
         case 'auth/user-disabled':
-          setError('Esta cuenta ha sido deshabilitada');
+          setError('This account has been disabled');
           break;
         case 'auth/user-not-found':
-          setError('No existe ninguna cuenta con este email');
+          setError('No account exists with this email');
           break;
         default:
-          setError('Error al iniciar sesión');
+          setError('Login error');
       }
     } finally {
       setLoading(false);
@@ -77,7 +77,7 @@ const Login = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
             <LoginIcon sx={{ mr: 1, color: 'primary.main' }} />
             <Typography component="h1" variant="h5">
-              Iniciar Sesión
+              Login
             </Typography>
           </Box>
 
@@ -106,7 +106,7 @@ const Login = () => {
               required
               fullWidth
               name="password"
-              label="Contraseña"
+              label="Password"
               type="password"
               id="password"
               autoComplete="current-password"
@@ -122,7 +122,7 @@ const Login = () => {
               disabled={loading}
               startIcon={loading ? <CircularProgress size={20} /> : <LoginIcon />}
             >
-              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              {loading ? 'Logging in...' : 'Login'}
             </Button>
             <Button
               fullWidth
@@ -130,7 +130,7 @@ const Login = () => {
               onClick={() => navigate('/register')}
               disabled={loading}
             >
-              ¿No tienes cuenta? Regístrate
+              Don't have an account? Register
             </Button>
           </Box>
         </Paper>

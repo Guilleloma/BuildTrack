@@ -32,11 +32,11 @@ const Home = () => {
           </Box>
           
           <Typography component="h1" variant="h4" gutterBottom>
-            Bienvenido a BuildTrack
+            Welcome to BuildTrack
           </Typography>
           
           <Typography variant="body1" sx={{ mb: 4 }}>
-            Gestiona tus proyectos de construcción de manera eficiente
+            Manage your construction projects efficiently
           </Typography>
 
           <Box sx={{ 
@@ -52,7 +52,7 @@ const Home = () => {
               onClick={() => navigate('/register')}
               startIcon={<PersonAddIcon />}
             >
-              Registrarse
+              Register
             </Button>
             
             <Button 
@@ -62,11 +62,11 @@ const Home = () => {
               onClick={() => navigate('/login')}
               startIcon={<LoginIcon />}
             >
-              Iniciar Sesión
+              Login
             </Button>
           </Box>
 
-          <Divider sx={{ my: 2 }}>o</Divider>
+          <Divider sx={{ my: 2 }}>or</Divider>
 
           <Button
             variant="contained"
@@ -84,7 +84,7 @@ const Home = () => {
               },
             }}
           >
-            Acceder al Sandbox
+            Access Sandbox
           </Button>
         </Paper>
       </Box>

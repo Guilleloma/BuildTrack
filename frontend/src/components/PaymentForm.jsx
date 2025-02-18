@@ -298,20 +298,20 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
       <DialogTitle>
         {payment ? 
           payment.type === 'DISTRIBUTED' ? 
-            'Editar Pago Distribuido' : 
-            `Editar Pago - ${milestone?.name}` 
+            'Edit Distributed Payment' : 
+            `Edit Payment - ${milestone?.name}` 
           : milestone ? 
             milestone.editingPayment ? 
-              `Editar Pago - ${milestone.name}` : 
-              `Registrar Pago - ${milestone.name}` 
-            : 'Pago Distribuido'
+              `Edit Payment - ${milestone.name}` : 
+              `Register Payment - ${milestone.name}` 
+            : 'Distributed Payment'
         }
       </DialogTitle>
       <DialogContent>
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
           <TextField
             fullWidth
-            label="Monto Total"
+            label="Total Amount"
             type="number"
             value={formData.amount}
             onChange={(e) => {
@@ -325,7 +325,7 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
 
           <TextField
             fullWidth
-            label="Descripción"
+            label="Description"
             value={formData.description}
             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
             multiline
@@ -334,14 +334,14 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
           />
 
           <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Método de Pago</InputLabel>
+            <InputLabel>Payment Method</InputLabel>
             <Select
               value={formData.paymentMethod}
               onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value }))}
-              label="Método de Pago"
+              label="Payment Method"
             >
-              <MenuItem value="EFECTIVO">Efectivo</MenuItem>
-              <MenuItem value="TRANSFERENCIA_BANCARIA">Transferencia Bancaria</MenuItem>
+              <MenuItem value="EFECTIVO">Cash</MenuItem>
+              <MenuItem value="TRANSFERENCIA_BANCARIA">Bank Transfer</MenuItem>
               <MenuItem value="BIZUM">Bizum</MenuItem>
               <MenuItem value="PAYPAL">PayPal</MenuItem>
             </Select>
@@ -351,27 +351,27 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
             <>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <Typography variant="subtitle1" color="primary">
-                  Distribución del Pago
+                  Payment Distribution
                 </Typography>
                 {formData.distributions.length > 0 && (
                   <Typography variant="body2" color="text.secondary">
-                    (Total distribuido: {formatCurrency(formData.distributions.reduce((sum, dist) => sum + parseFloat(dist.amount || 0), 0))})
+                    (Total distributed: {formatCurrency(formData.distributions.reduce((sum, dist) => sum + parseFloat(dist.amount || 0), 0))})
                   </Typography>
                 )}
               </Box>
 
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Añadir Hito</InputLabel>
+                <InputLabel>Add Milestone</InputLabel>
                 <Select
                   value=""
                   onChange={(e) => handleAddMilestone(e.target.value)}
-                  label="Añadir Hito"
+                  label="Add Milestone"
                 >
                   {availableMilestones
                     .filter(m => !formData.distributions.some(dist => dist.milestoneId === m._id))
                     .map(milestone => (
                       <MenuItem key={milestone._id} value={milestone._id}>
-                        {milestone.name} - Pendiente: {formatCurrency(
+                        {milestone.name} - Pending: {formatCurrency(
                           milestone.hasTax 
                             ? milestone.budget * (1 + (milestone.taxRate || 21) / 100) - (milestone.paidAmount || 0)
                             : milestone.budget - (milestone.paidAmount || 0)
@@ -442,9 +442,9 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
+        <Button onClick={onClose}>Cancel</Button>
         <Button onClick={handleSubmit} variant="contained">
-          {milestone?.editingPayment ? 'Actualizar' : 'Registrar'} Pago
+          {milestone?.editingPayment ? 'Update' : 'Register'} Payment
         </Button>
       </DialogActions>
     </Dialog>

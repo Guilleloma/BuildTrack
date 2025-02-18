@@ -71,7 +71,7 @@ const Navbar = ({ drawerWidth }) => {
             variant="contained"
             onClick={() => navigate('/')}
           >
-            Volver al Inicio
+            Back to Home
           </Button>
         ) : (
           <Button
@@ -86,7 +86,7 @@ const Navbar = ({ drawerWidth }) => {
               px: 3,
             }}
           >
-            Cerrar Sesión
+            Logout
           </Button>
         )}
       </Toolbar>

@@ -74,12 +74,12 @@ const ProjectForm = () => {
     <Container maxWidth="sm">
       <Paper sx={{ p: 4, mt: 4 }}>
         <Typography variant="h5" component="h1" gutterBottom align="center">
-          {isSandbox ? 'Nuevo Proyecto (Sandbox)' : 'Nuevo Proyecto'}
+          {isSandbox ? 'New Project (Sandbox)' : 'New Project'}
         </Typography>
 
         {isSandbox && (
           <Alert severity="info" sx={{ mb: 3 }}>
-            Estás creando un proyecto en modo Sandbox. Será visible y modificable por todos los usuarios.
+            You are creating a project in Sandbox mode. It will be visible and modifiable by all users.
           </Alert>
         )}
 
@@ -93,7 +93,7 @@ const ProjectForm = () => {
           <TextField
             required
             fullWidth
-            label="Nombre del Proyecto"
+            label="Project Name"
             name="name"
             value={formData.name}
             onChange={handleChange}
@@ -103,7 +103,7 @@ const ProjectForm = () => {
 
           <TextField
             fullWidth
-            label="Descripción"
+            label="Description"
             name="description"
             value={formData.description}
             onChange={handleChange}
@@ -121,7 +121,7 @@ const ProjectForm = () => {
               fullWidth
               disabled={loading}
             >
-              {loading ? 'Creando...' : 'Crear Proyecto'}
+              {loading ? 'Creating...' : 'Create Project'}
             </Button>
             <Button
               variant="outlined"
@@ -130,7 +130,7 @@ const ProjectForm = () => {
               onClick={() => navigate(isSandbox ? '/sandbox' : '/app')}
               disabled={loading}
             >
-              Cancelar
+              Cancel
             </Button>
           </Box>
         </Box>

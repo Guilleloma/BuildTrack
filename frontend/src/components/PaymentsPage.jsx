@@ -403,17 +403,17 @@ const PaymentsPage = () => {
   return (
     <Container>
       <Typography variant="h4" gutterBottom>
-        Pagos
+        Payments
       </Typography>
 
       <TextField
         fullWidth
-        label="Buscar pagos..."
+        label="Search payments..."
         variant="outlined"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         sx={{ mb: 4 }}
-        placeholder="Buscar por proyecto, hito o descripción..."
+        placeholder="Search by project, milestone or description..."
       />
 
       <Box sx={{ mb: 4 }}>
@@ -422,7 +422,7 @@ const PaymentsPage = () => {
             <Grid container spacing={3}>
               <Grid item xs={12} md={4}>
                 <Typography variant="subtitle2" color="text.secondary">
-                  Total Pagado
+                  Total Paid
                 </Typography>
                 <Typography variant="h4">
                   {formatCurrency(statistics.totalPayments)}
@@ -430,7 +430,7 @@ const PaymentsPage = () => {
               </Grid>
               <Grid item xs={12} md={4}>
                 <Typography variant="subtitle2" color="text.secondary">
-                  Número de Pagos
+                  Number of Payments
                 </Typography>
                 <Typography variant="h4">
                   {statistics.totalCount}
@@ -438,7 +438,7 @@ const PaymentsPage = () => {
               </Grid>
               <Grid item xs={12} md={4}>
                 <Typography variant="subtitle2" color="text.secondary">
-                  Promedio por Pago
+                  Average per Payment
                 </Typography>
                 <Typography variant="h4">
                   {formatCurrency(statistics.averagePayment)}
@@ -453,13 +453,13 @@ const PaymentsPage = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Fecha</TableCell>
-              <TableCell>Proyecto</TableCell>
-              <TableCell>Hitos</TableCell>
-              <TableCell>Descripción</TableCell>
-              <TableCell align="right">Monto</TableCell>
-              <TableCell>Método</TableCell>
-              <TableCell align="center" width={120}>Acciones</TableCell>
+              <TableCell>Date</TableCell>
+              <TableCell>Project</TableCell>
+              <TableCell>Milestones</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell align="right">Amount</TableCell>
+              <TableCell>Method</TableCell>
+              <TableCell align="center" width={120}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

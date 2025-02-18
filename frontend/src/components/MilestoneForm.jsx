@@ -176,14 +176,14 @@ const MilestoneForm = ({ open, onClose, onSubmit, milestone }) => {
                   onChange={(e) => setFormData({ ...formData, hasTax: e.target.checked })}
                 />
               }
-              label="Apply Tax"
+              label="Apply VAT"
             />
 
             {formData.hasTax && (
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Using default tax rate: {formData.taxRate}%
+                Using default VAT rate: {formData.taxRate}%
                 <br />
-                The tax rate can be configured in Settings
+                The VAT rate can be configured in Settings
               </Typography>
             )}
           </Box>
@@ -191,15 +191,15 @@ const MilestoneForm = ({ open, onClose, onSubmit, milestone }) => {
           {formData.budget && (
             <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
               <Typography variant="subtitle2" color="text.secondary">
-                Base Amount: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(parseFloat(formData.budget) || 0)}
+                Base Amount: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(parseFloat(formData.budget) || 0)}
               </Typography>
               {formData.hasTax && (
                 <Typography variant="subtitle2" color="text.secondary">
-                  Tax Amount ({formData.taxRate}%): {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format((parseFloat(formData.budget) || 0) * (parseFloat(formData.taxRate) || 0) / 100)}
+                  VAT Amount ({formData.taxRate}%): {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format((parseFloat(formData.budget) || 0) * (parseFloat(formData.taxRate) || 0) / 100)}
                 </Typography>
               )}
               <Typography variant="subtitle1" color="primary" sx={{ mt: 1 }}>
-                Total Amount: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(totalWithTax)}
+                Total Amount: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(totalWithTax)}
               </Typography>
             </Box>
           )}

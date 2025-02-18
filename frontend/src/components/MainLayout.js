@@ -1,5 +1,9 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemText, CssBaseline, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemText, CssBaseline, Box, ListItemIcon } from '@mui/material';
+import { Link } from 'react-router-dom';
+import FolderIcon from '@mui/icons-material/Folder';
+import PaymentIcon from '@mui/icons-material/Payment';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 const drawerWidth = 240;
 
@@ -24,11 +28,24 @@ const MainLayout = ({ children }) => {
         <Toolbar />
         <Box sx={{ overflow: 'auto' }}>
           <List>
-            {['Dashboard', 'Projects', 'Payments', 'Settings'].map((text) => (
-              <ListItem button key={text}>
-                <ListItemText primary={text} />
-              </ListItem>
-            ))}
+            <ListItem button component={Link} to={isSandbox ? '/sandbox' : '/app'}>
+              <ListItemIcon>
+                <FolderIcon />
+              </ListItemIcon>
+              <ListItemText primary="Projects" />
+            </ListItem>
+            <ListItem button component={Link} to={`${isSandbox ? '/sandbox' : '/app'}/payments`}>
+              <ListItemIcon>
+                <PaymentIcon />
+              </ListItemIcon>
+              <ListItemText primary="Payments" />
+            </ListItem>
+            <ListItem button component={Link} to={`${isSandbox ? '/sandbox' : '/app'}/settings`}>
+              <ListItemIcon>
+                <SettingsIcon />
+              </ListItemIcon>
+              <ListItemText primary="Settings" />
+            </ListItem>
           </List>
         </Box>
       </Drawer>

@@ -22,15 +22,15 @@ const Register = () => {
 
   const validateForm = () => {
     if (!email || !password || !confirmPassword) {
-      setError('Todos los campos son obligatorios');
+      setError('All fields are required');
       return false;
     }
     if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden');
+      setError('Passwords do not match');
       return false;
     }
     if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
+      setError('Password must be at least 6 characters long');
       return false;
     }
     return true;
@@ -51,13 +51,13 @@ const Register = () => {
       console.error("Error al registrar usuario:", error);
       switch (error.code) {
         case 'auth/email-already-in-use':
-          setError('Este email ya está registrado');
+          setError('This email is already registered');
           break;
         case 'auth/invalid-email':
-          setError('Email inválido');
+          setError('Invalid email');
           break;
         default:
-          setError('Error al registrar usuario');
+          setError('Error registering user');
       }
     } finally {
       setLoading(false);
@@ -76,7 +76,7 @@ const Register = () => {
       >
         <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
           <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
-            Registro
+            Register
           </Typography>
 
           {error && (
@@ -104,7 +104,7 @@ const Register = () => {
               required
               fullWidth
               name="password"
-              label="Contraseña"
+              label="Password"
               type="password"
               id="password"
               value={password}
@@ -116,7 +116,7 @@ const Register = () => {
               required
               fullWidth
               name="confirmPassword"
-              label="Confirmar Contraseña"
+              label="Confirm Password"
               type="password"
               id="confirmPassword"
               value={confirmPassword}
@@ -130,7 +130,7 @@ const Register = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? 'Registrando...' : 'Registrarse'}
+              {loading ? 'Registering...' : 'Register'}
             </Button>
             <Button
               fullWidth
@@ -138,7 +138,7 @@ const Register = () => {
               onClick={() => navigate('/login')}
               disabled={loading}
             >
-              ¿Ya tienes cuenta? Inicia sesión
+              Already have an account? Login
             </Button>
           </Box>
         </Paper>

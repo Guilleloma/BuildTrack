@@ -33,6 +33,7 @@ import LaunchIcon from '@mui/icons-material/Launch';
 import { formatCurrency } from '../utils/formatters';
 import { getApiUrl } from '../config';
 import PaymentForm from './PaymentForm';
+import AddIcon from '@mui/icons-material/Add';
 
 const getPaymentMethodLabel = (method) => {
   const labels = {
@@ -429,15 +430,19 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
           <CircularProgress size={24} />
         </Box>
       )}
+      <Typography variant="h6" gutterBottom>
+        Payments Made
+      </Typography>
+
       <TableContainer component={Paper} variant="outlined">
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Fecha</TableCell>
-              <TableCell align="right">Monto</TableCell>
-              <TableCell>Descripción</TableCell>
-              <TableCell>Método de Pago</TableCell>
-              <TableCell align="center" width={140}>Acciones</TableCell>
+              <TableCell>Date</TableCell>
+              <TableCell align="right">Amount</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell>Payment Method</TableCell>
+              <TableCell align="center" width={140}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

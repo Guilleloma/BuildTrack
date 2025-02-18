@@ -459,8 +459,12 @@ const ProjectDetail = () => {
               </Box>
             </Box>
             <Box sx={{ mt: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Progreso General del Proyecto
+              <Typography variant="h5" gutterBottom>
+                Project Overall Progress
+              </Typography>
+
+              <Typography variant="subtitle1" color="text.secondary">
+                Completed Tasks
               </Typography>
               
               {/* Barra de progreso de tareas */}
@@ -497,12 +501,12 @@ const ProjectDetail = () => {
                 />
               </Box>
 
-              {/* Barra de progreso de IVA */}
+              {/* Barra de progreso de VAT */}
               {projectProgress?.totals?.tax > 0 && (
                 <Box sx={{ mb: 2 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                     <Typography variant="body2" color="text.secondary">
-                      IVA ({projectProgress?.defaultTaxRate || 21}%)
+                      VAT ({projectProgress?.defaultTaxRate || 21}%)
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {formatCurrency(projectProgress?.totals?.tax_paid || 0)}/{formatCurrency(projectProgress?.totals?.tax || 0)} ({Math.round((projectProgress?.totals?.tax_paid / projectProgress?.totals?.tax || 0) * 100)}%)
@@ -516,10 +520,10 @@ const ProjectDetail = () => {
                 </Box>
               )}
 
-              {/* Total con IVA */}
+              {/* Total with VAT */}
               <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                 <Typography variant="subtitle1" color="text.secondary">
-                  Total Pagado: {formatCurrency(projectProgress?.totals?.paid || 0)} / {formatCurrency(projectProgress?.totals?.totalWithTax || 0)} ({Math.round(projectProgress?.totals?.paymentPercentage || 0)}%)
+                  Total Paid: {formatCurrency(projectProgress?.totals?.paid || 0)} / {formatCurrency(projectProgress?.totals?.totalWithTax || 0)} ({Math.round(projectProgress?.totals?.paymentPercentage || 0)}%)
                 </Typography>
               </Box>
             </Box>
@@ -601,7 +605,7 @@ const ProjectDetail = () => {
                       </Tooltip>
                     )}
                     {milestoneData.hasTax && (
-                      <Tooltip title={`IVA ${milestoneData.taxRate || 21}%`}>
+                      <Tooltip title={`VAT ${milestoneData.taxRate || 21}%`}>
                         <PercentIcon sx={{ fontSize: 16, color: 'secondary.main' }} />
                       </Tooltip>
                     )}
@@ -626,8 +630,8 @@ const ProjectDetail = () => {
                     <PaymentIcon sx={{ fontSize: 16 }} />
                     <Tooltip title={
                       milestoneData.hasTax 
-                        ? `Base: ${formatCurrency(baseAmount)}\nIVA (${milestoneData.taxRate || 21}%): ${formatCurrency(taxAmount)}\nTotal: ${formatCurrency(totalWithTax)}`
-                        : "Sin IVA"
+                        ? `Base: ${formatCurrency(baseAmount)}\nVAT (${milestoneData.taxRate || 21}%): ${formatCurrency(taxAmount)}\nTotal: ${formatCurrency(totalWithTax)}`
+                        : "No VAT"
                     }>
                       <Typography variant="body2">
                         {formatCurrency(milestoneData.paidAmount * (milestoneData.hasTax ? (1 + (milestoneData.taxRate || 21) / 100) : 1))}/{formatCurrency(totalWithTax)} ({Math.round(milestone.paymentPercentage)}%)

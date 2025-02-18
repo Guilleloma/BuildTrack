@@ -168,7 +168,7 @@ const ProjectList = () => {
     <Container maxWidth="lg">
       <Paper style={{ padding: '20px', marginTop: '20px' }}>
         <Typography variant="h4" gutterBottom align="center" style={{ marginBottom: '30px' }}>
-          {isSandbox ? 'Proyectos (Sandbox)' : 'Mis Proyectos'}
+          {isSandbox ? 'Projects (Sandbox)' : 'My Projects'}
         </Typography>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
@@ -186,18 +186,18 @@ const ProjectList = () => {
               navigate(newProjectPath);
             }}
           >
-            Crear Proyecto
+            Create Project
           </Button>
         </Box>
 
         {isSandbox && (
           <Alert severity="info" sx={{ mb: 3 }}>
-            Estás en modo Sandbox. Los proyectos creados aquí son públicos y pueden ser modificados por cualquier usuario.
+            You are in Sandbox mode. Projects created here are public and can be modified by any user.
           </Alert>
         )}
         
         <TextField
-          label="Buscar proyectos"
+          label="Search projects"
           variant="outlined"
           fullWidth
           margin="normal"
@@ -208,7 +208,7 @@ const ProjectList = () => {
         {filteredProjects.length === 0 ? (
           <div style={{ textAlign: 'center', marginTop: '40px' }}>
             <Typography variant="subtitle1" gutterBottom>
-              No se encontraron proyectos.
+              No projects found.
             </Typography>
           </div>
         ) : (
@@ -290,12 +290,12 @@ const ProjectList = () => {
                       
                       <Box sx={{ mt: 2 }}>
                         <Typography variant="subtitle2" color="primary" gutterBottom sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span>Presupuesto:</span>
+                          <span>Budget:</span>
                           <span>{formatCurrency(project.progress?.paidAmount || 0)} / {formatCurrency(project.progress?.totalCost || 0)}</span>
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                           <Typography variant="body2" sx={{ minWidth: 140 }}>
-                            Pagado: {Math.round(project.progress?.paymentPercentage || 0)}%
+                            Paid: {Math.round(project.progress?.paymentPercentage || 0)}%
                           </Typography>
                           <LinearProgress
                             variant="determinate"

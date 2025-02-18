@@ -687,10 +687,6 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 
 **Estado: COMPLETADO**
 
-## Sprint 19: Hacer una applicacion para produccion que pueda ser usada por los usuarios (MVP)
-- La aplicacion se debe poder instalar en un servidor de produccion
-- La aplicacion debe ser accesible desde cualquier navegador
-
 **Plan de Refactorización Móvil:**
 1. **Fase 1: Configuración y Layout Base**
    - Implementar responsive layout con `useMediaQuery` y `useTheme`
