@@ -334,43 +334,36 @@ router.post('/', async (req, res) => {
                 currentPaidAmount: milestone.paidAmount
             });
 
+            // Calcular el total con impuestos
             const totalWithTax = milestone.hasTax 
                 ? milestone.budget * (1 + (milestone.taxRate || 21) / 100)
                 : milestone.budget;
 
-            // Calculate base amount of this payment
-            const paymentBase = milestone.hasTax 
-                ? parseFloat((paymentAmount / (1 + (milestone.taxRate || 21) / 100)).toFixed(2))
-                : paymentAmount;
-
-            console.log('3. Payment Calculations:', {
-                totalWithTax,
-                paymentAmount,
-                paymentBase,
-                taxRate: milestone.hasTax ? (milestone.taxRate || 21) : 0
-            });
-
-            // Calculate current paid amount with tax
+            // Calcular el monto base pagado y con impuestos
             const basePaidAmount = milestone.paidAmount || 0;
             const currentPaidWithTax = milestone.hasTax
                 ? basePaidAmount * (1 + (milestone.taxRate || 21) / 100)
                 : basePaidAmount;
 
-            console.log('4. Current Amounts:', {
+            // El monto que intentamos pagar ya incluye impuestos
+            const attemptingToAddWithTax = paymentAmount;
+
+            console.log('3. Payment Calculations:', {
+                totalBase: milestone.budget,
+                totalWithTax,
                 basePaidAmount,
                 currentPaidWithTax,
-                remainingWithTax: totalWithTax - currentPaidWithTax,
-                attemptingToAddWithTax: paymentAmount,
-                wouldBeTotal: currentPaidWithTax + paymentAmount
+                attemptingToAddWithTax,
+                remainingWithTax: totalWithTax - currentPaidWithTax
             });
 
-            if (currentPaidWithTax + paymentAmount > totalWithTax + 0.01) {
-                console.log('5. Payment Validation Failed:', {
+            if (currentPaidWithTax + attemptingToAddWithTax > totalWithTax + 0.01) {
+                console.log('4. Payment Validation Failed:', {
                     currentPaidWithTax,
-                    attemptingToAdd: paymentAmount,
-                    wouldBe: currentPaidWithTax + paymentAmount,
+                    attemptingToAdd: attemptingToAddWithTax,
+                    wouldBe: currentPaidWithTax + attemptingToAddWithTax,
                     maxAllowed: totalWithTax,
-                    difference: (currentPaidWithTax + paymentAmount) - totalWithTax
+                    difference: (currentPaidWithTax + attemptingToAddWithTax) - totalWithTax
                 });
 
                 return res.status(400).json({ 
@@ -381,8 +374,7 @@ router.post('/', async (req, res) => {
                             withTax: currentPaidWithTax
                         },
                         attempting: {
-                            amount: paymentAmount,
-                            base: paymentBase
+                            amount: attemptingToAddWithTax
                         },
                         milestone: {
                             totalBase: milestone.budget,
@@ -393,10 +385,17 @@ router.post('/', async (req, res) => {
                 });
             }
 
-            console.log('6. Payment Validation Passed:', {
-                currentTotal: currentPaidWithTax + paymentAmount,
-                maxAllowed: totalWithTax,
-                remaining: totalWithTax - (currentPaidWithTax + paymentAmount)
+            // Si la validación pasa, calculamos el monto base del pago
+            const paymentBase = milestone.hasTax 
+                ? parseFloat((paymentAmount / (1 + (milestone.taxRate || 21) / 100)).toFixed(2))
+                : paymentAmount;
+
+            console.log('5. Final Payment Amounts:', {
+                paymentAmount,
+                paymentBase,
+                currentPaidWithTax,
+                newTotalWithTax: currentPaidWithTax + paymentAmount,
+                maxAllowed: totalWithTax
             });
 
             const payment = new Payment({
