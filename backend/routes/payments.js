@@ -209,18 +209,23 @@ router.post('/', async (req, res) => {
                     ? milestone.budget * (1 + (milestone.taxRate || 21) / 100)
                     : milestone.budget;
 
-                // Calculate how this payment should be split between base and tax
+                // Calculate base amount of this payment
                 const paymentBase = milestone.hasTax 
                     ? parseFloat((dist.amount / (1 + (milestone.taxRate || 21) / 100)).toFixed(2))
                     : parseFloat(dist.amount);
-                const paymentTax = milestone.hasTax 
-                    ? parseFloat((dist.amount - paymentBase).toFixed(2))
-                    : 0;
 
-                // Calculate total paid amount including tax
+                // Calculate current paid amount with tax
+                const basePaidAmount = milestone.paidAmount || 0;
                 const currentPaidWithTax = milestone.hasTax
-                    ? (milestone.paidAmount || 0) * (1 + (milestone.taxRate || 21) / 100)
-                    : (milestone.paidAmount || 0);
+                    ? basePaidAmount * (1 + (milestone.taxRate || 21) / 100)
+                    : basePaidAmount;
+
+                console.log('Current amounts for milestone:', milestone.name, {
+                    basePaidAmount,
+                    currentPaidWithTax,
+                    remainingWithTax: totalWithTax - currentPaidWithTax,
+                    attemptingToAdd: parseFloat(dist.amount)
+                });
 
                 if (currentPaidWithTax + parseFloat(dist.amount) > totalWithTax) {
                     return res.status(400).json({ 
@@ -337,10 +342,17 @@ router.post('/', async (req, res) => {
                 taxRate: milestone.hasTax ? (milestone.taxRate || 21) : 0
             });
 
-            // Calculate total paid amount including tax
+            // Calculate current paid amount with tax
+            const basePaidAmount = milestone.paidAmount || 0;
             const currentPaidWithTax = milestone.hasTax
-                ? (milestone.paidAmount || 0) * (1 + (milestone.taxRate || 21) / 100)
-                : (milestone.paidAmount || 0);
+                ? basePaidAmount * (1 + (milestone.taxRate || 21) / 100)
+                : basePaidAmount;
+
+            console.log('Current amounts:', {
+                basePaidAmount,
+                currentPaidWithTax,
+                remainingWithTax: totalWithTax - currentPaidWithTax
+            });
 
             if (currentPaidWithTax + paymentAmount > totalWithTax) {
                 console.log('Payment validation failed:', {
