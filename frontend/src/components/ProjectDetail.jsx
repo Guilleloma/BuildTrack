@@ -702,10 +702,10 @@ const ProjectDetail = () => {
                     Total Amount: {formatCurrency(totalWithTax)}
                   </Typography>
                   <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1 }}>
-                    Paid Amount: {formatCurrency(milestoneData.paidAmount || 0)}
+                    Paid Amount: {formatCurrency(milestoneData.paidAmount * (1 + (milestoneData.hasTax ? (milestoneData.taxRate || 21) / 100 : 0)))}
                   </Typography>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Pending Amount: {formatCurrency(totalWithTax - (milestoneData.paidAmount || 0))}
+                    Pending Amount: {formatCurrency(totalWithTax - (milestoneData.paidAmount * (1 + (milestoneData.hasTax ? (milestoneData.taxRate || 21) / 100 : 0))))}
                   </Typography>
                 </Box>
 
