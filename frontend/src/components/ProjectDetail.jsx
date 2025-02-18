@@ -552,14 +552,7 @@ const ProjectDetail = () => {
             <Accordion 
               key={milestone._id}
               expanded={expandedMilestoneId === milestone._id}
-              onChange={(e, isExpanded) => {
-                setExpandedMilestoneId(isExpanded ? milestone._id : null);
-                // Update URL without reloading
-                const newUrl = isExpanded 
-                  ? `${location.pathname}?milestone=${milestone._id}`
-                  : location.pathname;
-                navigate(newUrl, { replace: true });
-              }}
+              onChange={(e, isExpanded) => setExpandedMilestoneId(isExpanded ? milestone._id : null)}
             >
               <AccordionSummary 
                 expandIcon={<ExpandMoreIcon />}

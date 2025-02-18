@@ -398,6 +398,15 @@ const PaymentsPage = () => {
     }
   };
 
+  const handleProjectClick = (projectId, milestoneId = null) => {
+    const basePath = isSandbox ? '/sandbox' : '/app';
+    if (milestoneId) {
+      navigate(`${basePath}/projects/${projectId}?milestone=${milestoneId}`);
+    } else {
+      navigate(`${basePath}/projects/${projectId}`);
+    }
+  };
+
   if (loading) {
     return <LoadingMessage message="Loading payment history..." />;
   }
@@ -411,9 +420,239 @@ const PaymentsPage = () => {
   }
 
   return (
-    <div>
-      {/* Render your component content here */}
-    </div>
+    <Container maxWidth="lg">
+      <Paper sx={{ p: 4, mt: 4 }}>
+        {/* Estadísticas globales */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} md={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Total Payments</Typography>
+                <Typography variant="h4">{formatCurrency(statistics.totalPayments)}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Number of Payments</Typography>
+                <Typography variant="h4">{statistics.totalCount}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Average Payment</Typography>
+                <Typography variant="h4">{formatCurrency(statistics.averagePayment)}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+        {/* Búsqueda */}
+        <TextField
+          fullWidth
+          label="Search payments"
+          variant="outlined"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{ mb: 4 }}
+        />
+
+        {/* Lista de proyectos */}
+        {projectStats.map(project => (
+          <Accordion key={project._id} sx={{ mb: 2 }}>
+            <AccordionSummary>
+              <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Typography variant="h6">
+                    {project.name}
+                  </Typography>
+                  <IconButton 
+                    size="small" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleProjectClick(project._id);
+                    }}
+                  >
+                    <LaunchIcon />
+                  </IconButton>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Typography>
+                    {formatCurrency(project.totalPaid)} / {formatCurrency(project.totalCostWithTax)}
+                  </Typography>
+                </Box>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Box sx={{ mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="body2" sx={{ minWidth: 140 }}>
+                    Paid: {Math.round(project.completionPercentage)}%
+                  </Typography>
+                  <LinearProgress
+                    variant="determinate"
+                    value={project.completionPercentage}
+                    sx={{ 
+                      flexGrow: 1,
+                      ml: 1,
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: '#e0e0e0',
+                      '& .MuiLinearProgress-bar': {
+                        backgroundColor: '#4caf50',
+                        borderRadius: 4,
+                      }
+                    }}
+                  />
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Typography variant="body2" sx={{ minWidth: 140 }}>
+                    Completed: {Math.round(project.taskCompletionPercentage)}%
+                  </Typography>
+                  <LinearProgress
+                    variant="determinate"
+                    value={project.taskCompletionPercentage}
+                    sx={{ 
+                      flexGrow: 1,
+                      ml: 1,
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: '#e0e0e0',
+                      '& .MuiLinearProgress-bar': {
+                        backgroundColor: '#2196f3',
+                        borderRadius: 4,
+                      }
+                    }}
+                  />
+                </Box>
+              </Box>
+
+              {/* Tabla de hitos */}
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Milestone</TableCell>
+                      <TableCell align="right">Budget</TableCell>
+                      <TableCell align="right">Paid</TableCell>
+                      <TableCell align="right">Pending</TableCell>
+                      <TableCell align="right">Progress</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {project.milestoneStats.map(milestone => (
+                      <TableRow key={milestone._id}>
+                        <TableCell>{milestone.name}</TableCell>
+                        <TableCell align="right">{formatCurrency(milestone.totalWithTax)}</TableCell>
+                        <TableCell align="right">{formatCurrency(milestone.paidAmount)}</TableCell>
+                        <TableCell align="right">{formatCurrency(milestone.pendingAmount)}</TableCell>
+                        <TableCell align="right">{Math.round(milestone.completionPercentage)}%</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </AccordionDetails>
+          </Accordion>
+        ))}
+
+        {/* Historial de pagos */}
+        <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>Payment History</Typography>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Date</TableCell>
+                <TableCell>Project</TableCell>
+                <TableCell>Milestone</TableCell>
+                <TableCell>Description</TableCell>
+                <TableCell align="right">Amount</TableCell>
+                <TableCell>Method</TableCell>
+                <TableCell align="right">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredPayments.map(payment => (
+                <TableRow key={payment._id}>
+                  <TableCell>{new Date(payment.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    {payment.type === 'DISTRIBUTED' ? (
+                      payment.distributions[0]?.milestone?.project?.name
+                    ) : (
+                      payment.milestone?.project?.name
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {payment.type === 'DISTRIBUTED' ? (
+                      <Tooltip title={payment.distributions.map(d => 
+                        `${d.milestone?.name}: ${formatCurrency(d.amount)}`
+                      ).join('\n')}>
+                        <Typography>Multiple Milestones</Typography>
+                      </Tooltip>
+                    ) : (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {payment.milestone?.name}
+                        <IconButton 
+                          size="small"
+                          onClick={() => {
+                            const projectId = payment.milestone?.project?._id;
+                            const milestoneId = payment.milestone?._id;
+                            if (projectId && milestoneId) {
+                              handleProjectClick(projectId, milestoneId);
+                            }
+                          }}
+                        >
+                          <LaunchIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    )}
+                  </TableCell>
+                  <TableCell>{payment.description}</TableCell>
+                  <TableCell align="right">{formatCurrency(payment.amount)}</TableCell>
+                  <TableCell>
+                    <Chip 
+                      label={getPaymentMethodLabel(payment.paymentMethod)}
+                      color={getPaymentMethodColor(payment.paymentMethod)}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell align="right">
+                    <IconButton
+                      size="small"
+                      onClick={() => handleEditClick(payment)}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => handleDeleteClick(payment)}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
+
+      {/* Modal de edición de pago */}
+      {editingPayment && (
+        <PaymentForm
+          open={!!editingPayment}
+          onClose={() => setEditingPayment(null)}
+          onSubmit={handleEditSubmit}
+          payment={editingPayment}
+          milestone={editingPayment.milestone}
+          project={editingPayment.project}
+        />
+      )}
+    </Container>
   );
 };
 

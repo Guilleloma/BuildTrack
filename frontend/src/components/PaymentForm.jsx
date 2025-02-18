@@ -50,15 +50,11 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
         console.log('Milestone en el pago:', payment.milestone);
         
         const distributions = payment.type === 'DISTRIBUTED' ? 
-          payment.distributions.map(dist => {
-            console.log('Procesando distribución:', dist);
-            console.log('ID del milestone en distribución:', dist.milestoneId || dist.milestone?._id);
-            return {
-              milestoneId: dist.milestoneId || dist.milestone?._id,
-              amount: (dist.amount || '0').toString(),
-              name: dist.name || dist.milestone?.name || 'Sin nombre'
-            };
-          }) : [];
+          payment.distributions.map(dist => ({
+            milestoneId: dist.milestoneId || dist.milestone?._id,
+            amount: (dist.amount || '0').toString(),
+            name: dist.name || dist.milestone?.name || 'Sin nombre'
+          })) : [];
 
         console.log('Distribuciones procesadas:', distributions);
 
@@ -286,10 +282,9 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
         milestoneId: milestone?._id
       };
 
-      if (!formData.isDistributed && !milestone?._id) {
-        console.error('Error crítico: No se encontró el ID del milestone');
-        console.log('Milestone completo:', milestone);
-        throw new Error('No se pudo obtener el ID del milestone');
+      // Si estamos editando, asegurarnos de mantener el ID del pago
+      if (payment?._id) {
+        dataToSubmit._id = payment._id;
       }
 
       console.log('Datos preparados para enviar:', dataToSubmit);
