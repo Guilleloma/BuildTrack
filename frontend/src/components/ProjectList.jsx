@@ -116,7 +116,7 @@ const ProjectList = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`https://buildtrack.onrender.com/projects/${projectId}`, {
+      const response = await fetch(getApiUrl(`/projects/${projectId}`), {
         method: 'DELETE',
         headers
       });

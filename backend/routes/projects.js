@@ -25,9 +25,15 @@ router.get('/', async (req, res) => {
         if (req.query.mode === 'sandbox') {
             query.userId = 'sandbox';
             console.log('Using sandbox mode, query:', query);
-        } else if (req.query.userId) {
+        } else if (req.headers.authorization) {
+            // Verificar que el token coincide con el userId
+            const token = req.headers.authorization.split(' ')[1];
+            // TODO: Implementar verificación del token
+            // Por ahora, confiamos en el userId del query parameter
             query.userId = req.query.userId;
             console.log('Using authenticated mode, query:', query);
+        } else {
+            return res.status(401).json({ error: 'Unauthorized: Token required for non-sandbox mode' });
         }
 
         console.log('Executing MongoDB query:', query);
