@@ -58,7 +58,7 @@ const ProjectList = () => {
         console.log('[ProjectList] Token añadido a la petición para usuario:', user.email);
       }
 
-      const url = `https://buildtrack.onrender.com/projects${isSandbox ? '?mode=sandbox' : `?userId=${user?.uid}`}`;
+      const url = getApiUrl(`/projects${isSandbox ? '?mode=sandbox' : `?userId=${user?.uid}`}`);
       console.log('[ProjectList] Fetching projects from URL:', url);
 
       const response = await fetch(url, {
@@ -74,18 +74,8 @@ const ProjectList = () => {
         projects: data.map(p => ({ id: p._id, name: p.name, userId: p.userId }))
       });
 
-      // En modo autenticado, filtramos los proyectos del usuario
-      const filteredData = isSandbox 
-        ? data.filter(p => p.userId === 'sandbox')
-        : data.filter(p => p.userId === user?.uid);
-
-      console.log('[ProjectList] Filtered projects:', {
-        mode: isSandbox ? 'sandbox' : 'authenticated',
-        originalCount: data.length,
-        filteredCount: filteredData.length
-      });
-
-      setProjects(filteredData);
+      // El backend ya filtra los proyectos, no necesitamos filtrar de nuevo
+      setProjects(data);
       setLoading(false);
     } catch (error) {
       console.error('[ProjectList] Error in fetchProjects:', error);
