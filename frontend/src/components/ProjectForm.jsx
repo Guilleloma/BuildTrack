@@ -43,6 +43,7 @@ const ProjectForm = () => {
       const response = await fetch(getApiUrl('/projects'), {
         method: 'POST',
         headers,
+        credentials: 'include',
         body: JSON.stringify({
           ...formData,
           userId: isSandbox ? 'sandbox' : user.uid
@@ -50,8 +51,12 @@ const ProjectForm = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Error al crear el proyecto');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al crear el proyecto');
       }
+
+      const data = await response.json();
+      console.log('Project created:', data);
 
       // Redirigir a la lista de proyectos
       const basePath = isSandbox ? '/sandbox' : '/app';
