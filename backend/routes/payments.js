@@ -311,14 +311,21 @@ router.post('/', async (req, res) => {
                 return res.status(400).json({ error: 'Milestone ID is required for single payments' });
             }
 
+            console.log('=== DETAILED PAYMENT VALIDATION LOGS ===');
+            console.log('1. Input Data:', {
+                paymentAmount,
+                milestoneId,
+                description,
+                paymentMethod
+            });
+
             const milestone = await Milestone.findById(milestoneId).populate('project');
             if (!milestone) {
                 console.log('Milestone not found:', milestoneId);
                 return res.status(404).json({ error: 'Milestone not found' });
             }
 
-            console.log('=== PAYMENT VALIDATION DETAILS ===');
-            console.log('1. Milestone Data:', {
+            console.log('2. Milestone Data:', {
                 id: milestone._id,
                 name: milestone.name,
                 budget: milestone.budget,
@@ -336,7 +343,7 @@ router.post('/', async (req, res) => {
                 ? parseFloat((paymentAmount / (1 + (milestone.taxRate || 21) / 100)).toFixed(2))
                 : paymentAmount;
 
-            console.log('2. Payment Calculations:', {
+            console.log('3. Payment Calculations:', {
                 totalWithTax,
                 paymentAmount,
                 paymentBase,
@@ -349,7 +356,7 @@ router.post('/', async (req, res) => {
                 ? basePaidAmount * (1 + (milestone.taxRate || 21) / 100)
                 : basePaidAmount;
 
-            console.log('3. Current Amounts:', {
+            console.log('4. Current Amounts:', {
                 basePaidAmount,
                 currentPaidWithTax,
                 remainingWithTax: totalWithTax - currentPaidWithTax,
@@ -358,7 +365,7 @@ router.post('/', async (req, res) => {
             });
 
             if (currentPaidWithTax + paymentAmount > totalWithTax + 0.01) {
-                console.log('4. Payment Validation Failed:', {
+                console.log('5. Payment Validation Failed:', {
                     currentPaidWithTax,
                     attemptingToAdd: paymentAmount,
                     wouldBe: currentPaidWithTax + paymentAmount,
@@ -386,7 +393,7 @@ router.post('/', async (req, res) => {
                 });
             }
 
-            console.log('5. Payment Validation Passed:', {
+            console.log('6. Payment Validation Passed:', {
                 currentTotal: currentPaidWithTax + paymentAmount,
                 maxAllowed: totalWithTax,
                 remaining: totalWithTax - (currentPaidWithTax + paymentAmount)
