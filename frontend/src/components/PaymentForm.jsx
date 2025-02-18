@@ -100,23 +100,27 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
         console.log('Tasks:', milestone.tasks);
 
         const baseAmount = parseFloat(milestone.budget || 0);
-        const taxAmount = milestone.hasTax 
-          ? baseAmount * (parseFloat(milestone.taxRate || 21) / 100)
-          : 0;
+        const taxRate = milestone.hasTax ? (parseFloat(milestone.taxRate || 21) / 100) : 0;
+        const taxAmount = milestone.hasTax ? baseAmount * taxRate : 0;
         const totalWithTax = baseAmount + taxAmount;
-        const paidAmount = parseFloat(milestone.paidAmount || 0);
-        const remainingAmount = parseFloat((totalWithTax - paidAmount).toFixed(2));
+        
+        // paidAmount ya es el monto base pagado
+        const basePaid = parseFloat(milestone.paidAmount || 0);
+        const taxPaid = milestone.hasTax ? basePaid * taxRate : 0;
+        const totalPaidWithTax = basePaid + taxPaid;
+        
+        const remainingAmount = parseFloat((totalWithTax - totalPaidWithTax).toFixed(2));
 
         const totalTasks = milestone.tasks?.length || 0;
         const completedTasks = milestone.tasks?.filter(t => t.status === 'COMPLETED').length || 0;
         const taskCompletionPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-        const currentPaymentPercentage = totalWithTax > 0 ? (paidAmount / totalWithTax) * 100 : 0;
+        const currentPaymentPercentage = totalWithTax > 0 ? (totalPaidWithTax / totalWithTax) * 100 : 0;
 
         const milestoneStatusData = {
           baseAmount,
           taxAmount,
           totalWithTax,
-          paidAmount,
+          paidAmount: basePaid,
           remainingAmount,
           taskCompletionPercentage,
           currentPaymentPercentage,
@@ -418,7 +422,7 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
                 Total Amount: {formatCurrency(milestoneStatus.totalWithTax)}
               </Typography>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1 }}>
-                Paid Amount: {formatCurrency(milestoneStatus.paidAmount)}
+                Paid Amount: {formatCurrency(milestoneStatus.paidAmount * (1 + (milestone.hasTax ? (milestone.taxRate || 21) / 100 : 0)))}
               </Typography>
               <Typography variant="subtitle2" color="text.secondary">
                 Pending Amount: {formatCurrency(milestoneStatus.remainingAmount)}
