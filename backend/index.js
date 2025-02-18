@@ -21,9 +21,9 @@ mongoose.connect(MONGODB_URI).then(() => {
 
 // CORS configuration
 const corsOptions = {
-  origin: ['https://buildtrack-c3e8a.web.app', 'http://localhost:3001'],
+  origin: ['https://buildtrack-c3e8a.web.app', 'http://localhost:3001', 'https://buildtrack-c3e8a.firebaseapp.com'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Origin'],
   credentials: true,
   optionsSuccessStatus: 200
 };
@@ -31,6 +31,15 @@ const corsOptions = {
 // Middleware configuration
 app.use(cors(corsOptions));
 app.use(express.json());
+
+// Add CORS headers to all responses
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  next();
+});
 
 // Basic route for health check
 app.get('/', (req, res) => {
