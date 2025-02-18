@@ -691,5 +691,77 @@ Este documento describe el plan de desarrollo incremental del proyecto BuildTrac
 - La aplicacion se debe poder instalar en un servidor de produccion
 - La aplicacion debe ser accesible desde cualquier navegador
 
-**Estado: TODO**
+**Plan de Refactorización Móvil:**
+1. **Fase 1: Configuración y Layout Base**
+   - Implementar responsive layout con `useMediaQuery` y `useTheme`
+   - Convertir drawer a temporal en móvil y permanente en desktop
+   - Añadir botón hamburguesa en AppBar
+   - Optimizar espaciado y navegación principal
+
+2. **Fase 2: Lista de Proyectos (`ProjectList`)**
+   - Cambiar layout de grid a lista vertical en móvil
+   - Optimizar tarjetas para ancho completo
+   - Reorganizar información crítica
+   - Mejorar visualización de botones y acciones
+
+3. **Fase 3: Detalle de Proyecto (`ProjectDetail`)**
+   - Reorganizar header para mejor visibilidad móvil
+   - Optimizar visualización de milestones
+   - Mejorar accesibilidad de tareas y pagos
+   - Ajustar tipografía y espaciado
+
+4. **Fase 4: Historial de Pagos (`PaymentHistory`)**
+   - Crear vista específica para móvil usando cards
+   - Optimizar visualización de información de pagos
+   - Mejorar interacción con botones de acción
+   - Implementar diseño compacto y legible
+
+5. **Fase 5: Formularios**
+   - Optimizar formularios para entrada móvil
+   - Mejorar navegación por teclado
+   - Ajustar tamaños de campos
+   - Implementar validaciones adaptativas
+
+6. **Fase 6: Componentes Compartidos**
+   - Desarrollar componentes base responsivos
+   - Establecer sistema consistente de espaciado
+   - Definir tamaños de fuente adaptables
+   - Crear utilidades de responsive design
+
+7. **Fase 7: Optimización de Interacciones**
+   - Mejorar gestos táctiles
+   - Optimizar estados hover/active para móvil
+   - Implementar feedback táctil
+   - Ajustar tiempos de respuesta
+
+8. **Fase 8: Testing y Refinamiento**
+   - Probar en diversos dispositivos
+   - Verificar accesibilidad
+   - Optimizar rendimiento
+   - Refinar animaciones y transiciones
+
+**Implementación Inicial:**
+1. **MainLayout.js**:
+   - Implementar useMediaQuery y useTheme
+   - Añadir estado para control de drawer móvil
+   - Integrar botón hamburguesa en AppBar
+   - Configurar drawer condicional según dispositivo
+
+2. **ProjectList.jsx**:
+   - Implementar detección de vista móvil
+   - Adaptar Grid container para móvil
+   - Reorganizar contenido de tarjetas
+   - Optimizar espaciado y márgenes
+
+**Criterios de Aceptación:**
+- La aplicación debe ser responsive y funcionar correctamente en dispositivos móviles
+- El menú debe ser accesible y fácil de usar en pantallas pequeñas
+- La lista de proyectos debe ser legible y navegable en móvil
+- La transición entre vistas móvil y desktop debe ser fluida
+- No debe haber pérdida de funcionalidad en ninguna vista
+- Cada fase debe ser probada y validada antes de proceder a la siguiente
+- El rendimiento debe mantenerse óptimo en todas las vistas
+- La experiencia de usuario debe ser consistente entre dispositivos
+
+**Estado: EN PROGRESO**
 
