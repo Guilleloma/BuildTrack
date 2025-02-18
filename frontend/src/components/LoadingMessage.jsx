@@ -7,7 +7,7 @@ import {
   Container
 } from '@mui/material';
 
-const LoadingMessage = ({ message = "¡Despertando al servidor! 🌅" }) => {
+const LoadingMessage = ({ message = "Waking up the server! 🌅" }) => {
   return (
     <Container maxWidth="sm">
       <Paper 
@@ -26,13 +26,13 @@ const LoadingMessage = ({ message = "¡Despertando al servidor! 🌅" }) => {
           {message}
         </Typography>
         <Typography variant="body1" align="center" color="primary">
-          ¡Hey! Es un prototipo en desarrollo en servidores freemium 🚀
+          Hey! This is a prototype running on freemium servers 🚀
         </Typography>
         <Typography variant="body2" color="text.secondary" align="center">
-          A veces se va a echar la siesta si no hay nadie y le cuesta como 50 segundos despertarse 😴
+          Sometimes it takes a nap when nobody's around and needs about 50 seconds to wake up 😴
         </Typography>
         <Typography variant="caption" color="text.secondary" align="center" sx={{ fontStyle: 'italic' }}>
-          Gracias por tu paciencia (No estoy trabajando por hacerlo más rápido) 🙈
+          Thanks for your patience (I'm not working on making it faster) 🙈
         </Typography>
       </Paper>
     </Container>
