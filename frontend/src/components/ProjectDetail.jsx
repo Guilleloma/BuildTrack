@@ -471,9 +471,6 @@ const ProjectDetail = () => {
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2" color="text.secondary">
-                    Tareas Completadas
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
                     {projectProgress?.overallProgress?.completedTasks}/{projectProgress?.overallProgress?.totalTasks} ({Math.round(projectProgress?.overallProgress?.taskCompletionPercentage || 0)}%)
                   </Typography>
                 </Box>
@@ -484,47 +481,33 @@ const ProjectDetail = () => {
                 />
               </Box>
 
-              {/* Barra de progreso de pagos base */}
+              {/* Barra de progreso de pagos total */}
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2" color="text.secondary">
-                    Base
+                    Total Paid (with VAT)
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {formatCurrency(projectProgress?.totals?.base_paid || 0)}/{formatCurrency(projectProgress?.totals?.base || 0)} ({Math.round((projectProgress?.totals?.base_paid / projectProgress?.totals?.base || 0) * 100)}%)
+                    {formatCurrency(projectProgress?.totals?.paid || 0)}/{formatCurrency(projectProgress?.totals?.totalWithTax || 0)} ({Math.round(projectProgress?.totals?.paymentPercentage || 0)}%)
                   </Typography>
                 </Box>
                 <LinearProgress 
                   variant="determinate" 
-                  value={(projectProgress?.totals?.base_paid / projectProgress?.totals?.base || 0) * 100}
+                  value={projectProgress?.totals?.paymentPercentage || 0}
                   sx={{ height: 8, borderRadius: 4, bgcolor: 'grey.200' }}
                 />
               </Box>
 
-              {/* Barra de progreso de VAT */}
-              {projectProgress?.totals?.tax > 0 && (
-                <Box sx={{ mb: 2 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      VAT ({projectProgress?.defaultTaxRate || 21}%)
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {formatCurrency(projectProgress?.totals?.tax_paid || 0)}/{formatCurrency(projectProgress?.totals?.tax || 0)} ({Math.round((projectProgress?.totals?.tax_paid / projectProgress?.totals?.tax || 0) * 100)}%)
-                    </Typography>
-                  </Box>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={(projectProgress?.totals?.tax_paid / projectProgress?.totals?.tax || 0) * 100}
-                    sx={{ height: 8, borderRadius: 4, bgcolor: 'grey.200' }}
-                  />
-                </Box>
-              )}
-
-              {/* Total with VAT */}
+              {/* Información de Base y VAT */}
               <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                <Typography variant="subtitle1" color="text.secondary">
-                  Total Paid: {formatCurrency(projectProgress?.totals?.paid || 0)} / {formatCurrency(projectProgress?.totals?.totalWithTax || 0)} ({Math.round(projectProgress?.totals?.paymentPercentage || 0)}%)
+                <Typography variant="body2" color="text.secondary">
+                  Base: {formatCurrency(projectProgress?.totals?.base || 0)}
                 </Typography>
+                {projectProgress?.totals?.tax > 0 && (
+                  <Typography variant="body2" color="text.secondary">
+                    VAT ({projectProgress?.defaultTaxRate || 21}%): {formatCurrency(projectProgress?.totals?.tax || 0)}
+                  </Typography>
+                )}
               </Box>
             </Box>
           </CardContent>
