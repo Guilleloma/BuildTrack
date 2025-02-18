@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { getApiUrl } from '../config';
 import {
   Container,
   Paper,
@@ -39,7 +40,7 @@ const ProjectForm = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch('https://buildtrack.onrender.com/projects', {
+      const response = await fetch(getApiUrl('/projects'), {
         method: 'POST',
         headers,
         body: JSON.stringify({
