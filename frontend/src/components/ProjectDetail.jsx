@@ -784,7 +784,7 @@ const ProjectDetail = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <PaymentIcon sx={{ color: 'text.secondary' }} />
                     <Typography variant="h6">
-                      Pagos Realizados
+                      Payments Made
                     </Typography>
                   </Box>
                   <Box sx={{ mt: 2 }}>
@@ -798,7 +798,7 @@ const ProjectDetail = () => {
                       }}
                       disabled={milestone.paymentPercentage >= 100}
                     >
-                      Añadir Pago
+                      Add Payment
                     </Button>
                   </Box>
                 </Box>

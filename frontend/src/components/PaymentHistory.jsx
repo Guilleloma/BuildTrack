@@ -405,7 +405,7 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
   if (payments.length === 0) {
     return (
       <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-        No hay pagos registrados para este hito.
+        No payments registered for this milestone.
       </Typography>
     );
   }
@@ -460,9 +460,9 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
                 <TableCell align="right">
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
                     {payment.type === 'DISTRIBUTED' && (
-                      <Tooltip title="Parte de un pago distribuido">
+                      <Tooltip title="Part of a distributed payment">
                         <Chip
-                          label="Distribuido"
+                          label="Distributed"
                           size="small"
                           color="info"
                           variant="outlined"

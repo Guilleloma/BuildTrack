@@ -160,13 +160,13 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
 
   const validateAmount = (amount, distributions = []) => {
     if (!amount || amount <= 0) {
-      return 'El monto debe ser mayor que 0';
+      return 'Amount must be greater than 0';
     }
 
     if (formData.isDistributed) {
       const totalDistributed = distributions.reduce((sum, dist) => sum + parseFloat(dist.amount || 0), 0);
       if (Math.abs(totalDistributed - parseFloat(amount)) > 0.01) {
-        return `La suma de las distribuciones (${formatCurrency(totalDistributed)}) debe ser igual al monto total (${formatCurrency(amount)})`;
+        return `The sum of distributions (${formatCurrency(totalDistributed)}) must equal the total amount (${formatCurrency(amount)})`;
       }
       return null;
     }
@@ -175,15 +175,15 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
 
     const paymentAmount = parseFloat(amount);
     if (paymentAmount > milestoneStatus.remainingAmount) {
-      return `El pago excede el monto pendiente. Máximo permitido: ${formatCurrency(milestoneStatus.remainingAmount)}`;
+      return `Payment exceeds remaining amount. Maximum allowed: ${formatCurrency(milestoneStatus.remainingAmount)}`;
     }
 
     if (milestoneStatus.totalTasks > 0 && milestoneStatus.taskCompletionPercentage < 100) {
       const newPaymentPercentage = ((milestoneStatus.paidAmount + paymentAmount) / milestoneStatus.totalWithTax) * 100;
       if (newPaymentPercentage > milestoneStatus.taskCompletionPercentage) {
         setWarning({
-          message: `Atención: Se va a pagar el ${Math.round(newPaymentPercentage)}% del total cuando solo hay un ${Math.round(milestoneStatus.taskCompletionPercentage)}% de tareas completadas`,
-          taskCompletion: `${milestoneStatus.completedTasks}/${milestoneStatus.totalTasks} tareas completadas`
+          message: `Warning: You are going to pay ${Math.round(newPaymentPercentage)}% of the total when only ${Math.round(milestoneStatus.taskCompletionPercentage)}% of tasks are completed`,
+          taskCompletion: `${milestoneStatus.completedTasks}/${milestoneStatus.totalTasks} tasks completed`
         });
       } else {
         setWarning(null);
