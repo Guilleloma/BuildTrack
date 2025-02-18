@@ -46,7 +46,6 @@ const PaymentsPage = () => {
   const [editingPayment, setEditingPayment] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
   const isSandbox = location.pathname.startsWith('/sandbox');
 
   useEffect(() => {
@@ -61,10 +60,12 @@ const PaymentsPage = () => {
           'Content-Type': 'application/json'
         };
 
-        // Solo añadir el token si no estamos en modo sandbox
-        if (!isSandbox && user) {
-          const token = await user.getIdToken();
-          headers['Authorization'] = `Bearer ${token}`;
+        // Solo añadimos el token si no estamos en modo sandbox
+        if (!isSandbox) {
+          const token = localStorage.getItem('token');
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
         }
 
         const [paymentsRes, projectsRes] = await Promise.all([
@@ -110,7 +111,7 @@ const PaymentsPage = () => {
     };
 
     fetchData();
-  }, [location, user, isSandbox]);
+  }, [location, isSandbox]);
 
   // Calculate global statistics
   const statistics = {
@@ -218,17 +219,19 @@ const PaymentsPage = () => {
     console.log('Milestone en el pago:', JSON.stringify(payment.milestone, null, 2));
     
     try {
+        let headers = {
+          'Content-Type': 'application/json'
+        };
+
+        if (!isSandbox) {
+          const token = localStorage.getItem('token');
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+        }
+
         if (payment.type === 'DISTRIBUTED') {
             console.log('Payment is distributed, fetching full payment...');
-            let headers = {
-                'Content-Type': 'application/json'
-            };
-
-            if (!isSandbox && user) {
-                const token = await user.getIdToken();
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-
             const paymentResponse = await fetch(getApiUrl(`/payments/${payment._id}`), {
                 headers
             });
@@ -247,7 +250,6 @@ const PaymentsPage = () => {
               throw new Error('No se encontró información del milestone en el pago');
             }
 
-            // Preparar el pago con el formato correcto para el PaymentForm
             const paymentForForm = {
               _id: fullPayment._id,
               amount: fullPayment.amount.toString(),
@@ -270,38 +272,13 @@ const PaymentsPage = () => {
                 console.error('Error: No hay milestone en el pago');
                 throw new Error('No se encontró información del milestone en el pago');
             }
-            if (!payment.milestone.project || !payment.milestone.project._id) {
-                console.error('Error: No hay project._id en el milestone');
-                throw new Error('No se encontró información del proyecto en el milestone');
-            }
-            if (!payment.milestone._id) {
-                console.error('Error: No hay _id en el milestone');
-                throw new Error('No se encontró ID del milestone');
-            }
 
-            console.log('Project ID:', payment.milestone.project._id);
-            console.log('Milestone ID:', payment.milestone._id);
-            
-            let headers = {
-                'Content-Type': 'application/json'
-            };
-
-            if (!isSandbox && user) {
-                const token = await user.getIdToken();
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-            
-            const milestoneUrl = getApiUrl(`/projects/${payment.milestone.project._id}/milestones/${payment.milestone._id}`);
+            const milestoneUrl = getApiUrl(
+              `/projects/${payment.milestone.project._id}/milestones/${payment.milestone._id}${isSandbox ? '?mode=sandbox' : ''}`
+            );
             console.log('URL del milestone:', milestoneUrl);
             
-            const milestoneResponse = await fetch(milestoneUrl, {
-                headers
-            });
-            
-            console.log('Respuesta del milestone:', {
-                ok: milestoneResponse.ok,
-                status: milestoneResponse.status
-            });
+            const milestoneResponse = await fetch(milestoneUrl, { headers });
             
             if (!milestoneResponse.ok) {
                 const errorText = await milestoneResponse.text();
@@ -339,32 +316,34 @@ const PaymentsPage = () => {
         'Content-Type': 'application/json'
       };
 
-      if (!isSandbox && user) {
-        const token = await user.getIdToken();
-        headers['Authorization'] = `Bearer ${token}`;
+      if (!isSandbox) {
+        const token = localStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
       }
 
-      const response = await fetch(getApiUrl(`/payments/${editingPayment._id}`), {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(formData)
-      });
+      const response = await fetch(
+        getApiUrl(`/payments/${editingPayment._id}${isSandbox ? '?mode=sandbox' : ''}`),
+        {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(formData)
+        }
+      );
 
       if (!response.ok) {
         throw new Error('Error updating payment');
       }
 
-      // Refresh payments list
-      const paymentsRes = await fetch(getApiUrl(`/payments${isSandbox ? '?mode=sandbox' : ''}`), {
-        headers
-      });
-
-      if (!paymentsRes.ok) {
-        throw new Error('Error fetching updated payments');
-      }
-
-      const updatedPayments = await paymentsRes.json();
-      setPayments(updatedPayments);
+      // Refetch payments to update the list
+      const paymentsRes = await fetch(
+        getApiUrl(`/payments${isSandbox ? '?mode=sandbox' : ''}`),
+        { headers }
+      );
+      if (!paymentsRes.ok) throw new Error('Error al recargar los pagos');
+      const paymentsData = await paymentsRes.json();
+      setPayments(paymentsData);
       setEditingPayment(null);
       showMessage('Payment updated successfully');
     } catch (error) {
@@ -372,6 +351,64 @@ const PaymentsPage = () => {
       showMessage(error.message, 'error');
     }
   };
+
+  const handleDeleteClick = async (payment, milestoneId = null) => {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar este pago?')) {
+      return;
+    }
+
+    try {
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (!isSandbox) {
+        const token = localStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
+      const url = payment.type === 'DISTRIBUTED' && milestoneId
+        ? `${getApiUrl(`/payments/${payment._id}`)}?milestoneId=${milestoneId}${isSandbox ? '&mode=sandbox' : ''}`
+        : getApiUrl(`/payments/${payment._id}${isSandbox ? '?mode=sandbox' : ''}`);
+
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar el pago');
+      }
+
+      // Refetch payments to update the list
+      const paymentsRes = await fetch(
+        getApiUrl(`/payments${isSandbox ? '?mode=sandbox' : ''}`),
+        { headers }
+      );
+      if (!paymentsRes.ok) throw new Error('Error al recargar los pagos');
+      const paymentsData = await paymentsRes.json();
+      setPayments(paymentsData);
+
+      showMessage('Pago eliminado correctamente');
+    } catch (err) {
+      console.error('Error deleting payment:', err);
+      showMessage('Error al eliminar el pago', 'error');
+    }
+  };
+
+  if (loading) {
+    return <LoadingMessage message="Loading payment history..." />;
+  }
+
+  if (error) {
+    return (
+      <Container>
+        <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>
+      </Container>
+    );
+  }
 
   return (
     <div>
