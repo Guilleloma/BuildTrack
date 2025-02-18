@@ -411,21 +411,21 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
           {milestone && milestoneStatus && (
             <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
               <Typography variant="subtitle2" color="text.secondary">
-                Base Amount: {formatCurrency(milestoneStatus.baseAmount)}
+                Base Cost: {formatCurrency(milestoneStatus.baseAmount)}
               </Typography>
               {milestone.hasTax && (
                 <Typography variant="subtitle2" color="text.secondary">
-                  Tax Amount ({milestone.taxRate || 21}%): {formatCurrency(milestoneStatus.taxAmount)}
+                  VAT ({milestone.taxRate || 21}%): {formatCurrency(milestoneStatus.taxAmount)}
                 </Typography>
               )}
               <Typography variant="subtitle1" color="primary" sx={{ mt: 1 }}>
-                Total Amount: {formatCurrency(milestoneStatus.totalWithTax)}
+                Total Cost (with VAT): {formatCurrency(milestoneStatus.totalWithTax)}
               </Typography>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1 }}>
-                Paid Amount: {formatCurrency(milestoneStatus.paidAmount * (1 + (milestone.hasTax ? (milestone.taxRate || 21) / 100 : 0)))}
+                Total Paid (with VAT): {formatCurrency(milestoneStatus.paidAmount * (1 + (milestone.hasTax ? (milestone.taxRate || 21) / 100 : 0)))}
               </Typography>
               <Typography variant="subtitle2" color="text.secondary">
-                Pending Amount: {formatCurrency(milestoneStatus.remainingAmount)}
+                Total Remaining (with VAT): {formatCurrency(milestoneStatus.remainingAmount)}
               </Typography>
             </Box>
           )}
