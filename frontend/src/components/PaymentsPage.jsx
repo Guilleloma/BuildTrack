@@ -389,7 +389,7 @@ const PaymentsPage = () => {
   };
 
   if (loading) {
-    return <LoadingMessage message="Cargando historial de pagos..." />;
+    return <LoadingMessage message="Loading payment history..." />;
   }
 
   if (error) {

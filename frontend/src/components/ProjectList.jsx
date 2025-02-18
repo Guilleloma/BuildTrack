@@ -144,7 +144,7 @@ const ProjectList = () => {
   );
 
   if (loading) {
-    return <LoadingMessage message="Cargando proyectos..." />;
+    return <LoadingMessage message="Loading projects..." />;
   }
 
   if (error) {
