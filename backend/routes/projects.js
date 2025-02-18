@@ -15,49 +15,83 @@ router.get('/', async (req, res) => {
         console.log('Request details:', {
             mode: req.query.mode,
             userId: req.query.userId,
-            auth: req.headers.authorization ? 'Present' : 'Not present',
-            headers: req.headers,
-            query: req.query
+            auth: req.headers.authorization ? 'Present' : 'Not present'
         });
 
         let query = {};
         
         if (req.query.mode === 'sandbox') {
-            // En modo sandbox, solo devolver proyectos sandbox
             query.userId = 'sandbox';
-            console.log('Using sandbox mode, query:', query);
         } else if (req.headers.authorization && req.query.userId) {
-            // En modo autenticado, solo devolver proyectos del usuario
             query = {
                 $and: [
                     { userId: req.query.userId },
                     { userId: { $ne: 'sandbox' } }
                 ]
             };
-            console.log('Using authenticated mode, query:', query);
         } else {
             return res.status(401).json({ error: 'Unauthorized: Token and userId required for non-sandbox mode' });
         }
 
-        console.log('Executing MongoDB query:', query);
         const projects = await Project.find(query);
-        console.log('Query results:', {
-            count: projects.length,
-            projects: projects.map(p => ({
-                id: p._id,
-                name: p.name,
-                userId: p.userId,
-                createdAt: p.createdAt
-            }))
-        });
+        
+        // Calculate progress for each project
+        const projectsWithProgress = await Promise.all(projects.map(async (project) => {
+            const milestones = await Milestone.find({ project: project._id });
+            const milestoneIds = milestones.map(m => m._id);
+            
+            const tasks = await Task.find({ milestone: { $in: milestoneIds } });
+            const payments = await Payment.find({
+                $or: [
+                    { milestone: { $in: milestoneIds } },
+                    { 'distributions.milestone': { $in: milestoneIds } }
+                ]
+            }).populate('milestone distributions.milestone');
 
-        // Log the raw projects for debugging
-        console.log('Raw projects:', JSON.stringify(projects, null, 2));
+            // Calculate total amounts
+            const totalBase = milestones.reduce((sum, m) => sum + (m.budget || 0), 0);
+            const totalTax = milestones.reduce((sum, m) => {
+                if (m.hasTax) {
+                    const taxRate = m.taxRate || 21;
+                    return sum + ((m.budget || 0) * (taxRate / 100));
+                }
+                return sum;
+            }, 0);
 
-        res.json(projects);
+            // Calculate paid amounts
+            const totalBasePaid = milestones.reduce((sum, m) => sum + (m.paidAmount || 0), 0);
+            const totalTaxPaid = milestones.reduce((sum, m) => {
+                if (m.hasTax) {
+                    const taxRate = m.taxRate || 21;
+                    return sum + ((m.paidAmount || 0) * (taxRate / 100));
+                }
+                return sum;
+            }, 0);
+
+            const totalWithTax = totalBase + totalTax;
+            const totalPaid = totalBasePaid + totalTaxPaid;
+
+            // Calculate task completion
+            const totalTasks = tasks.length;
+            const completedTasks = tasks.filter(task => task.status === 'COMPLETED').length;
+            const taskCompletionPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
+            const projectData = project.toObject();
+            projectData.progress = {
+                totalCost: totalWithTax,
+                paidAmount: totalPaid,
+                paymentPercentage: totalWithTax > 0 ? Math.round((totalPaid / totalWithTax) * 100 * 100) / 100 : 0,
+                taskCompletionPercentage: Math.round(taskCompletionPercentage * 100) / 100,
+                totalTasks,
+                completedTasks
+            };
+
+            return projectData;
+        }));
+
+        res.json(projectsWithProgress);
     } catch (error) {
         console.error('Error in GET /projects:', error);
-        console.error('Stack trace:', error.stack);
         res.status(500).json({ error: 'Error fetching projects', details: error.message });
     }
 });
