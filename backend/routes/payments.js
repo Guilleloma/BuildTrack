@@ -317,7 +317,8 @@ router.post('/', async (req, res) => {
                 return res.status(404).json({ error: 'Milestone not found' });
             }
 
-            console.log('Milestone found:', {
+            console.log('=== PAYMENT VALIDATION DETAILS ===');
+            console.log('1. Milestone Data:', {
                 id: milestone._id,
                 name: milestone.name,
                 budget: milestone.budget,
@@ -335,7 +336,7 @@ router.post('/', async (req, res) => {
                 ? parseFloat((paymentAmount / (1 + (milestone.taxRate || 21) / 100)).toFixed(2))
                 : paymentAmount;
 
-            console.log('Payment calculations:', {
+            console.log('2. Payment Calculations:', {
                 totalWithTax,
                 paymentAmount,
                 paymentBase,
@@ -348,33 +349,48 @@ router.post('/', async (req, res) => {
                 ? basePaidAmount * (1 + (milestone.taxRate || 21) / 100)
                 : basePaidAmount;
 
-            console.log('Current amounts:', {
+            console.log('3. Current Amounts:', {
                 basePaidAmount,
                 currentPaidWithTax,
                 remainingWithTax: totalWithTax - currentPaidWithTax,
-                attemptingToAddWithTax: paymentAmount
+                attemptingToAddWithTax: paymentAmount,
+                wouldBeTotal: currentPaidWithTax + paymentAmount
             });
 
-            if (currentPaidWithTax + paymentAmount > totalWithTax + 0.01) { // Añadimos un pequeño margen para errores de redondeo
-                console.log('Payment validation failed:', {
+            if (currentPaidWithTax + paymentAmount > totalWithTax + 0.01) {
+                console.log('4. Payment Validation Failed:', {
                     currentPaidWithTax,
                     attemptingToAdd: paymentAmount,
                     wouldBe: currentPaidWithTax + paymentAmount,
-                    maxAllowed: totalWithTax
+                    maxAllowed: totalWithTax,
+                    difference: (currentPaidWithTax + paymentAmount) - totalWithTax
                 });
 
                 return res.status(400).json({ 
                     error: 'Payment would exceed milestone total cost (including tax)',
-                    currentlyPaid: currentPaidWithTax,
-                    totalBase: milestone.budget,
-                    totalWithTax: totalWithTax,
-                    paymentDetails: {
-                        total: paymentAmount,
-                        base: paymentBase
-                    },
-                    remaining: totalWithTax - currentPaidWithTax
+                    details: {
+                        currentlyPaid: {
+                            base: basePaidAmount,
+                            withTax: currentPaidWithTax
+                        },
+                        attempting: {
+                            amount: paymentAmount,
+                            base: paymentBase
+                        },
+                        milestone: {
+                            totalBase: milestone.budget,
+                            totalWithTax: totalWithTax,
+                            remaining: totalWithTax - currentPaidWithTax
+                        }
+                    }
                 });
             }
+
+            console.log('5. Payment Validation Passed:', {
+                currentTotal: currentPaidWithTax + paymentAmount,
+                maxAllowed: totalWithTax,
+                remaining: totalWithTax - (currentPaidWithTax + paymentAmount)
+            });
 
             const payment = new Payment({
                 type: 'SINGLE',
