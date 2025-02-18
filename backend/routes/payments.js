@@ -217,14 +217,19 @@ router.post('/', async (req, res) => {
                     ? parseFloat((dist.amount - paymentBase).toFixed(2))
                     : 0;
 
-                if ((milestone.paidAmount || 0) + paymentBase > milestone.budget) {
+                // Calculate total paid amount including tax
+                const currentPaidWithTax = milestone.hasTax
+                    ? (milestone.paidAmount || 0) * (1 + (milestone.taxRate || 21) / 100)
+                    : (milestone.paidAmount || 0);
+
+                if (currentPaidWithTax + parseFloat(dist.amount) > totalWithTax) {
                     return res.status(400).json({ 
-                        error: `Payment would exceed milestone ${milestone.name} base cost`,
+                        error: `Payment would exceed milestone ${milestone.name} total cost (including tax)`,
                         milestoneId: dist.milestoneId,
-                        currentlyPaid: milestone.paidAmount || 0,
+                        currentlyPaid: currentPaidWithTax,
                         totalBase: milestone.budget,
                         totalWithTax: totalWithTax,
-                        remaining: milestone.budget - (milestone.paidAmount || 0)
+                        remaining: totalWithTax - currentPaidWithTax
                     });
                 }
             }
@@ -332,24 +337,29 @@ router.post('/', async (req, res) => {
                 taxRate: milestone.hasTax ? (milestone.taxRate || 21) : 0
             });
 
-            if ((milestone.paidAmount || 0) + paymentBase > milestone.budget) {
+            // Calculate total paid amount including tax
+            const currentPaidWithTax = milestone.hasTax
+                ? (milestone.paidAmount || 0) * (1 + (milestone.taxRate || 21) / 100)
+                : (milestone.paidAmount || 0);
+
+            if (currentPaidWithTax + paymentAmount > totalWithTax) {
                 console.log('Payment validation failed:', {
-                    currentPaid: milestone.paidAmount || 0,
-                    attemptingToAdd: paymentBase,
-                    wouldBe: (milestone.paidAmount || 0) + paymentBase,
-                    maxAllowed: milestone.budget
+                    currentPaidWithTax,
+                    attemptingToAdd: paymentAmount,
+                    wouldBe: currentPaidWithTax + paymentAmount,
+                    maxAllowed: totalWithTax
                 });
 
                 return res.status(400).json({ 
-                    error: 'Payment would exceed milestone base cost',
-                    currentlyPaid: milestone.paidAmount || 0,
+                    error: 'Payment would exceed milestone total cost (including tax)',
+                    currentlyPaid: currentPaidWithTax,
                     totalBase: milestone.budget,
                     totalWithTax: totalWithTax,
                     paymentDetails: {
                         total: paymentAmount,
                         base: paymentBase
                     },
-                    remaining: milestone.budget - (milestone.paidAmount || 0)
+                    remaining: totalWithTax - currentPaidWithTax
                 });
             }
 
