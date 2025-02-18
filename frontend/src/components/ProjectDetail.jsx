@@ -485,7 +485,7 @@ const ProjectDetail = () => {
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2" color="text.secondary">
-                    Total Paid (with VAT)
+                    Total Paid
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     {formatCurrency(projectProgress?.totals?.paid || 0)}/{formatCurrency(projectProgress?.totals?.totalWithTax || 0)} ({Math.round(projectProgress?.totals?.paymentPercentage || 0)}%)
@@ -494,7 +494,14 @@ const ProjectDetail = () => {
                 <LinearProgress 
                   variant="determinate" 
                   value={projectProgress?.totals?.paymentPercentage || 0}
-                  sx={{ height: 8, borderRadius: 4, bgcolor: 'grey.200' }}
+                  sx={{ 
+                    height: 8, 
+                    borderRadius: 4, 
+                    bgcolor: 'grey.200',
+                    '& .MuiLinearProgress-bar': {
+                      backgroundColor: '#4caf50'
+                    }
+                  }}
                 />
               </Box>
 
