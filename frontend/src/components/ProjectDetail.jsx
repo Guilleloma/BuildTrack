@@ -238,8 +238,19 @@ const ProjectDetail = () => {
   const handleDeleteProject = async () => {
     if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) return;
     try {
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(getApiUrl(`/projects/${id}`, isSandbox), {
         method: 'DELETE',
+        headers,
+        credentials: 'include'
       });
       if (!response.ok) throw new Error('Error deleting project');
       navigate('/projects');
@@ -250,15 +261,26 @@ const ProjectDetail = () => {
 
   const handleCreateTask = async (taskData) => {
     try {
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(getApiUrl(`/projects/${id}/milestones/${selectedMilestone._id}/tasks`, isSandbox), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
+        credentials: 'include',
         body: JSON.stringify({
           ...taskData,
           milestone: selectedMilestone._id,
           status: 'PENDING'
         }),
       });
+
       if (!response.ok) throw new Error('Error creating task');
       
       const data = await response.json();
@@ -289,11 +311,21 @@ const ProjectDetail = () => {
 
   const handleUpdateTask = async (taskData) => {
     try {
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(
         getApiUrl(`/projects/${id}/milestones/${selectedMilestone._id}/tasks/${selectedTask._id}`, isSandbox),
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
+          credentials: 'include',
           body: JSON.stringify({
             ...taskData,
             milestone: selectedMilestone._id,
@@ -313,8 +345,19 @@ const ProjectDetail = () => {
   const handleDeleteTask = async (milestone_id, task_id) => {
     if (!window.confirm('Are you sure you want to delete this task?')) return;
     try {
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(getApiUrl(`/projects/${id}/milestones/${milestone_id}/tasks/${task_id}`, isSandbox), {
         method: 'DELETE',
+        headers,
+        credentials: 'include'
       });
       
       if (!response.ok) {
@@ -335,11 +378,21 @@ const ProjectDetail = () => {
 
   const handleToggleTask = async (milestone_id, task) => {
     try {
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(
         getApiUrl(`/projects/${id}/milestones/${milestone_id}/tasks/${task._id}`, isSandbox),
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
+          credentials: 'include',
           body: JSON.stringify({ 
             ...task,
             milestone: milestone_id,
@@ -392,8 +445,19 @@ const ProjectDetail = () => {
 
   const handleExportPDF = async () => {
     try {
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(getApiUrl(`/projects/${id}/report/pdf`, isSandbox), {
         method: 'GET',
+        headers,
+        credentials: 'include'
       });
       if (!response.ok) throw new Error('Error generating PDF report');
       
@@ -413,8 +477,19 @@ const ProjectDetail = () => {
 
   const handleExportExcel = async () => {
     try {
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(getApiUrl(`/projects/${id}/report/excel`, isSandbox), {
         method: 'GET',
+        headers,
+        credentials: 'include'
       });
       if (!response.ok) throw new Error('Error generating Excel report');
       
