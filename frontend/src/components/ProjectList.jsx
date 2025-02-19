@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingMessage from './LoadingMessage';
@@ -9,7 +9,6 @@ import {
   Typography, 
   TextField, 
   Grid, 
-  CircularProgress, 
   Container, 
   Paper, 
   Box, 
@@ -35,11 +34,7 @@ const ProjectList = () => {
   const { user } = useAuth();
   const isSandbox = location.pathname.startsWith('/sandbox');
 
-  useEffect(() => {
-    fetchProjects();
-  }, [user, isSandbox]);
-
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     try {
       console.log('[ProjectList] Iniciando fetchProjects:', { 
         isSandbox, 
@@ -51,22 +46,31 @@ const ProjectList = () => {
         'Content-Type': 'application/json'
       };
 
-      // Si estamos en modo autenticado, añadimos el token
       if (!isSandbox && user) {
         const token = await user.getIdToken();
         headers['Authorization'] = `Bearer ${token}`;
         console.log('[ProjectList] Token añadido a la petición para usuario:', user.email);
       }
 
-      const url = getApiUrl(`/projects${isSandbox ? '?mode=sandbox' : `?userId=${user?.uid}`}`);
+      const url = getApiUrl('projects', isSandbox);
       console.log('[ProjectList] Fetching projects from URL:', url);
 
       const response = await fetch(url, {
-        headers
+        headers,
+        credentials: 'include'
       });
 
       console.log('[ProjectList] Response status:', response.status);
-      if (!response.ok) throw new Error('Error fetching projects');
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        console.error('[ProjectList] Error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData
+        });
+        throw new Error(`Error fetching projects: ${response.status} ${response.statusText}`);
+      }
       
       const data = await response.json();
       console.log('[ProjectList] Projects received:', {
@@ -74,15 +78,19 @@ const ProjectList = () => {
         projects: data.map(p => ({ id: p._id, name: p.name, userId: p.userId }))
       });
 
-      // El backend ya filtra los proyectos, no necesitamos filtrar de nuevo
       setProjects(data);
       setLoading(false);
+      setError(null);
     } catch (error) {
       console.error('[ProjectList] Error in fetchProjects:', error);
-      setError('Error al cargar los proyectos');
+      setError(`Error al cargar los proyectos: ${error.message}`);
       setLoading(false);
     }
-  };
+  }, [isSandbox, user, location.pathname]);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
 
   const handleSearch = (e) => {
     setFilter(e.target.value);
@@ -116,16 +124,34 @@ const ProjectList = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(getApiUrl(`/projects/${projectId}`), {
-        method: 'DELETE',
-        headers
+      const url = getApiUrl(`projects/${projectId}`, isSandbox);
+      console.log('[ProjectList] Deleting project:', {
+        url,
+        projectId,
+        isSandbox
       });
 
-      if (!response.ok) throw new Error('Error deleting project');
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers,
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        console.error('[ProjectList] Error deleting project:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData
+        });
+        throw new Error(`Error deleting project: ${response.status} ${response.statusText}`);
+      }
+
       setProjects(projects.filter(p => p._id !== projectId));
+      setError(null);
     } catch (error) {
-      console.error('Error deleting project:', error);
-      setError('Error al eliminar el proyecto');
+      console.error('[ProjectList] Error in handleDeleteProject:', error);
+      setError('Error al eliminar el proyecto: ' + error.message);
     }
   };
 
