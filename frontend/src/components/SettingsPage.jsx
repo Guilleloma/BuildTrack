@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import {
   Container,
   Paper,
@@ -13,6 +15,9 @@ import {
 import { getApiUrl } from '../config';
 
 const SettingsPage = () => {
+  const location = useLocation();
+  const { user } = useAuth();
+  const isSandbox = location.pathname.startsWith('/sandbox');
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -21,19 +26,28 @@ const SettingsPage = () => {
 
   const fetchSettings = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl('/settings'), {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(getApiUrl('settings', isSandbox), {
+        headers,
+        credentials: 'include'
       });
-      if (!response.ok) throw new Error('Error fetching settings');
+
+      if (!response.ok) throw new Error('Error loading settings');
       const data = await response.json();
       setSettings(data);
       setEditedTaxRate(data.defaultTaxRate.toString());
+      setError(null);
     } catch (error) {
       console.error('Error fetching settings:', error);
-      setError('Error al cargar la configuración');
+      setError('Error loading settings. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -41,7 +55,7 @@ const SettingsPage = () => {
 
   useEffect(() => {
     fetchSettings();
-  }, []);
+  }, [isSandbox, user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,13 +68,19 @@ const SettingsPage = () => {
         throw new Error('Tax rate must be a number between 0 and 100');
       }
 
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl('/settings'), {
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(getApiUrl('settings', isSandbox), {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
+        credentials: 'include',
         body: JSON.stringify({
           defaultTaxRate: taxRate,
         }),
