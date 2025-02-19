@@ -501,7 +501,8 @@ router.delete('/:id', async (req, res) => {
         console.log('Request details:', {
             id: req.params.id,
             mode: req.query.mode,
-            auth: req.headers.authorization ? 'Present' : 'Not present'
+            auth: req.headers.authorization ? 'Present' : 'Not present',
+            userId: req.user?.uid
         });
 
         // Find the project first to check ownership
@@ -512,9 +513,13 @@ router.delete('/:id', async (req, res) => {
         }
 
         // Check if we're in sandbox mode or if the user owns the project
-        if (req.query.mode !== 'sandbox' && project.userId !== 'sandbox') {
-            console.log('Unauthorized: Not in sandbox mode and project is not owned by user');
-            return res.status(401).json({ message: 'Unauthorized' });
+        if (req.query.mode === 'sandbox' || project.userId === 'sandbox') {
+            console.log('Sandbox mode or sandbox project - allowing deletion');
+        } else if (project.userId !== req.user?.uid) {
+            console.log('Unauthorized: Project userId does not match authenticated user');
+            console.log('Project userId:', project.userId);
+            console.log('Authenticated userId:', req.user?.uid);
+            return res.status(401).json({ message: 'Unauthorized: You do not own this project' });
         }
 
         // Delete the project
