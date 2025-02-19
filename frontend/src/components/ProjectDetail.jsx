@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Container,
@@ -61,15 +61,15 @@ const ProjectDetail = () => {
     isSandbox
   });
 
-  const handleBackClick = () => {
-    console.log('[ProjectDetail] Back button clicked:', {
-      isSandbox,
-      currentPath: location.pathname
+  const handleBackClick = useCallback(() => {
+    const basePath = isSandbox ? '/sandbox/projects' : '/app/projects';
+    console.log('[ProjectDetail] Attempting navigation:', {
+      from: location.pathname,
+      to: basePath,
+      isSandbox
     });
-    const basePath = isSandbox ? '/sandbox' : '/app';
-    console.log('[ProjectDetail] Navigating to:', basePath);
     navigate(basePath);
-  };
+  }, [navigate, location.pathname, isSandbox]);
 
   const [project, setProject] = React.useState(null);
   const [projectProgress, setProjectProgress] = React.useState(null);
@@ -148,7 +148,7 @@ const ProjectDetail = () => {
       pathname: location.pathname
     });
     fetchProject();
-  }, [fetchProject]);
+  }, [fetchProject, handleBackClick]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -449,8 +449,11 @@ const ProjectDetail = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
           <Button
             variant="outlined"
-            onClick={handleBackClick}
             startIcon={<ArrowBackIcon />}
+            onClick={() => {
+              const basePath = isSandbox ? '/sandbox/projects' : '/app/projects';
+              window.location.href = basePath;
+            }}
           >
             Back to Projects
           </Button>

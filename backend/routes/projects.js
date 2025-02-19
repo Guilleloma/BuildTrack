@@ -46,8 +46,9 @@ router.get('/', async (req, res) => {
             const totalBase = milestones.reduce((sum, m) => sum + (m.budget || 0), 0);
             const totalTax = milestones.reduce((sum, m) => {
                 if (m.hasTax) {
+                    const budget = m.budget || 0;
                     const taxRate = m.taxRate || 21;
-                    return sum + ((m.budget || 0) * (taxRate / 100));
+                    return sum + (budget * (taxRate / 100));
                 }
                 return sum;
             }, 0);
@@ -133,14 +134,14 @@ router.get('/:id/progress', async (req, res) => {
 
             // Calculate payments for this milestone
             const singlePayments = payments
-                .filter(p => p.type === 'SINGLE' && p.milestone?._id.toString() === milestone._id.toString())
+                .filter(p => p.type === 'SINGLE' && p.milestone && p.milestone._id && p.milestone._id.toString() === milestone._id.toString())
                 .reduce((sum, p) => sum + p.amount, 0);
 
             const distributedPayments = payments
-                .filter(p => p.type === 'DISTRIBUTED')
+                .filter(p => p.type === 'DISTRIBUTED' && p.distributions && Array.isArray(p.distributions))
                 .reduce((sum, p) => {
                     const distribution = p.distributions.find(d => 
-                        d.milestone._id.toString() === milestone._id.toString()
+                        d.milestone && d.milestone._id && d.milestone._id.toString() === milestone._id.toString()
                     );
                     return sum + (distribution?.amount || 0);
                 }, 0);
@@ -149,7 +150,8 @@ router.get('/:id/progress', async (req, res) => {
             console.log('Payment calculations:', {
                 singlePayments,
                 distributedPayments,
-                totalPaid
+                totalPaid,
+                milestone: milestone._id.toString()
             });
             
             // Calculate task progress
@@ -214,26 +216,27 @@ router.get('/:id/progress', async (req, res) => {
             : 0;
 
         // Calculate total amounts
-        const totalBase = milestones.reduce((sum, m) => sum + m.budget, 0);
-        const totalBasePaid = milestonesWithProgress.reduce((sum, m) => sum + m.paidAmount, 0);
+        const totalBase = milestones.reduce((sum, m) => sum + (m.budget || 0), 0);
+        const totalBasePaid = milestonesWithProgress.reduce((sum, m) => sum + (m.paidAmount || 0), 0);
         const totalTax = milestones.reduce((sum, m) => {
             if (m.hasTax) {
+                const budget = m.budget || 0;
                 const taxRate = m.taxRate || 21;
-                return sum + (m.budget * (taxRate / 100));
+                return sum + (budget * (taxRate / 100));
             }
             return sum;
         }, 0);
         const totalTaxPaid = milestonesWithProgress.reduce((sum, m) => {
             if (m.hasTax) {
+                const paidAmount = m.paidAmount || 0;
                 const taxRate = m.taxRate || 21;
-                const basePaid = m.paidAmount;
-                return sum + (basePaid * (taxRate / 100));
+                return sum + (paidAmount * (taxRate / 100));
             }
             return sum;
         }, 0);
 
-        const totalWithTax = totalBase + totalTax;
-        const totalPaid = totalBasePaid + totalTaxPaid;
+        const totalWithTax = parseFloat((totalBase + totalTax).toFixed(2));
+        const totalPaid = parseFloat((totalBasePaid + totalTaxPaid).toFixed(2));
 
         console.log('Final calculations:', {
             totalBase,
@@ -296,83 +299,106 @@ router.get('/:id', async (req, res) => {
                 { milestone: { $in: milestoneIds } },
                 { 'distributions.milestone': { $in: milestoneIds } }
             ]
-        }).populate('milestone distributions.milestone');
+        }).populate({
+            path: 'milestone',
+            select: '_id name project',
+            populate: {
+                path: 'project',
+                select: '_id name userId'
+            }
+        }).populate({
+            path: 'distributions.milestone',
+            select: '_id name project',
+            populate: {
+                path: 'project',
+                select: '_id name userId'
+            }
+        });
+
         console.log('Payments found:', payments.length);
         
         // Get tasks and payments for each milestone
         const milestonesWithTasksAndPayments = await Promise.all(milestones.map(async (milestone) => {
-            const tasks = await Task.find({ milestone: milestone._id });
-            console.log(`Tasks found for milestone ${milestone._id}:`, tasks.length);
+            try {
+                const tasks = await Task.find({ milestone: milestone._id });
+                console.log(`Tasks found for milestone ${milestone._id}:`, tasks.length);
 
-            // Calculate total paid amount including distributed payments
-            const singlePayments = payments
-                .filter(p => p.type === 'SINGLE' && p.milestone?._id.toString() === milestone._id.toString())
-                .reduce((sum, p) => sum + p.amount, 0);
+                // Calculate total paid amount including distributed payments
+                const singlePayments = payments
+                    .filter(p => p.type === 'SINGLE' && p.milestone && p.milestone._id && p.milestone._id.toString() === milestone._id.toString())
+                    .reduce((sum, p) => sum + (p.amount || 0), 0);
 
-            const distributedPayments = payments
-                .filter(p => p.type === 'DISTRIBUTED')
-                .reduce((sum, p) => {
-                    const distribution = p.distributions.find(d => 
-                        d.milestone._id.toString() === milestone._id.toString()
-                    );
-                    return sum + (distribution?.amount || 0);
-                }, 0);
+                const distributedPayments = payments
+                    .filter(p => p.type === 'DISTRIBUTED' && p.distributions && Array.isArray(p.distributions))
+                    .reduce((sum, p) => {
+                        const distribution = p.distributions.find(d => 
+                            d.milestone && d.milestone._id && d.milestone._id.toString() === milestone._id.toString()
+                        );
+                        return sum + (distribution?.amount || 0);
+                    }, 0);
 
-            const totalPaid = singlePayments + distributedPayments;
-            console.log('Payment calculations for milestone:', {
-                id: milestone._id,
-                name: milestone.name,
-                singlePayments,
-                distributedPayments,
-                totalPaid
-            });
-            
-            // Calculate amounts with tax
-            const baseAmount = parseFloat(milestone.budget);
-            const taxAmount = milestone.hasTax ? baseAmount * (milestone.taxRate || 21) / 100 : 0;
-            const totalWithTax = baseAmount + taxAmount;
+                const totalPaid = singlePayments + distributedPayments;
+                
+                // Calculate amounts with tax
+                const baseAmount = parseFloat(milestone.budget || 0);
+                const taxAmount = milestone.hasTax ? baseAmount * (milestone.taxRate || 21) / 100 : 0;
+                const totalWithTax = baseAmount + taxAmount;
 
-            // Use the stored paidAmount which is already the base amount
-            const basePaid = milestone.paidAmount || 0;
-            const taxPaid = milestone.hasTax 
-                ? basePaid * (milestone.taxRate || 21) / 100 
-                : 0;
-            const totalPaidWithTax = basePaid + taxPaid;
+                // Use the stored paidAmount which is already the base amount
+                const basePaid = milestone.paidAmount || 0;
+                const taxPaid = milestone.hasTax 
+                    ? basePaid * (milestone.taxRate || 21) / 100 
+                    : 0;
+                const totalPaidWithTax = basePaid + taxPaid;
 
-            console.log('Amount calculations for milestone:', {
-                id: milestone._id,
-                name: milestone.name,
-                baseAmount,
-                taxAmount,
-                totalWithTax,
-                basePaid,
-                taxPaid,
-                totalPaidWithTax
-            });
+                console.log('Amount calculations for milestone:', {
+                    id: milestone._id,
+                    name: milestone.name,
+                    baseAmount,
+                    taxAmount,
+                    totalWithTax,
+                    basePaid,
+                    taxPaid,
+                    totalPaidWithTax
+                });
 
-            const milestoneObj = milestone.toObject();
-            milestoneObj.tasks = tasks;
-            milestoneObj.payments = payments.filter(p => 
-                (p.type === 'SINGLE' && p.milestone?._id.toString() === milestone._id.toString()) ||
-                (p.type === 'DISTRIBUTED' && p.distributions.some(d => d.milestone._id.toString() === milestone._id.toString()))
-            );
-            milestoneObj.totalWithTax = totalWithTax;
-            milestoneObj.taxAmount = taxAmount;
-            milestoneObj.baseAmount = baseAmount;
-            milestoneObj.paidAmount = basePaid;
-            milestoneObj.pendingAmount = totalWithTax - totalPaidWithTax;
-            milestoneObj.paymentPercentage = (totalPaidWithTax / totalWithTax) * 100;
+                const milestoneObj = milestone.toObject();
+                milestoneObj.tasks = tasks;
+                milestoneObj.payments = payments.filter(p => {
+                    if (p.type === 'SINGLE') {
+                        return p.milestone && p.milestone._id && p.milestone._id.toString() === milestone._id.toString();
+                    }
+                    if (p.type === 'DISTRIBUTED' && p.distributions) {
+                        return p.distributions.some(d => 
+                            d.milestone && d.milestone._id && d.milestone._id.toString() === milestone._id.toString()
+                        );
+                    }
+                    return false;
+                });
+                milestoneObj.totalWithTax = totalWithTax;
+                milestoneObj.taxAmount = taxAmount;
+                milestoneObj.baseAmount = baseAmount;
+                milestoneObj.paidAmount = basePaid;
+                milestoneObj.pendingAmount = totalWithTax - totalPaidWithTax;
+                milestoneObj.paymentPercentage = totalWithTax > 0 ? (totalPaidWithTax / totalWithTax) * 100 : 0;
 
-            return milestoneObj;
+                return milestoneObj;
+            } catch (error) {
+                console.error(`Error processing milestone ${milestone._id}:`, error);
+                return null;
+            }
         }));
 
-        // Calculate project totals
-        const projectTotals = milestonesWithTasksAndPayments.reduce((totals, m) => ({
-            totalBase: totals.totalBase + m.baseAmount,
-            totalTax: totals.totalTax + m.taxAmount,
-            totalWithTax: totals.totalWithTax + m.totalWithTax,
-            totalBasePaid: totals.totalBasePaid + m.paidAmount,
-            totalTaxPaid: totals.totalTaxPaid + (m.hasTax ? m.paidAmount * (m.taxRate || 21) / 100 : 0)
+        // Filter out any null milestones from processing errors
+        const validMilestones = milestonesWithTasksAndPayments.filter(Boolean);
+
+        // Calculate project totals only from valid milestones
+        const projectTotals = validMilestones.reduce((totals, m) => ({
+            totalBase: totals.totalBase + (m.baseAmount || 0),
+            totalTax: totals.totalTax + (m.taxAmount || 0),
+            totalWithTax: totals.totalWithTax + (m.totalWithTax || 0),
+            totalBasePaid: totals.totalBasePaid + (m.paidAmount || 0),
+            totalTaxPaid: totals.totalTaxPaid + (m.hasTax ? (m.paidAmount || 0) * (m.taxRate || 21) / 100 : 0)
         }), { totalBase: 0, totalTax: 0, totalWithTax: 0, totalBasePaid: 0, totalTaxPaid: 0 });
 
         const totalPaid = projectTotals.totalBasePaid + projectTotals.totalTaxPaid;
@@ -383,7 +409,7 @@ router.get('/:id', async (req, res) => {
         });
 
         const projectData = project.toObject();
-        projectData.milestones = milestonesWithTasksAndPayments;
+        projectData.milestones = validMilestones;
         projectData.totals = {
             base: parseFloat(projectTotals.totalBase.toFixed(2)),
             tax: parseFloat(projectTotals.totalTax.toFixed(2)),
@@ -391,7 +417,7 @@ router.get('/:id', async (req, res) => {
             base_paid: parseFloat(projectTotals.totalBasePaid.toFixed(2)),
             tax_paid: parseFloat(projectTotals.totalTaxPaid.toFixed(2)),
             paid: parseFloat(totalPaid.toFixed(2)),
-            paymentPercentage: (totalPaid / projectTotals.totalWithTax) * 100
+            paymentPercentage: projectTotals.totalWithTax > 0 ? (totalPaid / projectTotals.totalWithTax) * 100 : 0
         };
 
         // Send the response
@@ -806,24 +832,19 @@ async function calculateProjectData(project, milestones, payments, tasks) {
 
         // Calculate payments for this milestone
         const singlePayments = payments
-            .filter(p => p.type === 'SINGLE' && p.milestone?._id.toString() === milestone._id.toString());
+            .filter(p => p.type === 'SINGLE' && p.milestone && p.milestone._id && p.milestone._id.toString() === milestone._id.toString())
+            .reduce((sum, p) => sum + p.amount, 0);
         
         const distributedPayments = payments
-            .filter(p => p.type === 'DISTRIBUTED' && p.distributions.some(d => 
-                d.milestone._id.toString() === milestone._id.toString()
-            ));
+            .filter(p => p.type === 'DISTRIBUTED' && p.distributions && Array.isArray(p.distributions))
+            .reduce((sum, p) => {
+                const distribution = p.distributions.find(d => 
+                    d.milestone && d.milestone._id && d.milestone._id.toString() === milestone._id.toString()
+                );
+                return sum + (distribution?.amount || 0);
+            }, 0);
 
-        const milestonePayments = [
-            ...singlePayments,
-            ...distributedPayments.map(p => ({
-                ...p.toObject(),
-                amount: p.distributions.find(d => 
-                    d.milestone._id.toString() === milestone._id.toString()
-                ).amount
-            }))
-        ];
-
-        const totalPaid = milestonePayments.reduce((sum, p) => sum + p.amount, 0);
+        const totalPaid = singlePayments + distributedPayments;
         
         const baseAmount = milestone.budget;
         const taxAmount = milestone.hasTax ? baseAmount * (milestone.taxRate || 21) / 100 : 0;
@@ -832,7 +853,17 @@ async function calculateProjectData(project, milestones, payments, tasks) {
         return {
             ...milestone.toObject(),
             tasks: milestoneTasks,
-            payments: milestonePayments,
+            payments: payments.filter(p => {
+                if (p.type === 'SINGLE') {
+                    return p.milestone && p.milestone._id && p.milestone._id.toString() === milestone._id.toString();
+                }
+                if (p.type === 'DISTRIBUTED' && p.distributions) {
+                    return p.distributions.some(d => 
+                        d.milestone && d.milestone._id && d.milestone._id.toString() === milestone._id.toString()
+                    );
+                }
+                return false;
+            }),
             totalTasks,
             completedTasks,
             taskCompletionPercentage: totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0,

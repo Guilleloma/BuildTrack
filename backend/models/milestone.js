@@ -16,13 +16,13 @@ const milestoneSchema = new mongoose.Schema({
     type: Number,
     required: true,
     default: 0,
-    get: v => parseFloat(v.toFixed(2))
+    get: v => v ? parseFloat(v.toFixed(2)) : 0
   },
   paidAmount: {
     type: Number,
     required: true,
     default: 0,
-    get: v => parseFloat(v.toFixed(2))
+    get: v => v ? parseFloat(v.toFixed(2)) : 0
   },
   hasTax: {
     type: Boolean,
@@ -45,19 +45,23 @@ const milestoneSchema = new mongoose.Schema({
 
 // Virtual for total amount with tax
 milestoneSchema.virtual('totalWithTax').get(function() {
-  if (!this.hasTax) return parseFloat(this.budget.toFixed(2));
+  const budget = this.budget || 0;
+  if (!this.hasTax) return parseFloat(budget.toFixed(2));
   const taxRate = this.taxRate || 21; // Default to 21% if not specified
-  return parseFloat((this.budget * (1 + taxRate / 100)).toFixed(2));
+  return parseFloat((budget * (1 + taxRate / 100)).toFixed(2));
 });
 
 // Virtual for remaining amount with tax
 milestoneSchema.virtual('remainingWithTax').get(function() {
+  const budget = this.budget || 0;
+  const paidAmount = this.paidAmount || 0;
+  
   if (!this.hasTax) {
-    return parseFloat((this.budget - this.paidAmount).toFixed(2));
+    return parseFloat((budget - paidAmount).toFixed(2));
   }
   const taxRate = this.taxRate || 21;
-  const totalWithTax = this.budget * (1 + taxRate / 100);
-  return parseFloat((totalWithTax - this.paidAmount).toFixed(2));
+  const totalWithTax = budget * (1 + taxRate / 100);
+  return parseFloat((totalWithTax - paidAmount).toFixed(2));
 });
 
 module.exports = mongoose.model('Milestone', milestoneSchema); 
