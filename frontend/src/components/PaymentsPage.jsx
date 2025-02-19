@@ -47,33 +47,60 @@ const PaymentsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isSandbox = location.pathname.startsWith('/sandbox');
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
+      console.log('=== INICIO fetchData PaymentsPage ===');
+      console.log('Estado actual:', {
+        isSandbox,
+        pathname: location.pathname,
+        user: user ? {
+          uid: user.uid,
+          email: user.email,
+          isAnonymous: user.isAnonymous
+        } : null
+      });
+
       setLoading(true);
       try {
-        // Get payment ID from URL query params
         const params = new URLSearchParams(location.search);
         const paymentId = params.get('id');
+        console.log('Payment ID from URL:', paymentId);
 
         let headers = {
           'Content-Type': 'application/json'
         };
 
-        // Solo añadimos el token si no estamos en modo sandbox
-        if (!isSandbox) {
-          const token = localStorage.getItem('token');
-          if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-          }
+        if (!isSandbox && user) {
+          const token = await user.getIdToken();
+          console.log('Token obtenido:', token ? 'Token presente' : 'Token ausente');
+          headers['Authorization'] = `Bearer ${token}`;
         }
+        console.log('Headers configurados:', headers);
+
+        console.log('Iniciando fetches:', {
+          paymentsUrl: getApiUrl(`/payments${isSandbox ? '?mode=sandbox' : `?userId=${user?.uid}`}`),
+          projectsUrl: getApiUrl(`/projects${isSandbox ? '?mode=sandbox' : `?userId=${user?.uid}`}`)
+        });
 
         const [paymentsRes, projectsRes] = await Promise.all([
-          fetch(getApiUrl(`/payments${isSandbox ? '?mode=sandbox' : ''}`), { headers }),
-          fetch(getApiUrl(`/projects${isSandbox ? '?mode=sandbox' : ''}`), { headers })
+          fetch(getApiUrl(`/payments${isSandbox ? '?mode=sandbox' : `?userId=${user?.uid}`}`), { headers }),
+          fetch(getApiUrl(`/projects${isSandbox ? '?mode=sandbox' : `?userId=${user?.uid}`}`), { headers })
         ]);
 
+        console.log('Respuestas recibidas:', {
+          paymentsStatus: paymentsRes.status,
+          projectsStatus: projectsRes.status
+        });
+
         if (!paymentsRes.ok || !projectsRes.ok) {
+          const paymentsText = await paymentsRes.text();
+          const projectsText = await projectsRes.text();
+          console.error('Error en respuestas:', {
+            payments: { status: paymentsRes.status, body: paymentsText },
+            projects: { status: projectsRes.status, body: projectsText }
+          });
           throw new Error('Error fetching data');
         }
 
@@ -82,12 +109,24 @@ const PaymentsPage = () => {
           projectsRes.json()
         ]);
 
+        console.log('Datos recibidos:', {
+          payments: {
+            count: paymentsData.length,
+            sample: paymentsData.slice(0, 2)
+          },
+          projects: {
+            count: projectsData.length,
+            sample: projectsData.slice(0, 2)
+          }
+        });
+
         setPayments(paymentsData);
         setProjects(projectsData);
 
-        // If we have a payment ID in the URL, find and open that payment for editing
         if (paymentId) {
+          console.log('Buscando pago para editar:', paymentId);
           const paymentToEdit = paymentsData.find(p => p._id === paymentId);
+          console.log('Pago encontrado:', paymentToEdit);
           if (paymentToEdit && paymentToEdit.type === 'DISTRIBUTED') {
             // For distributed payments, we need to get the milestone info
             const milestones = paymentToEdit.distributions.map(dist => ({
@@ -103,15 +142,20 @@ const PaymentsPage = () => {
           }
         }
       } catch (err) {
-        console.error('Error fetching data:', err);
+        console.error('Error detallado en fetchData:', {
+          message: err.message,
+          stack: err.stack,
+          name: err.name
+        });
         setError(err.message);
       } finally {
         setLoading(false);
+        console.log('=== FIN fetchData PaymentsPage ===');
       }
     };
 
     fetchData();
-  }, [location, isSandbox]);
+  }, [location, isSandbox, user]);
 
   // Calculate global statistics
   const statistics = {
@@ -223,11 +267,9 @@ const PaymentsPage = () => {
           'Content-Type': 'application/json'
         };
 
-        if (!isSandbox) {
-          const token = localStorage.getItem('token');
-          if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-          }
+        if (!isSandbox && user) {
+          const token = await user.getIdToken();
+          headers['Authorization'] = `Bearer ${token}`;
         }
 
         if (payment.type === 'DISTRIBUTED') {
@@ -316,11 +358,9 @@ const PaymentsPage = () => {
         'Content-Type': 'application/json'
       };
 
-      if (!isSandbox) {
-        const token = localStorage.getItem('token');
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
       }
 
       const response = await fetch(
@@ -362,11 +402,9 @@ const PaymentsPage = () => {
         'Content-Type': 'application/json'
       };
 
-      if (!isSandbox) {
-        const token = localStorage.getItem('token');
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
       }
 
       const url = payment.type === 'DISTRIBUTED' && milestoneId

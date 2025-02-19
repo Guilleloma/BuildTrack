@@ -11,6 +11,33 @@ const Task = require('../models/task');
 // GET /payments - list all payments
 router.get('/', async (req, res) => {
   try {
+    console.log('=== GET /payments ===');
+    console.log('Request details:', {
+      mode: req.query.mode,
+      userId: req.query.userId,
+      auth: req.headers.authorization ? 'Present' : 'Not present'
+    });
+
+    let query = {};
+    
+    if (req.query.mode === 'sandbox') {
+      query = {
+        $or: [
+          { 'milestone.project.userId': 'sandbox' },
+          { 'distributions.milestone.project.userId': 'sandbox' }
+        ]
+      };
+    } else if (req.headers.authorization && req.query.userId) {
+      query = {
+        $or: [
+          { 'milestone.project.userId': req.query.userId },
+          { 'distributions.milestone.project.userId': req.query.userId }
+        ]
+      };
+    } else {
+      return res.status(401).json({ error: 'Unauthorized: Token and userId required for non-sandbox mode' });
+    }
+
     const payments = await Payment.find()
       .populate({
         path: 'milestone distributions.milestone',
@@ -21,10 +48,29 @@ router.get('/', async (req, res) => {
         select: '_id name budget hasTax taxRate paidAmount project'
       });
 
+    // Filter payments based on query after population
+    const filteredPayments = payments.filter(payment => {
+      if (req.query.mode === 'sandbox') {
+        if (payment.type === 'DISTRIBUTED') {
+          return payment.distributions.some(dist => 
+            dist.milestone?.project?.userId === 'sandbox'
+          );
+        }
+        return payment.milestone?.project?.userId === 'sandbox';
+      } else {
+        if (payment.type === 'DISTRIBUTED') {
+          return payment.distributions.some(dist => 
+            dist.milestone?.project?.userId === req.query.userId
+          );
+        }
+        return payment.milestone?.project?.userId === req.query.userId;
+      }
+    });
+
     // Get all unique project IDs from both single and distributed payments
     const projectIds = [...new Set([
-      ...payments.map(p => p.milestone?.project?._id).filter(Boolean),
-      ...payments.flatMap(p => p.distributions?.map(d => d.milestone?.project?._id) || []).filter(Boolean)
+      ...filteredPayments.map(p => p.milestone?.project?._id).filter(Boolean),
+      ...filteredPayments.flatMap(p => p.distributions?.map(d => d.milestone?.project?._id) || []).filter(Boolean)
     ])];
     
     // Get complete project information with progress
@@ -70,7 +116,7 @@ router.get('/', async (req, res) => {
     }));
 
     // Transform payments to include project information
-    const paymentsWithProgress = payments.map(payment => {
+    const paymentsWithProgress = filteredPayments.map(payment => {
       const paymentObj = payment.toObject();
 
       if (payment.type === 'DISTRIBUTED') {
