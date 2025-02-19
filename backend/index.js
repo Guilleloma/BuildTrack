@@ -6,6 +6,13 @@ const port = process.env.PORT || 3000;
 const jwt = require('jsonwebtoken');
 const SECRET = process.env.JWT_SECRET || 'mysecret';
 const users = {};
+const admin = require('firebase-admin');
+
+// Initialize Firebase Admin
+const serviceAccount = require('./serviceAccountKey.json');
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
 
 // MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://holaguillelopez:(Lokkito86)@buildtrack.ayjef.mongodb.net/buildtrack?retryWrites=true&w=majority';
@@ -40,6 +47,36 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   next();
 });
+
+// Authentication middleware
+const authenticateToken = async (req, res, next) => {
+  console.log('=== Authentication Middleware ===');
+  console.log('Path:', req.path);
+  console.log('Query mode:', req.query.mode);
+  
+  // Skip authentication for sandbox mode
+  if (req.query.mode === 'sandbox') {
+    console.log('Sandbox mode detected, skipping authentication');
+    return next();
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    console.log('No authorization header found');
+    return res.status(401).json({ error: 'No authorization header' });
+  }
+
+  try {
+    const token = authHeader.split(' ')[1];
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    req.user = decodedToken;
+    console.log('Token verified successfully for user:', decodedToken.uid);
+    next();
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+};
 
 // Basic route for health check
 app.get('/', (req, res) => {
@@ -79,10 +116,10 @@ const projectsRouter = require('./routes/projects');
 const paymentsRouter = require('./routes/payments');
 const settingsRouter = require('./routes/settings');
 
-// Register routers
-app.use('/projects', projectsRouter);
-app.use('/payments', paymentsRouter);
-app.use('/settings', settingsRouter);
+// Register routers with authentication
+app.use('/projects', authenticateToken, projectsRouter);
+app.use('/payments', authenticateToken, paymentsRouter);
+app.use('/settings', authenticateToken, settingsRouter);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
