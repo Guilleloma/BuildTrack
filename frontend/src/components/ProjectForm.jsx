@@ -40,7 +40,7 @@ const ProjectForm = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(getApiUrl('/projects'), {
+      const response = await fetch(getApiUrl('/projects', isSandbox), {
         method: 'POST',
         headers,
         credentials: 'include',
