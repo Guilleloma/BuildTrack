@@ -433,7 +433,7 @@ router.post('/', async (req, res) => {
 
             // Si la validación pasa, calculamos el monto base del pago
             const paymentBase = milestone.hasTax 
-                ? parseFloat((paymentAmount / (1 + (milestone.taxRate || 21) / 100)).toFixed(2))
+                ? Math.round((paymentAmount / (1 + (milestone.taxRate || 21) / 100)) * 100) / 100
                 : paymentAmount;
 
             console.log('5. Final Payment Amounts:', {
@@ -932,7 +932,7 @@ router.delete('/:id', async (req, res) => {
             const currentPaidAmount = parseFloat(milestone.paidAmount || 0);
             const paymentAmount = parseFloat(payment.amount || 0);
             const paymentBase = milestone.hasTax 
-              ? parseFloat((paymentAmount / (1 + (milestone.taxRate || 21) / 100)).toFixed(2))
+              ? Math.round((paymentAmount / (1 + (milestone.taxRate || 21) / 100)) * 100) / 100
               : paymentAmount;
             let newPaidAmount = parseFloat((currentPaidAmount - paymentBase).toFixed(2));
 
@@ -1004,7 +1004,7 @@ router.delete('/:id', async (req, res) => {
                 const currentPaidAmount = parseFloat(milestone.paidAmount || 0);
                 const distributionAmount = parseFloat(dist.amount || 0);
                 const paymentBase = milestone.hasTax 
-                  ? parseFloat((distributionAmount / (1 + (milestone.taxRate || 21) / 100)).toFixed(2))
+                  ? Math.round((distributionAmount / (1 + (milestone.taxRate || 21) / 100)) * 100) / 100
                   : distributionAmount;
                 let newPaidAmount = parseFloat((currentPaidAmount - paymentBase).toFixed(2));
 

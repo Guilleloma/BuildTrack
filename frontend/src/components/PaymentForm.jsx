@@ -423,10 +423,10 @@ const PaymentForm = ({ open, onClose, onSubmit, milestone, project, payment }) =
                 Total Cost (with VAT): {formatCurrency(milestoneStatus.totalWithTax)}
               </Typography>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1 }}>
-                Total Paid (with VAT): {formatCurrency(milestone.paidAmount * (1 + (milestone.hasTax ? (milestone.taxRate || 21) / 100 : 0)))}
+                Total Paid (with VAT): {formatCurrency(Math.round(milestone.paidAmount * (1 + (milestone.hasTax ? (milestone.taxRate || 21) / 100 : 0)) * 100) / 100)}
               </Typography>
               <Typography variant="subtitle2" color="text.secondary">
-                Total Remaining (with VAT): {formatCurrency(milestoneStatus.totalWithTax - (milestone.paidAmount * (1 + (milestone.hasTax ? (milestone.taxRate || 21) / 100 : 0))))}
+                Total Remaining (with VAT): {formatCurrency(Math.round((milestoneStatus.totalWithTax - (milestone.paidAmount * (1 + (milestone.hasTax ? (milestone.taxRate || 21) / 100 : 0)))) * 100) / 100)}
               </Typography>
             </Box>
           )}
