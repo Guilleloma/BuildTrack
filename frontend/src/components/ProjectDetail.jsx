@@ -452,7 +452,7 @@ const ProjectDetail = () => {
             startIcon={<ArrowBackIcon />}
             onClick={() => {
               const basePath = isSandbox ? '/sandbox/projects' : '/app/projects';
-              window.location.href = basePath;
+              navigate(basePath);
             }}
           >
             Back to Projects
