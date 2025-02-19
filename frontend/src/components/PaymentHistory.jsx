@@ -214,18 +214,25 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
 
   const handleEditSubmit = async (formData) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl(`/payments/${editingPayment._id}`), {
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(getApiUrl(`payments/${editingPayment._id}`, isSandbox), {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
+        credentials: 'include',
         body: JSON.stringify(formData)
       });
 
       if (!response.ok) {
-        throw new Error('Error al actualizar el pago');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al actualizar el pago');
       }
 
       await fetchPayments();

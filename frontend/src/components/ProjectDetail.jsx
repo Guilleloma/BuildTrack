@@ -1,5 +1,6 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import {
   Container,
   Card,
@@ -51,6 +52,7 @@ const ProjectDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const isSandbox = location.pathname.startsWith('/sandbox');
 
   console.log('[ProjectDetail] Initializing with:', {
@@ -101,22 +103,31 @@ const ProjectDetail = () => {
   const fetchProject = useCallback(async () => {
     try {
       console.log('[ProjectDetail] Fetching project with sandbox mode:', isSandbox);
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl(`/projects/${id}`, isSandbox), {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(getApiUrl(`projects/${id}`, isSandbox), {
+        headers,
+        credentials: 'include'
       });
+      
       if (!response.ok) throw new Error('Project not found');
       const data = await response.json();
       
       // Obtener el progreso del proyecto
       console.log('[ProjectDetail] Fetching project progress with sandbox mode:', isSandbox);
-      const progressResponse = await fetch(getApiUrl(`/projects/${id}/progress`, isSandbox), {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const progressResponse = await fetch(getApiUrl(`projects/${id}/progress`, isSandbox), {
+        headers,
+        credentials: 'include'
       });
+      
       if (!progressResponse.ok) throw new Error('Error fetching project progress');
       const progressData = await progressResponse.json();
       
@@ -128,7 +139,7 @@ const ProjectDetail = () => {
     } finally {
       setLoading(false);
     }
-  }, [id, isSandbox]);
+  }, [id, isSandbox, user]);
 
   useEffect(() => {
     console.log('[ProjectDetail] Component mounted with:', {
@@ -149,15 +160,22 @@ const ProjectDetail = () => {
 
   const handleCreateMilestone = async (milestoneData) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl(`/projects/${id}/milestones`, isSandbox), {
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(getApiUrl(`projects/${id}/milestones`, isSandbox), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
+        credentials: 'include',
         body: JSON.stringify(milestoneData)
       });
+      
       if (!response.ok) throw new Error('Error creating milestone');
       await fetchProject();
       setMilestoneFormOpen(false);
@@ -168,15 +186,22 @@ const ProjectDetail = () => {
 
   const handleUpdateMilestone = async (milestoneId, milestoneData) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl(`/projects/${id}/milestones/${milestoneId}`, isSandbox), {
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(getApiUrl(`projects/${id}/milestones/${milestoneId}`, isSandbox), {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
+        credentials: 'include',
         body: JSON.stringify(milestoneData)
       });
+      
       if (!response.ok) throw new Error('Error updating milestone');
       await fetchProject();
       setMilestoneFormOpen(false);
@@ -188,13 +213,21 @@ const ProjectDetail = () => {
   const handleDeleteMilestone = async (milestoneId) => {
     if (!window.confirm('Are you sure you want to delete this milestone?')) return;
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl(`/projects/${id}/milestones/${milestoneId}`, isSandbox), {
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(getApiUrl(`projects/${id}/milestones/${milestoneId}`, isSandbox), {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers,
+        credentials: 'include'
       });
+      
       if (!response.ok) throw new Error('Error deleting milestone');
       await fetchProject();
     } catch (err) {
