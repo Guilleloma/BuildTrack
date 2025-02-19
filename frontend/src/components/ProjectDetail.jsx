@@ -84,7 +84,7 @@ const ProjectDetail = () => {
   const fetchProjectProgress = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl(`/projects/${id}/progress`), {
+      const response = await fetch(getApiUrl(`/projects/${id}/progress`, isSandbox), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -95,12 +95,12 @@ const ProjectDetail = () => {
     } catch (err) {
       console.error('Error fetching project progress:', err);
     }
-  }, [id]);
+  }, [id, isSandbox]);
 
   const fetchProject = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl(`/projects/${id}`), {
+      const response = await fetch(getApiUrl(`/projects/${id}`, isSandbox), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -109,7 +109,7 @@ const ProjectDetail = () => {
       const data = await response.json();
       
       // Obtener el progreso del proyecto
-      const progressResponse = await fetch(getApiUrl(`/projects/${id}/progress`), {
+      const progressResponse = await fetch(getApiUrl(`/projects/${id}/progress`, isSandbox), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -124,7 +124,7 @@ const ProjectDetail = () => {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, isSandbox]);
 
   useEffect(() => {
     fetchProject();
@@ -141,7 +141,7 @@ const ProjectDetail = () => {
   const handleCreateMilestone = async (milestoneData) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl(`/projects/${id}/milestones`), {
+      const response = await fetch(getApiUrl(`/projects/${id}/milestones`, isSandbox), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -160,7 +160,7 @@ const ProjectDetail = () => {
   const handleUpdateMilestone = async (milestoneId, milestoneData) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl(`/projects/${id}/milestones/${milestoneId}`), {
+      const response = await fetch(getApiUrl(`/projects/${id}/milestones/${milestoneId}`, isSandbox), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -180,7 +180,7 @@ const ProjectDetail = () => {
     if (!window.confirm('Are you sure you want to delete this milestone?')) return;
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl(`/projects/${id}/milestones/${milestoneId}`), {
+      const response = await fetch(getApiUrl(`/projects/${id}/milestones/${milestoneId}`, isSandbox), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -196,7 +196,7 @@ const ProjectDetail = () => {
   const handleDeleteProject = async () => {
     if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) return;
     try {
-      const response = await fetch(getApiUrl(`/projects/${id}`), {
+      const response = await fetch(getApiUrl(`/projects/${id}`, isSandbox), {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Error deleting project');
@@ -208,7 +208,7 @@ const ProjectDetail = () => {
 
   const handleCreateTask = async (taskData) => {
     try {
-      const response = await fetch(getApiUrl(`/projects/${id}/milestones/${selectedMilestone._id}/tasks`), {
+      const response = await fetch(getApiUrl(`/projects/${id}/milestones/${selectedMilestone._id}/tasks`, isSandbox), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -271,7 +271,7 @@ const ProjectDetail = () => {
   const handleDeleteTask = async (milestone_id, task_id) => {
     if (!window.confirm('Are you sure you want to delete this task?')) return;
     try {
-      const response = await fetch(getApiUrl(`/projects/${id}/milestones/${milestone_id}/tasks/${task_id}`), {
+      const response = await fetch(getApiUrl(`/projects/${id}/milestones/${milestone_id}/tasks/${task_id}`, isSandbox), {
         method: 'DELETE',
       });
       
@@ -294,7 +294,7 @@ const ProjectDetail = () => {
   const handleToggleTask = async (milestone_id, task) => {
     try {
       const response = await fetch(
-        getApiUrl(`/projects/${id}/milestones/${milestone_id}/tasks/${task._id}`),
+        getApiUrl(`/projects/${id}/milestones/${milestone_id}/tasks/${task._id}`, isSandbox),
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -314,7 +314,7 @@ const ProjectDetail = () => {
 
   const handlePaymentComplete = async (paymentData) => {
     try {
-      const response = await fetch(getApiUrl('/payments'), {
+      const response = await fetch(getApiUrl('/payments', isSandbox), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(paymentData),
@@ -340,7 +340,7 @@ const ProjectDetail = () => {
 
   const handleExportPDF = async () => {
     try {
-      const response = await fetch(getApiUrl(`/projects/${id}/report/pdf`), {
+      const response = await fetch(getApiUrl(`/projects/${id}/report/pdf`, isSandbox), {
         method: 'GET',
       });
       if (!response.ok) throw new Error('Error generating PDF report');
@@ -361,7 +361,7 @@ const ProjectDetail = () => {
 
   const handleExportExcel = async () => {
     try {
-      const response = await fetch(getApiUrl(`/projects/${id}/report/excel`), {
+      const response = await fetch(getApiUrl(`/projects/${id}/report/excel`, isSandbox), {
         method: 'GET',
       });
       if (!response.ok) throw new Error('Error generating Excel report');
