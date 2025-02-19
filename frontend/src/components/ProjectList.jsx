@@ -52,7 +52,7 @@ const ProjectList = () => {
         console.log('[ProjectList] Token añadido a la petición para usuario:', user.email);
       }
 
-      const url = getApiUrl('projects', isSandbox);
+      const url = getApiUrl('projects', isSandbox, !isSandbox && user ? user.uid : null);
       console.log('[ProjectList] Fetching projects from URL:', url);
 
       const response = await fetch(url, {
