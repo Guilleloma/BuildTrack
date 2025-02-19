@@ -353,6 +353,8 @@ const PaymentsPage = () => {
   };
 
   const handleEditSubmit = async (formData) => {
+    console.log('=== INICIO handleEditSubmit PaymentsPage ===');
+    console.log('FormData:', formData);
     try {
       let headers = {
         'Content-Type': 'application/json'
@@ -363,6 +365,7 @@ const PaymentsPage = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
+      console.log('Enviando petición PUT a:', getApiUrl(`/payments/${editingPayment._id}${isSandbox ? '?mode=sandbox' : ''}`));
       const response = await fetch(
         getApiUrl(`/payments/${editingPayment._id}${isSandbox ? '?mode=sandbox' : ''}`),
         {
@@ -373,23 +376,35 @@ const PaymentsPage = () => {
       );
 
       if (!response.ok) {
-        throw new Error('Error updating payment');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error updating payment');
       }
 
-      // Refetch payments to update the list
+      // Obtener los datos actualizados
       const paymentsRes = await fetch(
-        getApiUrl(`/payments${isSandbox ? '?mode=sandbox' : ''}`),
+        getApiUrl(`/payments${isSandbox ? '?mode=sandbox' : `?userId=${user?.uid}`}`),
         { headers }
       );
       if (!paymentsRes.ok) throw new Error('Error al recargar los pagos');
       const paymentsData = await paymentsRes.json();
       setPayments(paymentsData);
+
+      // Actualizar también los proyectos para reflejar los cambios en los totales
+      const projectsRes = await fetch(
+        getApiUrl(`/projects${isSandbox ? '?mode=sandbox' : `?userId=${user?.uid}`}`),
+        { headers }
+      );
+      if (!projectsRes.ok) throw new Error('Error al recargar los proyectos');
+      const projectsData = await projectsRes.json();
+      setProjects(projectsData);
+
       setEditingPayment(null);
       showMessage('Payment updated successfully');
     } catch (error) {
       console.error('Error updating payment:', error);
       showMessage(error.message, 'error');
     }
+    console.log('=== FIN handleEditSubmit PaymentsPage ===');
   };
 
   const handleDeleteClick = async (payment, milestoneId = null) => {
