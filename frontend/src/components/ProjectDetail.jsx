@@ -53,7 +53,8 @@ const ProjectDetail = () => {
   const location = useLocation();
   const isSandbox = location.pathname.startsWith('/sandbox');
 
-  console.log('[ProjectDetail] Current location:', {
+  console.log('[ProjectDetail] Initializing with:', {
+    id,
     pathname: location.pathname,
     isSandbox
   });
@@ -99,6 +100,7 @@ const ProjectDetail = () => {
 
   const fetchProject = useCallback(async () => {
     try {
+      console.log('[ProjectDetail] Fetching project with sandbox mode:', isSandbox);
       const token = localStorage.getItem('token');
       const response = await fetch(getApiUrl(`/projects/${id}`, isSandbox), {
         headers: {
@@ -109,6 +111,7 @@ const ProjectDetail = () => {
       const data = await response.json();
       
       // Obtener el progreso del proyecto
+      console.log('[ProjectDetail] Fetching project progress with sandbox mode:', isSandbox);
       const progressResponse = await fetch(getApiUrl(`/projects/${id}/progress`, isSandbox), {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -120,6 +123,7 @@ const ProjectDetail = () => {
       setProject(data);
       setProjectProgress(progressData);
     } catch (err) {
+      console.error('[ProjectDetail] Error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -127,6 +131,11 @@ const ProjectDetail = () => {
   }, [id, isSandbox]);
 
   useEffect(() => {
+    console.log('[ProjectDetail] Component mounted with:', {
+      id,
+      isSandbox,
+      pathname: location.pathname
+    });
     fetchProject();
   }, [fetchProject]);
 
