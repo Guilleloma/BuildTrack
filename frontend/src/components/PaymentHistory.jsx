@@ -243,16 +243,22 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
     }
 
     try {
-      const token = localStorage.getItem('token');
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const url = payment.type === 'DISTRIBUTED' && milestoneId
-        ? `${getApiUrl(`/payments/${payment._id}`)}?milestoneId=${milestoneId}`
-        : getApiUrl(`/payments/${payment._id}`);
+        ? `${getApiUrl(`payments/${payment._id}`, isSandbox)}?milestoneId=${milestoneId}`
+        : getApiUrl(`payments/${payment._id}`, isSandbox);
 
       const response = await fetch(url, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers
       });
 
       if (!response.ok) {
@@ -261,7 +267,7 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
 
       await fetchPayments();
       if (onPaymentDeleted) {
-        onPaymentDeleted();
+        await onPaymentDeleted();
       }
       showMessage('Pago eliminado correctamente');
     } catch (err) {
