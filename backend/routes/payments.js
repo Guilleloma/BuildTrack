@@ -577,6 +577,18 @@ router.get('/:id', async (req, res) => {
 // PUT /payments/:id - update a payment
 router.put('/:id', async (req, res) => {
   try {
+    console.log('=== PUT /payments/:id ===');
+    console.log('Request details:', {
+      mode: req.query.mode,
+      userId: req.query.userId,
+      auth: req.headers.authorization ? 'Present' : 'Not present'
+    });
+
+    // Validación de autenticación
+    if (req.query.mode !== 'sandbox' && (!req.headers.authorization || !req.query.userId)) {
+      return res.status(401).json({ error: 'Unauthorized: Token and userId required for non-sandbox mode' });
+    }
+
     const payment = await Payment.findById(req.params.id);
     if (!payment) {
       return res.status(404).json({ error: 'Payment not found' });
