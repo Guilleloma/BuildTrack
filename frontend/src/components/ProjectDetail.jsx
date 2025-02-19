@@ -816,7 +816,7 @@ const ProjectDetail = () => {
             setMilestoneFormOpen(false);
             setSelectedMilestone(null);
           }}
-          onSubmit={selectedMilestone ? handleUpdateMilestone : handleCreateMilestone}
+          onSubmit={(data) => selectedMilestone ? handleUpdateMilestone(selectedMilestone._id, data) : handleCreateMilestone(data)}
           milestone={selectedMilestone}
         />
 
