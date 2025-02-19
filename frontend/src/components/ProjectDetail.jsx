@@ -248,7 +248,7 @@ const ProjectDetail = () => {
   const handleUpdateTask = async (taskData) => {
     try {
       const response = await fetch(
-        getApiUrl(`/projects/${id}/milestones/${selectedMilestone._id}/tasks/${selectedTask._id}`),
+        getApiUrl(`/projects/${id}/milestones/${selectedMilestone._id}/tasks/${selectedTask._id}`, isSandbox),
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
