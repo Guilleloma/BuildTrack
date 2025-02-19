@@ -471,10 +471,29 @@ router.put('/:id', async (req, res) => {
 // DELETE remove a project
 router.delete('/:id', async (req, res) => {
     try {
-        const project = await Project.findByIdAndDelete(req.params.id);
+        console.log('=== DELETE /projects/:id ===');
+        console.log('Request details:', {
+            id: req.params.id,
+            mode: req.query.mode,
+            auth: req.headers.authorization ? 'Present' : 'Not present'
+        });
+
+        // Find the project first to check ownership
+        const project = await Project.findById(req.params.id);
         if (!project) {
+            console.log('Project not found');
             return res.status(404).json({ message: 'Project not found' });
         }
+
+        // Check if we're in sandbox mode or if the user owns the project
+        if (req.query.mode !== 'sandbox' && project.userId !== 'sandbox') {
+            console.log('Unauthorized: Not in sandbox mode and project is not owned by user');
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        // Delete the project
+        await Project.findByIdAndDelete(req.params.id);
+        
         // Get all milestones for this project
         const milestones = await Milestone.find({ project: project._id });
         const milestoneIds = milestones.map(m => m._id);
@@ -484,8 +503,10 @@ router.delete('/:id', async (req, res) => {
         await Payment.deleteMany({ milestone: { $in: milestoneIds } });
         await Milestone.deleteMany({ project: project._id });
         
+        console.log('Project and related data deleted successfully');
         res.json({ message: 'Project deleted', project });
     } catch (error) {
+        console.error('Error in DELETE /projects/:id:', error);
         res.status(500).json({ message: error.message });
     }
 });
