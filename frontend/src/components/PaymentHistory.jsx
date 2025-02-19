@@ -223,19 +223,36 @@ const PaymentHistory = ({ projectId, milestoneId, refreshTrigger, onPaymentDelet
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(getApiUrl(`payments/${editingPayment._id}`, isSandbox), {
+      const requestData = editingPayment.type === 'SINGLE' 
+        ? { 
+            ...formData, 
+            type: 'SINGLE',
+            milestoneId: editingPayment.milestone._id 
+          }
+        : { 
+            ...formData, 
+            type: 'DISTRIBUTED' 
+          };
+
+      const url = getApiUrl(`payments/${editingPayment._id}`, isSandbox) + 
+        (!isSandbox && user ? `?userId=${user.uid}` : '');
+
+      const response = await fetch(url, {
         method: 'PUT',
         headers,
         credentials: 'include',
-        body: JSON.stringify(formData)
+        body: JSON.stringify(requestData)
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al actualizar el pago');
+        throw new Error(errorData.message || errorData.error || 'Error al actualizar el pago');
       }
 
       await fetchPayments();
+      if (onPaymentDeleted) {
+        await onPaymentDeleted();
+      }
       setEditingPayment(null);
       showMessage('Pago actualizado correctamente');
     } catch (err) {

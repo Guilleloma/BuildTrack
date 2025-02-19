@@ -356,9 +356,19 @@ const ProjectDetail = () => {
 
   const handlePaymentComplete = async (paymentData) => {
     try {
+      let headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (!isSandbox && user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(getApiUrl('/payments', isSandbox), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
+        credentials: 'include',
         body: JSON.stringify(paymentData),
       });
       
