@@ -51,11 +51,17 @@ app.use((req, res, next) => {
   next();
 });
 
+// Basic route for health check (no authentication required)
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'BuildTrack API is running' });
+});
+
 // Authentication middleware
 const authenticateToken = async (req, res, next) => {
   console.log('=== Authentication Middleware ===');
   console.log('Path:', req.path);
   console.log('Query mode:', req.query.mode);
+  console.log('Headers:', req.headers); // Añadir log de headers
   
   // Skip authentication for sandbox mode
   if (req.query.mode === 'sandbox') {
@@ -80,11 +86,6 @@ const authenticateToken = async (req, res, next) => {
     return res.status(401).json({ error: 'Invalid token' });
   }
 };
-
-// Basic route for health check
-app.get('/', (req, res) => {
-  res.json({ status: 'ok', message: 'BuildTrack API is running' });
-});
 
 // Auth routes
 app.post('/register', (req, res) => {
@@ -152,6 +153,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+const server = app.listen(port, '0.0.0.0', () => {
+  console.log(`Server is running on port ${port}`);
+  console.log(`Full URL: http://0.0.0.0:${port}`);
 }); 
