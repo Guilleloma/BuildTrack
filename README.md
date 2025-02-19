@@ -241,6 +241,27 @@ The project follows a structured branching strategy to ensure code quality and s
    - Create a Pull Request from `uat` to `trunk`
    - Deploy to production after approval
 
+### Continuous Deployment (CD)
+The project implements automated deployment through Render.com:
+1. **Backend Auto-Deploy**:
+   - Connected to the GitHub repository
+   - Monitors the `development` branch
+   - Automatically deploys on every push
+   - Handles dependency installation
+   - Configures environment variables
+   - Starts the server using `npm start`
+
+2. **Environment Management**:
+   - Sensitive data stored as environment variables
+   - Separate configurations for development/production
+   - Secure handling of API keys and credentials
+
+3. **Deploy Process**:
+   ```bash
+   # The following command triggers automatic deployment
+   git push origin development
+   ```
+
 ### Deployment Environments
 - **Development**: For active development and initial testing
 - **UAT**: https://buildtrack-uat.web.app
